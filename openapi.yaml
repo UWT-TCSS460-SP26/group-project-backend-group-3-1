@@ -39,5 +39,5 @@ paths:
                 properties:
                   status:
                     type: string
-                    example: "The server is alive and running."
+                    example: 'The server is alive and running.'
                     description: Human-readable confirmation that the server responded successfully.
