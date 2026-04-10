@@ -15,9 +15,9 @@ cp .env.example .env
 npm run dev
 ```
 
-The server starts at [http://localhost:3000](http://localhost:3000).
+The server starts at [https://group-project-backend-group-3-1.onrender.com](https://group-project-backend-group-3-1.onrender.com).
 
-API documentation is at [http://localhost:3000/api-docs](http://localhost:3000/api-docs).
+API documentation is at [https://group-project-backend-group-3-1.onrender.com/api-docs](https://group-project-backend-group-3-1.onrender.com/api-docs).
 
 ## Scripts
 
@@ -33,4 +33,4 @@ API documentation is at [http://localhost:3000/api-docs](http://localhost:3000/a
 
 ## Deployed URL
 
-[Add your deployed URL here]
+[https://group-project-backend-group-3-1.onrender.com]

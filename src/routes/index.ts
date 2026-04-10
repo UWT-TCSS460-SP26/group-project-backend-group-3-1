@@ -3,6 +3,7 @@ import { greetingRouter } from './greeting';
 
 const routes = Router();
 
-routes.use('/hello', greetingRouter);
+//change path later according to API structure
+routes.use('/', greetingRouter);
 
 export { routes };
