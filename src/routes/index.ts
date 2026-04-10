@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { greetingRouter } from './greeting';
+import { helloRouter } from './hello';
 
 const routes = Router();
 
-routes.use('/hello', greetingRouter);
+routes.use('/hello', helloRouter);
 
 export { routes };
