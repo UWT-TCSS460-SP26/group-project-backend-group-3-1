@@ -3,7 +3,7 @@ import cors from 'cors';
 import fs from 'fs';
 import YAML from 'yaml';
 import { apiReference } from '@scalar/express-api-reference';
-import {routes} from './routes/index';
+import { routes } from './routes/index';
 
 const app = express();
 

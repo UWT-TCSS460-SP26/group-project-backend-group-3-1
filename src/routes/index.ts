@@ -1,5 +1,5 @@
-import { Router } from 'express'
-import { greetingRouter } from './greeting'
+import { Router } from 'express';
+import { greetingRouter } from './greeting';
 
 const routes = Router();
 
