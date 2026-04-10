@@ -23,7 +23,6 @@ tags:
 paths:
   /heartbeat:
     get:
-    
       tags: [Heartbeat]
       summary: GET heartbeat status
       description: Returns a message declaring that the server is alive

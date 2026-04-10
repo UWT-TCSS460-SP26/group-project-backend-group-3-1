@@ -5,6 +5,6 @@ describe('Heartbeat Route', () => {
   it('GET /heartbeat — returns server alive message', async () => {
     const response = await request(app).get('/heartbeat');
     expect(response.status).toBe(200);
-    expect(response.body.message).toBe('This server is alive!');
+    expect(response.body.status).toBe('The server is alive and running.');
   });
 });
