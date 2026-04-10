@@ -19,7 +19,6 @@ app.get('/openapi.json', (_request: Request, response: Response) => {
 });
 app.use('/api-docs', apiReference({ spec: { url: '/openapi.json' } }));
 
-// Routes, connect our greeting routes
 app.use(routes);
 
 //Heartbeat route

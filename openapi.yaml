@@ -1,17 +1,19 @@
 openapi: 3.0.3
 info:
-  title: TCSS 460 Group Project API
+  title: TCSS 460 — Group 3 API
   description: |
+<<<<<<< HEAD
     **Team:** [Group 3]
     **Deployed URL:** [https://group-project-backend-group-3-1.onrender.com]
 
-    A RESTful API for the TCSS 460 group project.
+    **Live deployment:** See the Production entry under `servers`. If your host differs, update that URL in this file so `/api-docs` stays accurate.
   version: 0.1.0
 
 servers:
   - url: http://localhost:3000
     description: Local development
   - url: https://group-project-backend-group-3-1.onrender.com
+<<<<<<< HEAD
     description: Deployed server on Render
 
 tags:
@@ -21,22 +23,20 @@ tags:
 paths:
   /heartbeat:
     get:
+<<<<<<< HEAD
       tags: [Heartbeat]
       summary: GET heartbeat status
       description: Returns a message declaring that the server is alive
       responses:
         '200':
-          description: A confirmation message
+          description: A greeting message
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HeartbeatResponse'
-
-components:
-  schemas:
-    HeartbeatResponse:
-      type: object
-      properties:
-        message:
-          type: string
-          example: 'The server is alive!'
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    example: 'The server is alive and running.'
+                    description: Human-readable confirmation that the server responded successfully.

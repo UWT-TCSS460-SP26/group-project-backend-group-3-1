@@ -1,9 +1,8 @@
 import { Router } from 'express';
-import { greetingRouter } from './greeting';
+import { heartbeatRouter } from './heartbeat';
 
 const routes = Router();
 
-//change path later according to API structure
-routes.use('/', greetingRouter);
+routes.use('/heartbeat', heartbeatRouter);
 
 export { routes };
