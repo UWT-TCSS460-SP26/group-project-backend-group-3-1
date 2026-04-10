@@ -22,9 +22,9 @@ app.use('/api-docs', apiReference({ spec: { url: '/openapi.json' } }));
 // Routes, connect our greeting routes
 app.use(routes);
 
-//Template route
-app.get('/hello', (_request: Request, response: Response) => {
-  response.json({ message: 'Hello, TCSS 460!' });
+//Heartbeat route
+app.get('/heartbeat', (_request: Request, response: Response) => {
+  response.status(200).json({ message: 'This server is alive!' });
 });
 
 // 404 handler — must be after all routes
