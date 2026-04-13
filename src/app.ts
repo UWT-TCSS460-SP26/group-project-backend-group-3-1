@@ -21,10 +21,12 @@ app.use('/api-docs', apiReference({ spec: { url: '/openapi.json' } }));
 
 app.use(routes);
 
-//heartbeat route  (Jorge edit for Sprint 0, delete/modify this part)
+
 app.get('/heartbeat', (_request: Request, response: Response) => {
   response.status(200).json({ message: 'This server is alive!' });
 });
+
+// Heartbeat Route above (Jorge edit for Sprint 0, delete/modify this part and move back to line 24)
 
 // 404 handler — must be after all routes
 app.use((_request: Request, response: Response) => {
