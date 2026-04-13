@@ -87,7 +87,7 @@ group project: Having a breakdown of steps for the sprints for the week it is du
 
 Agenda Item 6:
 The group needs to meet synchronously (online is OK) AT LEAST 3 times a Week. What times/days work for everyone?
-https://www.when2meet.com/
+https://www.when2meet.com/?36140886-gObUd
 
 Agenda Item 7:
 Wrap-up
