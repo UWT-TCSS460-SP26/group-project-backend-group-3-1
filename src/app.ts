@@ -21,7 +21,7 @@ app.use('/api-docs', apiReference({ spec: { url: '/openapi.json' } }));
 
 app.use(routes);
 
-//Heartbeat route
+//Heartbeat route  (Jorge edit for Sprint 0, delete/modify this part)
 app.get('/heartbeat', (_request: Request, response: Response) => {
   response.status(200).json({ message: 'This server is alive!' });
 });
