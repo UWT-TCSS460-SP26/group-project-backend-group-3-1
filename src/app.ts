@@ -22,7 +22,7 @@ app.use('/api-docs', apiReference({ spec: { url: '/openapi.json' } }));
 app.use(routes);
 
 //Heartbeat route
-app.get('/heartbeat', (_request: Request, response: Response) => {
+app.get('/heartbea', (_request: Request, response: Response) => {
   response.status(200).json({ message: 'This server is alive!' });
 });
 
