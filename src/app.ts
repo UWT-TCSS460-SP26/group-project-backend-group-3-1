@@ -21,11 +21,6 @@ app.use('/api-docs', apiReference({ spec: { url: '/openapi.json' } }));
 
 app.use(routes);
 
-// Heartbeat Route (for merge conflict add '/heartbeat' in path of the method below)
-app.get('/heartbeater', (_request: Request, response: Response) => {
-  response.status(200).json({ message: 'This server is alive!' });
-});
-
 // 404 handler — must be after all routes
 app.use((_request: Request, response: Response) => {
   response.status(404).json({ error: 'Route not found' });
