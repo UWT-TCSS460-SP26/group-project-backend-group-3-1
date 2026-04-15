@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import { heartbeatRouter } from './heartbeat';
-import { helloRouter } from './hello';
+import { movieRouter } from './movie';
 
 const routes = Router();
 
 routes.use('/heartbeat', heartbeatRouter);
-routes.use('/hello', helloRouter);
+routes.use('/movies', movieRouter);
 
 export { routes };
