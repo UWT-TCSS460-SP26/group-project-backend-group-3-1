@@ -19,6 +19,10 @@ servers:
 tags:
   - name: Heartbeat
     description: HTTP request to verify server is alive
+  - name: Movies
+    description: Movie endpoints
+  - name: Shows
+    description: TV show endpoints
 
 paths:
   /heartbeat:
@@ -39,3 +43,97 @@ paths:
                     type: string
                     example: 'The server is alive and running.'
                     description: Human-readable confirmation that the server responded successfully.
+
+  /movies/popular:
+    get:
+      tags: [Movies]
+      summary: Get popular movies
+      description: Returns top 10 popular movies in English from a transformed backend schema.
+      responses:
+        '200':
+          description: Popular movie list.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [count, results]
+                properties:
+                  count:
+                    type: integer
+                    example: 10
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      required: [movieId]
+                      properties:
+                        movieId:
+                          type: integer
+                          example: 603
+        '500':
+          description: Missing TMDB token configuration.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: TMDB token is not configured
+        '502':
+          description: Upstream TMDB call failed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Failed to reach TMDB service
+
+  /shows/popular:
+    get:
+      tags: [Shows]
+      summary: Get popular TV shows
+      description: Returns top 10 popular TV shows in English from a transformed backend schema.
+      responses:
+        '200':
+          description: Popular show list.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [count, results]
+                properties:
+                  count:
+                    type: integer
+                    example: 10
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      required: [showId]
+                      properties:
+                        showId:
+                          type: integer
+                          example: 1399
+        '500':
+          description: Missing TMDB token configuration.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: TMDB token is not configured
+        '502':
+          description: Upstream TMDB call failed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Failed to reach TMDB service
