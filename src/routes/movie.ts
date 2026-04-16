@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
 import { getMovieDetails, getPopularMovies, searchMovies } from '../controllers/movie';
 
 const movieRouter = Router();
