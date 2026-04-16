@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { TMDBResponse , TMDBMovieDetailed} from '../types/tmdb';
+import { TMDBResponse, TMDBMovieDetailed } from '../types/tmdb';
 
 const BASE_URL = 'https://api.themoviedb.org/3';
 const token = process.env.TMDB_BEARER_TOKEN;
@@ -35,7 +35,7 @@ export const searchMovies = async (req: Request, res: Response) => {
       poster: movie.poster_path,
       releaseDate: movie.release_date,
       description: movie.overview,
-      id: movie.id
+      id: movie.id,
     }));
 
     if (movies.length === 0) {
@@ -51,11 +51,11 @@ export const searchMovies = async (req: Request, res: Response) => {
 export const getMovieDetails = async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  if(!id){
-    return res.status(400).json({error: 'ID required'});
+  if (!id) {
+    return res.status(400).json({ error: 'ID required' });
   }
 
-  try{
+  try {
     const result = await fetch(
       `${BASE_URL}/movie/${encodeURIComponent(String(id))}?language=en-US`,
       {
@@ -66,9 +66,11 @@ export const getMovieDetails = async (req: Request, res: Response) => {
         },
       }
     );
-  
-    if(!result.ok) {
-      res.status(result.status).json({status: `${result.statusText} - ${ result.status }`, error: 'TMDB API error' });
+
+    if (!result.ok) {
+      res
+        .status(result.status)
+        .json({ status: `${result.statusText} - ${result.status}`, error: 'TMDB API error' });
       return;
     }
 
@@ -82,11 +84,11 @@ export const getMovieDetails = async (req: Request, res: Response) => {
       revenue: data.revenue,
       runtime: data.runtime,
       budget: data.budget,
-    }
+    };
 
     res.json(movie);
-  } catch(_error){
-    res.status(502).json({error: 'Failed to reach TMDB service'})
+  } catch (_error) {
+    res.status(502).json({ error: 'Failed to reach TMDB service' });
   }
 };
 
