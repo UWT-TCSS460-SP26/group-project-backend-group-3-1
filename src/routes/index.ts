@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { heartbeatRouter } from './heartbeat';
-import { movieRouter } from './movie';
-import { showRouter } from './show';
+import { movieRouter } from './movies';
+import { showRouter } from './shows';
 
 const routes = Router();
 

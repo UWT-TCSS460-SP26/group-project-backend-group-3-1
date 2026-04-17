@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getPopularShows } from '../controllers/show';
+import { getPopularShows } from '../controllers/shows';
 
 const showRouter = Router();
 
