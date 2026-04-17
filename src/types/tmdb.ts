@@ -22,3 +22,19 @@ export type TMDBMovieDetailed = {
   runtime: number;
   budget: number;
 };
+
+export type TMDBTVSearchResult = {
+  id: number;
+  title: string;
+  poster_path: string | null;
+  first_air_date: string;
+  overview: string;
+  genre_ids: number[];
+};
+
+/** Row from TMDb `/search/tv` JSON (series title is `name` in the API). */
+export type TMDBTVSearchApiRow = Omit<TMDBTVSearchResult, 'title'> & { name: string };
+
+export type TMDBTVSearchResponse = {
+  results: TMDBTVSearchApiRow[];
+};
