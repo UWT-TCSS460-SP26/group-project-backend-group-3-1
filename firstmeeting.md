@@ -38,7 +38,7 @@ on different projects for other courses since all my courses this quarter are gr
 life. Something I want others to know about me is I love playing roblox, volleyball and traveling outside the US.
 
 Hey everyone, my name is Kevin and you can just call me that.
-I went to Green River CC and also took 142&143 there (Michael Wood my goat).
+I went to Green River CC and also took 142&143 there.
 It's been a very long time since I took those classes but they definitely helped
 build a foundation for the rest of my classes. My strength is that I have experience
 with OOP for backend; but my weakness is frontend but also getting lost often on knowing
