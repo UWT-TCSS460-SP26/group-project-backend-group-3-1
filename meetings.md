@@ -93,3 +93,16 @@ Agenda Item 7:
 Wrap-up
 
 Good introduction meeting getting to know each other and our schedules.
+
+--------------------------------------------------------------------------------------------------------------------------------
+
+Second Meeting
+
+- Discussing the structure of the endpoints. Created a schema.
+
+- Considered different schema endpoints and went through all relevant TMDB api docs.
+
+- Members spoke up and asked any confusions regarding routes.
+
+![The designed endpoints for movies and shows](endpoints_design.png)
+

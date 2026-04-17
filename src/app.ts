@@ -14,16 +14,16 @@ app.use(express.json());
 // OpenAPI documentation
 const specFile = fs.readFileSync('./openapi.yaml', 'utf8');
 const spec = YAML.parse(specFile);
-app.get('/openapi.json', (_request: Request, response: Response) => {
-  response.json(spec);
+app.get('/openapi.json', (_req: Request, res: Response) => {
+  res.json(spec);
 });
 app.use('/api-docs', apiReference({ spec: { url: '/openapi.json' } }));
 
 app.use(routes);
 
 // 404 handler — must be after all routes
-app.use((_request: Request, response: Response) => {
-  response.status(404).json({ error: 'Route not found' });
+app.use((_req: Request, res: Response) => {
+  res.status(404).json({ error: 'Route not found' });
 });
 
 export { app };

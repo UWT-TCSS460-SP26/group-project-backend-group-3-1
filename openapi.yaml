@@ -19,6 +19,10 @@ servers:
 tags:
   - name: Heartbeat
     description: HTTP request to verify server is alive
+  - name: Movies
+    description: Movie endpoints
+  - name: Shows
+    description: TV show endpoints
 
 paths:
   /heartbeat:
@@ -39,3 +43,336 @@ paths:
                     type: string
                     example: 'The server is alive and running.'
                     description: Human-readable confirmation that the server responded successfully.
+
+  /movies:
+    get:
+      tags: [Movies]
+      summary: Search movies by title
+      description: |
+        Search for movies by title. Returns a list of matches or a message if no results are found.
+      parameters:
+        - name: title
+          in: query
+          required: true
+          description: Movie title (or fragment) passed to TMDB as the search query.
+          schema:
+            type: string
+            example: matrix
+      responses:
+        '200':
+          description: |
+            A list of matching movies, or an object with a message if no results are found.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: array
+                    items:
+                      type: object
+                      required: [title, releaseDate, description, id]
+                      properties:
+                        title:
+                          type: string
+                          example: The Matrix
+                        poster:
+                          type: string
+                          nullable: true
+                          example: /f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg
+                        releaseDate:
+                          type: string
+                          example: '1999-03-31'
+                        description:
+                          type: string
+                        id:
+                          type: integer
+                          example: 603
+                  - type: object
+                    required: [message]
+                    properties:
+                      message:
+                        type: string
+                        example: 'No movies found with title: nothing'
+        '400':
+          description: Missing required `title` query parameter.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [error]
+                properties:
+                  error:
+                    type: string
+                    example: Title is required
+        '401':
+          description: Unauthorized request to external movie service.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, error]
+                properties:
+                  status:
+                    type: string
+                    example: 'Unauthorized - 401'
+                  error:
+                    type: string
+                    example: TMDB API error
+        '404':
+          description: Requested resource was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, error]
+                properties:
+                  status:
+                    type: string
+                    example: 'Not Found - 404'
+                  error:
+                    type: string
+                    example: TMDB API error
+        default:
+          description: |
+            An error occurred while fetching movie data.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, error]
+                properties:
+                  status:
+                    type: string
+                  error:
+                    type: string
+                    example: TMDB API error
+        '500':
+          description: Server configuration error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: TMDB token is not configured
+        '502':
+          description: Failed to retrieve data from external service.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Failed to reach TMDB service
+
+  /movies/{id}:
+    get:
+      tags: [Movies]
+      summary: Get movie details by ID
+      description: |
+        Retrieve detailed information about a specific movie using its ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: TMDB movie ID.
+          schema:
+            type: integer
+            example: 550
+      responses:
+        '200':
+          description: Detailed information about the requested movie.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [title, release_date, overview, revenue, runtime, budget]
+                properties:
+                  title:
+                    type: string
+                    example: Fight Club
+                  poster_path:
+                    type: string
+                    nullable: true
+                  release_date:
+                    type: string
+                    example: '1999-10-15'
+                  overview:
+                    type: string
+                  revenue:
+                    type: number
+                    example: 100853753
+                  runtime:
+                    type: integer
+                    example: 139
+                  budget:
+                    type: number
+                    example: 63000000
+        '400':
+          description: Missing or invalid movie ID.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [error]
+                properties:
+                  error:
+                    type: string
+                    example: ID required
+        '401':
+          description: Authentication failed or external service access was denied.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, error]
+                properties:
+                  status:
+                    type: string
+                    example: 'Unauthorized - 401'
+                  error:
+                    type: string
+                    example: TMDB API error
+        '404':
+          description: The requested movie was not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, error]
+                properties:
+                  status:
+                    type: string
+                    example: 'Not Found - 404'
+                  error:
+                    type: string
+                    example: TMDB API error
+        default:
+          description: |
+            An unexpected error occurred while processing the request.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, error]
+                properties:
+                  status:
+                    type: string
+                  error:
+                    type: string
+                    example: TMDB API error
+        '500':
+          description: Server configuration error. Required service credentials are missing.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: TMDB token is not configured
+        '502':
+          description: Failed to retrieve data from external service.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Failed to reach TMDB service
+
+  /movies/popular:
+    get:
+      tags: [Movies]
+      summary: Get popular movies
+      description: Returns top 10 popular movies in English from a transformed backend schema.
+      responses:
+        '200':
+          description: Popular movie list.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [count, results]
+                properties:
+                  count:
+                    type: integer
+                    example: 10
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      required: [movieId]
+                      properties:
+                        movieId:
+                          type: integer
+                          example: 603
+        '500':
+          description: Missing TMDB token configuration.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: TMDB token is not configured
+        '502':
+          description: Upstream TMDB call failed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Failed to reach TMDB service
+
+  /shows/popular:
+    get:
+      tags: [Shows]
+      summary: Get popular TV shows
+      description: Returns top 10 popular TV shows in English from a transformed backend schema.
+      responses:
+        '200':
+          description: Popular show list.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [count, results]
+                properties:
+                  count:
+                    type: integer
+                    example: 10
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      required: [showId]
+                      properties:
+                        showId:
+                          type: integer
+                          example: 1399
+        '500':
+          description: Missing TMDB token configuration.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: TMDB token is not configured
+        '502':
+          description: Upstream TMDB call failed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Failed to reach TMDB service
