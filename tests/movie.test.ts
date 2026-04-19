@@ -242,4 +242,30 @@ describe('Movie Popular Route', () => {
     expect(response.status).toBe(500);
     expect(response.body).toEqual({ error: 'TMDB token is not configured' });
   });
+
+  it('GET /movies/popular forwards TMDB status when discover response is not ok', async () => {
+    const mockedResponse = {
+      ok: false,
+      status: 503,
+      statusText: 'Service Unavailable',
+      json: async () => ({}),
+    };
+
+    global.fetch = jest.fn().mockResolvedValue(mockedResponse as never) as typeof global.fetch;
+
+    const response = await request(app).get('/movies/popular');
+
+    expect(response.status).toBe(503);
+    expect(response.body.error).toBe('TMDB API error');
+    expect(response.body.status).toBe('Service Unavailable - 503');
+  });
+
+  it('GET /movies/popular returns 502 when fetch rejects', async () => {
+    global.fetch = jest.fn().mockRejectedValue(new Error('network')) as typeof global.fetch;
+
+    const response = await request(app).get('/movies/popular');
+
+    expect(response.status).toBe(502);
+    expect(response.body).toEqual({ error: 'Failed to reach TMDB service' });
+  });
 });
