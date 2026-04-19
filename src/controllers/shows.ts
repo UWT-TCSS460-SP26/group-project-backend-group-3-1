@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { TMDBTVSearchResponse } from '../types/tmdb';
+import { TMDBTVDetailsApi, TMDBTVSearchResponse } from '../types/tmdb';
 
 const BASE_URL = 'https://api.themoviedb.org/3';
 const POSTER_BASE = 'https://image.tmdb.org/t/p/w500';
@@ -66,6 +66,54 @@ export const searchShows = async (req: Request, res: Response) => {
     }));
 
     return res.json(shows);
+  } catch (_error) {
+    return res.status(500).json({ error: 'Failed to reach TMDB service' });
+  }
+};
+
+export const getShowById = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { headers, apiKey } = getTmdbAuth();
+
+  if (id === undefined || id === null || String(id).trim() === '') {
+    return res.status(400).json({ error: 'Show id is required' });
+  }
+
+  if (!process.env.TMDB_BEARER_TOKEN && !apiKey) {
+    return res.status(500).json({ error: 'TMDB authentication is not configured' });
+  }
+
+  const params = new URLSearchParams({ language: 'en-US' });
+  if (apiKey) {
+    params.set('api_key', apiKey);
+  }
+
+  const url = `${BASE_URL}/tv/${encodeURIComponent(String(id))}?${params.toString()}`;
+
+  try {
+    const result = await fetch(url, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!result.ok) {
+      return res.status(result.status).json({
+        status: `${result.statusText} - ${result.status}`,
+        error: 'TMDB API error',
+      });
+    }
+
+    const data = (await result.json()) as TMDBTVDetailsApi & { id: number };
+
+    return res.json({
+      id: data.id,
+      title: data.title,
+      posterImage: data.poster_path ? `${POSTER_BASE}${data.poster_path}` : null,
+      releaseDate: data.release_date,
+      shortDescription: data.overview,
+      revenue: data.revenue,
+      budget: data.budget,
+    });
   } catch (_error) {
     return res.status(500).json({ error: 'Failed to reach TMDB service' });
   }

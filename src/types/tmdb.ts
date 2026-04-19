@@ -38,3 +38,13 @@ export type TMDBTVSearchApiRow = Omit<TMDBTVSearchResult, 'title'> & { name: str
 export type TMDBTVSearchResponse = {
   results: TMDBTVSearchApiRow[];
 };
+
+/** Row from TMDb `GET /tv/{series_id}` (detail). */
+export type TMDBTVDetailsApi = {
+  title: string;
+  poster_path: string | null;
+  release_date: string;
+  overview: string;
+  revenue: number;
+  budget: number;
+};
