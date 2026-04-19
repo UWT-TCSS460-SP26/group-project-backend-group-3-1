@@ -407,6 +407,24 @@ paths:
                   value:
                     error: Failed to reach TMDB service
 
+  /shows/{id}:
+    get:
+      tags: [Shows]
+      summary: Get TV show details by ID
+      description: Retrieve detailed information about a specific TV show using its ID if it exists within the TMDB database.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The TV show ID based on TMDB.
+      responses:
+        '200':
+          description: Detailed information about the requested TV show.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShowSearchResult'
+
   /shows/popular:
     get:
       tags: [Shows]
@@ -455,6 +473,7 @@ paths:
                     example: Failed to reach TMDB service
 
 components:
+
   schemas:
     ErrorMessage:
       type: object
@@ -463,6 +482,7 @@ components:
         error:
           type: string
           description: Human-readable error message from this API.
+
     ShowSearchResult:
       type: object
       description: One TV series match after normalization for clients.

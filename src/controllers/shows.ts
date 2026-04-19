@@ -109,3 +109,50 @@ export const getPopularShows = async (_req: Request, res: Response) => {
     return res.status(502).json({ error: 'Failed to reach TMDB service' });
   }
 };
+export const getShowByID = async (request: Request, response: Response) => {
+  const { id } = request.params;
+  const { apiKey } = getTmdbAuth();
+
+  try {
+    const result = await fetch(
+      `${BASE_URL}/tv/${encodeURIComponent(String(id))}?api_key=${apiKey}`,
+      { method: 'GET' }
+    );
+
+    if (!result.ok) {
+      const errorText = await result.text();
+      response.status(result.status).json({
+        error: errorText || 'TMDB API Error'
+      });
+      return;
+    }
+
+    const data = await result.json() as {
+      id: number;
+      name: string;
+      first_air_date: string;
+      overview: string;
+      poster_path: string | null;
+      created_by?: Array<{ name: string }>;
+      genres?: Array<{ id: number; name: string }>;
+      number_of_episodes?: number;
+      number_of_seasons?: number;
+    };
+
+    const transformed = {
+      creator: data.created_by?.map((person) => person.name) ?? [],
+      title: data.name,
+      releaseDate: data.first_air_date,
+      shortDescription: data.overview,
+      genre: data.genres?.map((genre) => genre.name) ?? [],
+      posterImage: data.poster_path ? `${POSTER_BASE}${data.poster_path}` : null,
+      episodeCount: data.number_of_episodes ?? 0,
+      seasonCount: data.number_of_seasons ?? 0,
+    };
+
+    response.json(transformed);
+
+  } catch (_error) {
+    response.status(502).json({ error: 'Failed to reach TMDB' });
+  }
+};
