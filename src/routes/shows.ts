@@ -1,11 +1,10 @@
 import { Router } from 'express';
-import { getPopularShows, getShowByID, searchShows } from '../controllers/shows';
-import { validateNumericId } from '../middleware/validation';
+import { getPopularShows, getShowById, searchShows } from '../controllers/shows';
 
 const showRouter = Router();
 
 showRouter.get('/', searchShows);
 showRouter.get('/popular', getPopularShows);
-showRouter.get('/:id', validateNumericId ,getShowByID);
+showRouter.get('/:id', getShowById);
 
 export { showRouter };
