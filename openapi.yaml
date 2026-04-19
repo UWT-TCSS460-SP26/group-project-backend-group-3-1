@@ -334,77 +334,48 @@ paths:
       tags: [Shows]
       summary: Search TV shows by title
       description: |
-        Searches TV series using **The Movie Database (TMDB)** [Search TV endpoint](https://developer.themoviedb.org/reference/search-tv)
-        (`GET /3/search/tv`). The backend returns **only the first page** of TMDB results (TMDB default page size applies; the API does not expose a `page` query parameter).
+        Returns a list of TV shows that match the provided title or keyword.
 
-        **Upstream authentication (server configuration, not sent by API clients):**
+        If no shows are found, an empty array (`[]`) is returned.
 
-        - **`TMDB_BEARER_TOKEN`** — If set, requests use `Authorization: Bearer <token>` (v4 read access token or compatible bearer).
-        - **`TMDB_API_KEY`** — If no bearer token is set, the v3 API key is appended to the TMDB URL as `api_key`.
-
-        At least one of these must be configured or the endpoint responds with `500`.
-
-        **Response shape:** Each item maps TMDB fields to a stable JSON schema: series `name` → `title`, `poster_path` → full `posterImage` URL (`https://image.tmdb.org/t/p/w500` + path, or `null` if missing), `first_air_date` → `releaseDate`, `overview` → `shortDescription`, and `genre_ids` → `genreIds`. When TMDB returns no rows, the response is an empty JSON array (`[]`).
+        Results include basic show information such as title, image, release date, description, and genre IDs.
       parameters:
         - name: title
           in: query
           required: true
-          description: |
-            TV show title or fragment. Passed to TMDB as the `query` parameter after trimming; special characters are URL-encoded.
+          description: The title or keyword to search for TV shows.
           schema:
             type: string
-            minLength: 1
             example: invincible
       responses:
         '200':
-          description: |
-            First page of matching TV shows as a simplified list. Empty list if TMDB has no matches (not an error).
+          description: A list of matching TV shows.
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/ShowSearchResult'
-              examples:
-                sample:
-                  summary: Example search hits
-                  value:
-                    - id: 95557
-                      title: Invincible
-                      posterImage: https://image.tmdb.org/t/p/w500/yDWJYRAfMNu9y2A0jN0aYf6APmn.jpg
-                      releaseDate: '2021-03-26'
-                      shortDescription: Teenage son of the most powerful superhero on the planet.
-                      genreIds: [16, 10765, 9648]
         '400':
-          description: Missing `title`, or `title` is empty/whitespace after string conversion.
+          description: Missing or invalid title parameter
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
               examples:
-                missingTitle:
+                error:
                   value:
                     error: Query parameter title is required
         '500':
-          description: |
-            Server or upstream failure: TMDB credentials missing, TMDB returned a non-success HTTP status, or the outbound request failed (network/timeout).
+          description: Server error while processing request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
               examples:
-                noAuth:
-                  summary: No TMDB_BEARER_TOKEN or TMDB_API_KEY
+                error:
                   value:
-                    error: TMDB authentication is not configured
-                tmdbHttp:
-                  summary: TMDB rejected the request or returned an error status
-                  value:
-                    error: TMDB API error
-                network:
-                  summary: Fetch failed before a response was received
-                  value:
-                    error: Failed to reach TMDB service
+                    error: Internal server error
 
   /shows/popular:
     get:

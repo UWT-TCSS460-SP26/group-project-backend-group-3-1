@@ -37,11 +37,11 @@ export const searchMovies = async (req: Request, res: Response) => {
     const data = (await result.json()) as TMDBResponse;
 
     const movies = data.results.map((movie) => ({
+      id: movie.id,
       title: movie.title,
       poster: movie.poster_path,
       releaseDate: movie.release_date,
       description: movie.overview,
-      id: movie.id,
     }));
 
     if (movies.length === 0) {

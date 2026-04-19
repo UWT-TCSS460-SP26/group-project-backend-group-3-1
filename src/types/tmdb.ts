@@ -1,10 +1,10 @@
 //Movie object outline
 export type TMDBMovie = {
+  id: number;
   title: string;
   poster_path: string | null;
   release_date: string;
   overview: string;
-  id: number;
 };
 
 //Stores list of movie objects
