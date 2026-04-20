@@ -52,10 +52,11 @@ describe('Show Details Route (GET /shows/:id)', () => {
         id: 95557,
         title: 'Invincible',
         poster_path: '/yDWJYRAfMNu9y2A0jN0aYf6APmn.jpg',
-        release_date: '2021-03-26',
+        first_air_date: '2021-03-26',
         overview: 'Teenage son of the most powerful superhero.',
-        revenue: 0,
-        budget: 0,
+        created_by: [{ name: 'Robert Kirkman' }],
+        number_of_episodes: 24,
+        number_of_seasons: 2,
       }),
     };
 
@@ -70,8 +71,9 @@ describe('Show Details Route (GET /shows/:id)', () => {
       posterImage: 'https://image.tmdb.org/t/p/w500/yDWJYRAfMNu9y2A0jN0aYf6APmn.jpg',
       releaseDate: '2021-03-26',
       shortDescription: 'Teenage son of the most powerful superhero.',
-      revenue: 0,
-      budget: 0,
+      creator: ['Robert Kirkman'],
+      episodeCount: 24,
+      seasonCount: 2,
     });
 
     expect(global.fetch).toHaveBeenCalledWith(
@@ -97,10 +99,11 @@ describe('Show Details Route (GET /shows/:id)', () => {
         id: 1,
         title: 'Test',
         poster_path: null,
-        release_date: '',
+        first_air_date: '',
         overview: '',
-        revenue: 100,
-        budget: 50,
+        created_by: [],
+        number_of_episodes: 0,
+        number_of_seasons: 0,
       }),
     };
 
@@ -122,10 +125,11 @@ describe('Show Details Route (GET /shows/:id)', () => {
         id: 2,
         title: 'Keyed',
         poster_path: null,
-        release_date: '2020-01-01',
+        first_air_date: '2020-01-01',
         overview: 'Hi',
-        revenue: 1,
-        budget: 2,
+        created_by: [],
+        number_of_episodes: 1,
+        number_of_seasons: 1,
       }),
     };
 
@@ -162,10 +166,11 @@ describe('Show Details Route (GET /shows/:id)', () => {
         id: 55,
         title: 'X',
         poster_path: null,
-        release_date: '',
+        first_air_date: '',
         overview: '',
-        revenue: 0,
-        budget: 0,
+        created_by: [],
+        number_of_episodes: 0,
+        number_of_seasons: 0,
       }),
     };
 

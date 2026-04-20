@@ -108,11 +108,12 @@ export const getShowById = async (req: Request, res: Response) => {
     return res.json({
       id: data.id,
       title: data.title,
-      posterImage: data.poster_path ? `${POSTER_BASE}${data.poster_path}` : null,
-      releaseDate: data.release_date,
       shortDescription: data.overview,
-      revenue: data.revenue,
-      budget: data.budget,
+      creator: data.created_by?.map((person) => person.name) ?? [],
+      releaseDate: data.first_air_date,
+      episodeCount: data.number_of_episodes ?? 0,
+      seasonCount: data.number_of_seasons ?? 0,
+      posterImage: data.poster_path ? `${POSTER_BASE}${data.poster_path}` : null,
     });
   } catch (_error) {
     return res.status(500).json({ error: 'Failed to reach TMDB service' });
