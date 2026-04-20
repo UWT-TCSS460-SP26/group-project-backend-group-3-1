@@ -115,7 +115,6 @@ export const getShowById = async (req: Request, res: Response) => {
       seasonCount: data.number_of_seasons ?? 0,
       posterImage: data.poster_path ? `${POSTER_BASE}${data.poster_path}` : null,
     });
-
   } catch (_error) {
     return res.status(500).json({ error: 'Failed to reach TMDB service' });
   }

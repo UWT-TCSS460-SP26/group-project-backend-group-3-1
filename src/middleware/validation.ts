@@ -25,4 +25,3 @@ export const requireEnvVar = (key: string) => {
     next();
   };
 };
-

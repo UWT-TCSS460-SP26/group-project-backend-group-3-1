@@ -444,7 +444,6 @@ paths:
                 noAuth:
                   summary: No TMDB_BEARER_TOKEN or TMDB_API_KEY
 
-
   /shows/popular:
     get:
       tags: [Shows]
@@ -493,7 +492,6 @@ paths:
                     example: Failed to reach TMDB service
 
 components:
-
   schemas:
     ErrorMessage:
       type: object
@@ -539,7 +537,18 @@ components:
     DetailedShowResult:
       type: object
       description: One TV series match after normalization for clients.
-      required: [title, id, overview, creators, genres, poster, releaseDate, numberOfEpisodes, numberOfSeasons]
+      required:
+        [
+          title,
+          id,
+          overview,
+          creators,
+          genres,
+          poster,
+          releaseDate,
+          numberOfEpisodes,
+          numberOfSeasons,
+        ]
       properties:
         title:
           type: integer
@@ -562,7 +571,7 @@ components:
           description: TMDB genre id list (`genre_ids`).
           items:
             type: integer, string
-          example: [ 16, 10765, 9648 ]
+          example: [16, 10765, 9648]
         poster:
           type: string
           nullable: true
@@ -581,6 +590,3 @@ components:
           type: integer
           description: Number of seasons in the series.
           example: 2
-
-
-
