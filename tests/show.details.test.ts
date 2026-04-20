@@ -50,7 +50,7 @@ describe('Show Details Route (GET /shows/:id)', () => {
       ok: true,
       json: async () => ({
         id: 95557,
-        title: 'Invincible',
+        name: 'Invincible',
         poster_path: '/yDWJYRAfMNu9y2A0jN0aYf6APmn.jpg',
         first_air_date: '2021-03-26',
         overview: 'Teenage son of the most powerful superhero.',
@@ -72,6 +72,7 @@ describe('Show Details Route (GET /shows/:id)', () => {
       releaseDate: '2021-03-26',
       shortDescription: 'Teenage son of the most powerful superhero.',
       creator: ['Robert Kirkman'],
+      genres: [],
       episodeCount: 24,
       seasonCount: 2,
     });
@@ -97,7 +98,7 @@ describe('Show Details Route (GET /shows/:id)', () => {
       ok: true,
       json: async () => ({
         id: 1,
-        title: 'Test',
+        name: 'Test',
         poster_path: null,
         first_air_date: '',
         overview: '',
@@ -123,7 +124,7 @@ describe('Show Details Route (GET /shows/:id)', () => {
       ok: true,
       json: async () => ({
         id: 2,
-        title: 'Keyed',
+        name: 'Keyed',
         poster_path: null,
         first_air_date: '2020-01-01',
         overview: 'Hi',
@@ -164,7 +165,7 @@ describe('Show Details Route (GET /shows/:id)', () => {
       ok: true,
       json: async () => ({
         id: 55,
-        title: 'X',
+        name: 'X',
         poster_path: null,
         first_air_date: '',
         overview: '',
