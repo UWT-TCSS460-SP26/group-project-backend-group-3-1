@@ -512,38 +512,50 @@ components:
         [
           title,
           id,
-          overview,
-          creators,
+          shortDescription,
+          creator,
           genres,
-          poster,
+          posterImage,
           releaseDate,
-          numberOfEpisodes,
-          numberOfSeasons,
+          episodeCount,
+          seasonCount,
         ]
       properties:
         title:
-          type: integer
-          description: TMDB TV series id (`tv_id`).
-          example: 95557
-        id:
           type: string
           description: Series title (from TMDB `name`).
           example: Invincible
-        overview:
+        id:
+          type: integer
+          description: Series TMDB id (`id`).
+          example: 54
+        shortDescription:
           type: string
           description: Overview / synopsis (from TMDB `overview`).
           example: Teenage son of the most powerful superhero on the planet.
-        creators:
+        creator:
           type: array
           description: List of creators (from TMDB `created_by`).
+          items:
+            type: string
           example: [Kevin Lam, Christian De Dios]
         genres:
           type: array
-          description: TMDB genre id list (`genre_ids`).
+          description: List of genre objects returned by TMDB.
           items:
-            type: integer, string
-          example: [16, 10765, 9648]
-        poster:
+            type: object
+            required: [id, name]
+            properties:
+              id:
+                type: integer
+                example: 35
+              name:
+                type: string
+                example: Comedy
+          example:
+            - id: 35
+              name: Comedy
+        posterImage:
           type: string
           nullable: true
           description: |
@@ -553,11 +565,11 @@ components:
           type: string
           description: First air date (from TMDB `first_air_date`, ISO `YYYY-MM-DD` when present; may be empty).
           example: '2021-03-26'
-        numberOfEpisodes:
+        episodeCount:
           type: integer
           description: Number of episodes in the series.
           example: 12
-        numberOfSeasons:
+        seasonCount:
           type: integer
           description: Number of seasons in the series.
           example: 2

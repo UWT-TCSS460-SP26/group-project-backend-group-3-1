@@ -41,8 +41,8 @@ export type TMDBTVSearchResponse = {
 
 /** Row from TMDb `GET /tv/{series_id}` (detail). */
 export type TMDBTVDetailsApi = {
-  title: string;
   id: number;
+  name: string;
   overview: string;
   created_by?: Array<{ name: string }>;
   genres?: Array<{ id: number; name: string }>;

@@ -103,13 +103,18 @@ export const getShowById = async (req: Request, res: Response) => {
       });
     }
 
-    const data = (await result.json()) as TMDBTVDetailsApi & { id: number };
+    const data = (await result.json()) as TMDBTVDetailsApi & {
+      id: number;
+      name?: string;
+      original_name?: string;
+    };
 
     return res.json({
       id: data.id,
-      title: data.title,
+      title: data.name ?? data.original_name ?? '',
       shortDescription: data.overview,
       creator: data.created_by?.map((person) => person.name) ?? [],
+      genres: data.genres ?? [],
       releaseDate: data.first_air_date,
       episodeCount: data.number_of_episodes ?? 0,
       seasonCount: data.number_of_seasons ?? 0,
