@@ -422,7 +422,28 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ShowSearchResult'
+                $ref: '#/components/schemas/DetailedShowResult'
+        '400':
+          description: Show ID is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              examples:
+                missingId:
+                  value:
+                    error: ID required
+        '500':
+          description: |
+            Server or upstream failure: TMDB credentials missing, TMDB returned a non-success HTTP status, or the outbound request failed (network/timeout).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              examples:
+                noAuth:
+                  summary: No TMDB_BEARER_TOKEN or TMDB_API_KEY
+
 
   /shows/popular:
     get:
@@ -514,3 +535,52 @@ components:
           items:
             type: integer
           example: [16, 10765, 9648]
+
+    DetailedShowResult:
+      type: object
+      description: One TV series match after normalization for clients.
+      required: [title, id, overview, creators, genres, poster, releaseDate, numberOfEpisodes, numberOfSeasons]
+      properties:
+        title:
+          type: integer
+          description: TMDB TV series id (`tv_id`).
+          example: 95557
+        id:
+          type: string
+          description: Series title (from TMDB `name`).
+          example: Invincible
+        overview:
+          type: string
+          description: Overview / synopsis (from TMDB `overview`).
+          example: Teenage son of the most powerful superhero on the planet.
+        creators:
+          type: array
+          description: List of creators (from TMDB `created_by`).
+          example: [Kevin Lam, Christian De Dios]
+        genres:
+          type: array
+          description: TMDB genre id list (`genre_ids`).
+          items:
+            type: integer, string
+          example: [ 16, 10765, 9648 ]
+        poster:
+          type: string
+          nullable: true
+          description: |
+            Full poster URL (`w500` width) or `null` when TMDB has no `poster_path`.
+          example: https://image.tmdb.org/t/p/w500/yDWJYRAfMNu9y2A0jN0aYf6APmn.jpg
+        releaseDate:
+          type: string
+          description: First air date (from TMDB `first_air_date`, ISO `YYYY-MM-DD` when present; may be empty).
+          example: '2021-03-26'
+        numberOfEpisodes:
+          type: integer
+          description: Number of episodes in the series.
+          example: 12
+        numberOfSeasons:
+          type: integer
+          description: Number of seasons in the series.
+          example: 2
+
+
+
