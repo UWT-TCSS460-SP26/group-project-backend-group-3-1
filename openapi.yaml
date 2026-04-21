@@ -387,6 +387,9 @@ paths:
           in: path
           required: true
           description: The TV show ID based on TMDB.
+          schema:
+            type: integer
+            example: 2004
       responses:
         '200':
           description: Detailed information about the requested TV show.
