@@ -40,7 +40,7 @@ describe('Show Search Route (GET /shows)', () => {
     const response = await request(app).get('/shows').query({ title: 'invincible' });
 
     expect(response.status).toBe(500);
-    expect(response.body).toEqual({ error: 'TMDB authentication is not configured' });
+    expect(response.body).toEqual({ error: 'TMDB_BEARER_TOKEN and TMDB_API_KEY is not configured' });
   });
 
   it('returns 500 when TMDB responds with a non-success status', async () => {

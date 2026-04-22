@@ -32,10 +32,6 @@ export const searchShows = async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Query parameter title is required' });
   }
 
-  if (!process.env.TMDB_BEARER_TOKEN && !apiKey) {
-    return res.status(500).json({ error: 'TMDB authentication is not configured' });
-  }
-
   const params = new URLSearchParams({
     query: String(title),
     language: 'en-US',
@@ -79,9 +75,9 @@ export const getShowById = async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Show id is required' });
   }
 
-  if (!process.env.TMDB_BEARER_TOKEN && !apiKey) {
-    return res.status(500).json({ error: 'TMDB authentication is not configured' });
-  }
+  // if (!process.env.TMDB_BEARER_TOKEN && !apiKey) {
+  //   return res.status(500).json({ error: 'TMDB authentication is not configured' });
+  // }
 
   const params = new URLSearchParams({ language: 'en-US' });
   if (apiKey) {
@@ -128,9 +124,9 @@ export const getShowById = async (req: Request, res: Response) => {
 export const getPopularShows = async (_req: Request, res: Response) => {
   const token = process.env.TMDB_BEARER_TOKEN;
 
-  if (!token) {
-    return res.status(500).json({ error: 'TMDB token is not configured' });
-  }
+  // if (!token) {
+  //   return res.status(500).json({ error: 'TMDB token is not configured' });
+  // }
 
   try {
     const result = await fetch(

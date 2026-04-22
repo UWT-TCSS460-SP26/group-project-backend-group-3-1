@@ -28,7 +28,7 @@ describe('Movie Search Route', () => {
     const response = await request(app).get('/movies').query({ title: 'x' });
 
     expect(response.status).toBe(500);
-    expect(response.body).toEqual({ error: 'TMDB token is not configured' });
+    expect(response.body).toEqual({ error: 'TMDB_BEARER_TOKEN and TMDB_API_KEY is not configured' });
   });
 
   it('GET /movies forwards TMDB status when search response is not ok', async () => {
@@ -133,7 +133,7 @@ describe('Movie Details Route', () => {
     const response = await request(app).get('/movies/123');
 
     expect(response.status).toBe(500);
-    expect(response.body).toEqual({ error: 'TMDB token is not configured' });
+    expect(response.body).toEqual({ error: 'TMDB_BEARER_TOKEN and TMDB_API_KEY is not configured' });
   });
 
   it('GET /movies/:id forwards TMDB status when detail response is not ok', async () => {
@@ -240,7 +240,7 @@ describe('Movie Popular Route', () => {
     const response = await request(app).get('/movies/popular');
 
     expect(response.status).toBe(500);
-    expect(response.body).toEqual({ error: 'TMDB token is not configured' });
+    expect(response.body).toEqual({ error: 'TMDB_BEARER_TOKEN and TMDB_API_KEY is not configured' });
   });
 
   it('GET /movies/popular forwards TMDB status when discover response is not ok', async () => {

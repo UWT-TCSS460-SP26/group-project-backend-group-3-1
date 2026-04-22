@@ -43,7 +43,7 @@ describe('Show Popular Route', () => {
     const response = await request(app).get('/shows/popular');
 
     expect(response.status).toBe(500);
-    expect(response.body).toEqual({ error: 'TMDB token is not configured' });
+    expect(response.body).toEqual({ error: 'TMDB_BEARER_TOKEN and TMDB_API_KEY is not configured' });
   });
 
   it('GET /shows/popular forwards TMDB status when discover response is not ok', async () => {

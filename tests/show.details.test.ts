@@ -25,7 +25,7 @@ describe('Show Details Route (GET /shows/:id)', () => {
     const response = await request(app).get('/shows/95557');
 
     expect(response.status).toBe(500);
-    expect(response.body).toEqual({ error: 'TMDB authentication is not configured' });
+    expect(response.body).toEqual({ error: 'TMDB_BEARER_TOKEN and TMDB_API_KEY is not configured' });
   });
 
   it('forwards TMDB status when detail response is not ok', async () => {
