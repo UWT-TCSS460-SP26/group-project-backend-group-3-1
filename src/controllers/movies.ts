@@ -6,7 +6,7 @@ const BASE_URL = 'https://api.themoviedb.org/3';
 export const searchMovies = async (req: Request, res: Response) => {
   const token = process.env.TMDB_BEARER_TOKEN;
   const { title } = req.query;
-  
+
   if (!token) {
     return res.status(500).json({ error: 'TMDB token is not configured' });
   }
@@ -57,7 +57,7 @@ export const searchMovies = async (req: Request, res: Response) => {
 export const getMovieDetails = async (req: Request, res: Response) => {
   const token = process.env.TMDB_BEARER_TOKEN;
   const { id } = req.params;
-  
+
   if (!token) {
     return res.status(500).json({ error: 'TMDB token is not configured' });
   }

@@ -54,7 +54,7 @@ export const searchShows = async (req: Request, res: Response) => {
 export const getShowById = async (req: Request, res: Response) => {
   const { id } = req.params;
   const token = process.env.TMDB_BEARER_TOKEN;
-  
+
   if (!token) {
     return res.status(500).json({ error: 'TMDB token is not configured' });
   }
@@ -64,16 +64,13 @@ export const getShowById = async (req: Request, res: Response) => {
   }
 
   try {
-    const result = await fetch(
-      `${BASE_URL}/tv/${encodeURIComponent(String(id))}?language=en-US`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    const result = await fetch(`${BASE_URL}/tv/${encodeURIComponent(String(id))}?language=en-US`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
 
     if (!result.ok) {
       return res.status(result.status).json({
@@ -106,7 +103,7 @@ export const getShowById = async (req: Request, res: Response) => {
 
 export const getPopularShows = async (_req: Request, res: Response) => {
   const token = process.env.TMDB_BEARER_TOKEN;
-  
+
   if (!token) {
     return res.status(500).json({ error: 'TMDB token is not configured' });
   }
