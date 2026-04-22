@@ -43,7 +43,7 @@ describe('Show Popular Route', () => {
     const response = await request(app).get('/shows/popular');
 
     expect(response.status).toBe(500);
-    expect(response.body).toEqual({ error: 'TMDB_BEARER_TOKEN and TMDB_API_KEY is not configured' });
+    expect(response.body).toEqual({ error: 'TMDB_BEARER_TOKEN is not configured' });
   });
 
   it('GET /shows/popular forwards TMDB status when discover response is not ok', async () => {
@@ -59,7 +59,8 @@ describe('Show Popular Route', () => {
     const response = await request(app).get('/shows/popular');
 
     expect(response.status).toBe(401);
-    expect(response.body).toEqual({ error: 'TMDB API error' });
+    expect(response.body.error).toBe('TMDB API error');
+    expect(response.body.status).toBe('Unauthorized - 401');
   });
 
   it('GET /shows/popular returns 502 when fetch rejects', async () => {

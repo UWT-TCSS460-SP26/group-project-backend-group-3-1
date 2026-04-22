@@ -16,10 +16,10 @@ export const validateNumericId = (request: Request, response: Response, next: Ne
  * Validates that a required environment variable is set.
  * Returns a middleware function that checks for the given key in process.env.
  */
-export const requireEnvVar = (key: string, token: string) => {
+export const requireEnvVar = (token: string) => {
   return (_request: Request, response: Response, next: NextFunction) => {
-    if (!process.env[key] && !process.env[token]) {
-      response.status(500).json({ error: `${key} and ${token} is not configured` });
+    if (!process.env[token]) {
+      response.status(500).json({ error: `${token} is not configured` });
       return;
     }
     next();

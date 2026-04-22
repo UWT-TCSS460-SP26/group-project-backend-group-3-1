@@ -4,7 +4,7 @@ import { requireEnvVar } from '../middleware/validation';
 
 const movieRouter = Router();
 
-movieRouter.use(requireEnvVar('TMDB_BEARER_TOKEN', 'TMDB_API_KEY'));
+movieRouter.use(requireEnvVar('TMDB_BEARER_TOKEN'));
 
 movieRouter.get('/', searchMovies);
 movieRouter.get('/popular', getPopularMovies);

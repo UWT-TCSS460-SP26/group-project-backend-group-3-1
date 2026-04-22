@@ -18,14 +18,24 @@ describe('Show Details Route (GET /shows/:id)', () => {
     jest.restoreAllMocks();
   });
 
-  it('returns 500 when neither bearer token nor API key is configured', async () => {
+  it('returns 500 when bearer token is not configured', async () => {
     delete process.env.TMDB_BEARER_TOKEN;
     delete process.env.TMDB_API_KEY;
 
     const response = await request(app).get('/shows/95557');
 
     expect(response.status).toBe(500);
-    expect(response.body).toEqual({ error: 'TMDB_BEARER_TOKEN and TMDB_API_KEY is not configured' });
+    expect(response.body).toEqual({ error: 'TMDB_BEARER_TOKEN is not configured' });
+  });
+
+  it('returns 500 when only TMDB_API_KEY is set without bearer', async () => {
+    delete process.env.TMDB_BEARER_TOKEN;
+    process.env.TMDB_API_KEY = 'v3-api-key';
+
+    const response = await request(app).get('/shows/2');
+
+    expect(response.status).toBe(500);
+    expect(response.body).toEqual({ error: 'TMDB_BEARER_TOKEN is not configured' });
   });
 
   it('forwards TMDB status when detail response is not ok', async () => {
@@ -83,6 +93,7 @@ describe('Show Details Route (GET /shows/:id)', () => {
     );
     const url = (global.fetch as jest.Mock).mock.calls[0][0] as string;
     expect(url).toContain('language=en-US');
+    expect(url).not.toContain('api_key');
 
     const init = (global.fetch as jest.Mock).mock.calls[0][1] as {
       headers: Record<string, string>;
@@ -116,47 +127,12 @@ describe('Show Details Route (GET /shows/:id)', () => {
     expect(response.body.posterImage).toBeNull();
   });
 
-  it('uses TMDB_API_KEY query param when bearer token is not set', async () => {
-    delete process.env.TMDB_BEARER_TOKEN;
-    process.env.TMDB_API_KEY = 'v3-api-key';
-
-    const mockedResponse = {
-      ok: true,
-      json: async () => ({
-        id: 2,
-        name: 'Keyed',
-        poster_path: null,
-        first_air_date: '2020-01-01',
-        overview: 'Hi',
-        created_by: [],
-        number_of_episodes: 1,
-        number_of_seasons: 1,
-      }),
-    };
-
-    global.fetch = jest.fn().mockResolvedValue(mockedResponse as never) as typeof global.fetch;
-
-    const response = await request(app).get('/shows/2');
-
-    expect(response.status).toBe(200);
-    expect(response.body.title).toBe('Keyed');
-
-    const url = (global.fetch as jest.Mock).mock.calls[0][0] as string;
-    expect(url).toContain('api_key=v3-api-key');
-    expect(url).not.toContain('Bearer');
-
-    const init = (global.fetch as jest.Mock).mock.calls[0][1] as {
-      headers: Record<string, string>;
-    };
-    expect(init.headers).toEqual({ 'Content-Type': 'application/json' });
-  });
-
-  it('returns 500 when fetch rejects', async () => {
+  it('returns 502 when fetch rejects', async () => {
     global.fetch = jest.fn().mockRejectedValue(new Error('network')) as typeof global.fetch;
 
     const response = await request(app).get('/shows/1');
 
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(502);
     expect(response.body).toEqual({ error: 'Failed to reach TMDB service' });
   });
 
