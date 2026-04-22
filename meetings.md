@@ -104,4 +104,16 @@ Second Meeting
 
 - Members spoke up and asked any confusions regarding routes.
 
-![The designed endpoints for movies and shows](endpoints_design.png)
+![The designed endpoints for movies and shows](./meeting_images/endpoints_design.png)
+
+Third Meeting, Week 4
+
+- Give everyone tasks for the week from the sprint
+
+- Create db schema, made user, review, and rating tables
+
+- Discuss the types for each column
+
+![The designed db schema](./meeting_images/db_schema.png)
+
+![Assigned tasks to each person](./meeting_images/task_spread.png)
