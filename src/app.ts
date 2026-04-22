@@ -13,6 +13,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(logger);
+
+// TEMPORARY — Sprint 2 only. Use this router for local development.
 //app.use('/auth', devAuthRouter);
 
 // OpenAPI documentation

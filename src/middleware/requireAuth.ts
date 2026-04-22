@@ -37,6 +37,7 @@ export const requireAuth = (request: Request, response: Response, next: NextFunc
   const token = header.slice('Bearer '.length).trim();
 
   try {
+    //remove the as unknown as AuthenticatedUser to see the error
     const payload = jwt.verify(token, secret) as unknown as AuthenticatedUser;
     request.user = payload;
     next();
