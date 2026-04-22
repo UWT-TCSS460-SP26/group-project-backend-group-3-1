@@ -5,6 +5,7 @@ import YAML from 'yaml';
 import { apiReference } from '@scalar/express-api-reference';
 import { routes } from './routes/index';
 import { logger } from './middleware/logger';
+import devAuthRouter from './routes/devAuth';
 
 const app = express();
 
@@ -12,6 +13,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(logger);
+//app.use('/auth', devAuthRouter);
 
 // OpenAPI documentation
 const specFile = fs.readFileSync('./openapi.yaml', 'utf8');

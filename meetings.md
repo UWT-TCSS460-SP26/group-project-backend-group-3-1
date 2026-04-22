@@ -96,6 +96,8 @@ Good introduction meeting getting to know each other and our schedules.
 
 ---
 
+---
+
 Second Meeting
 
 - Discussing the structure of the endpoints. Created a schema.
@@ -117,3 +119,4 @@ Third Meeting, Week 4
 ![The designed db schema](./meeting_images/db_schema.png)
 
 ![Assigned tasks to each person](./meeting_images/task_spread.png)
+![The designed endpoints for movies and shows](endpoints_design.png)
