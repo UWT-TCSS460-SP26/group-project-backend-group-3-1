@@ -10,11 +10,10 @@ info:
   version: 0.1.0
 
 servers:
+  - url: https://group-project-backend-group-3-1.onrender.com
+    description: Deployed server on Render
   - url: http://localhost:3000
     description: Local development
-  - url: https://group-project-backend-group-3-1.onrender.com
-
-    description: Deployed server on Render
 
 tags:
   - name: Heartbeat
@@ -330,6 +329,95 @@ paths:
                     type: string
                     example: Failed to reach TMDB service
 
+  /shows:
+    get:
+      tags: [Shows]
+      summary: Search TV shows by title
+      description: |
+        Returns a list of TV shows that match the provided title or keyword.
+
+        If no shows are found, an empty array (`[]`) is returned.
+
+        Results include basic show information such as title, image, release date, description, and genre IDs.
+      parameters:
+        - name: title
+          in: query
+          required: true
+          description: The title or keyword to search for TV shows.
+          schema:
+            type: string
+            example: invincible
+      responses:
+        '200':
+          description: A list of matching TV shows.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ShowSearchResult'
+        '400':
+          description: Missing or invalid title parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              examples:
+                error:
+                  value:
+                    error: Query parameter title is required
+        '500':
+          description: Server error while processing request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              examples:
+                error:
+                  value:
+                    error: Internal server error
+
+  /shows/{id}:
+    get:
+      tags: [Shows]
+      summary: Get TV show details by ID
+      description: Retrieve detailed information about a specific TV show using its ID if it exists within the TMDB database.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The TV show ID based on TMDB.
+          schema:
+            type: integer
+            example: 2004
+      responses:
+        '200':
+          description: Detailed information about the requested TV show.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailedShowResult'
+        '400':
+          description: Show ID is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              examples:
+                missingId:
+                  value:
+                    error: ID required
+        '500':
+          description: |
+            Server or upstream failure: TMDB credentials missing, TMDB returned a non-success HTTP status, or the outbound request failed (network/timeout).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              examples:
+                noAuth:
+                  summary: No TMDB_BEARER_TOKEN or TMDB_API_KEY
+
   /shows/popular:
     get:
       tags: [Shows]
@@ -376,3 +464,115 @@ paths:
                   error:
                     type: string
                     example: Failed to reach TMDB service
+
+components:
+  schemas:
+    ErrorMessage:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          description: Human-readable error message from this API.
+
+    ShowSearchResult:
+      type: object
+      description: One TV series match after normalization for clients.
+      required: [id, title, posterImage, releaseDate, shortDescription, genreIds]
+      properties:
+        id:
+          type: integer
+          description: TMDB TV series id (`tv_id`).
+          example: 95557
+        title:
+          type: string
+          description: Series title (from TMDB `name`).
+          example: Invincible
+        posterImage:
+          type: string
+          nullable: true
+          description: |
+            Full poster URL (`w500` width) or `null` when TMDB has no `poster_path`.
+          example: https://image.tmdb.org/t/p/w500/yDWJYRAfMNu9y2A0jN0aYf6APmn.jpg
+        releaseDate:
+          type: string
+          description: First air date (from TMDB `first_air_date`, ISO `YYYY-MM-DD` when present; may be empty).
+          example: '2021-03-26'
+        shortDescription:
+          type: string
+          description: Overview / synopsis (from TMDB `overview`).
+        genreIds:
+          type: array
+          description: TMDB genre id list (`genre_ids`).
+          items:
+            type: integer
+          example: [16, 10765, 9648]
+
+    DetailedShowResult:
+      type: object
+      description: One TV series match after normalization for clients.
+      required:
+        [
+          title,
+          id,
+          shortDescription,
+          creator,
+          genres,
+          posterImage,
+          releaseDate,
+          episodeCount,
+          seasonCount,
+        ]
+      properties:
+        title:
+          type: string
+          description: Series title (from TMDB `name`).
+          example: Invincible
+        id:
+          type: integer
+          description: Series TMDB id (`id`).
+          example: 54
+        shortDescription:
+          type: string
+          description: Overview / synopsis (from TMDB `overview`).
+          example: Teenage son of the most powerful superhero on the planet.
+        creator:
+          type: array
+          description: List of creators (from TMDB `created_by`).
+          items:
+            type: string
+          example: [Kevin Lam, Christian De Dios]
+        genres:
+          type: array
+          description: List of genre objects returned by TMDB.
+          items:
+            type: object
+            required: [id, name]
+            properties:
+              id:
+                type: integer
+                example: 35
+              name:
+                type: string
+                example: Comedy
+          example:
+            - id: 35
+              name: Comedy
+        posterImage:
+          type: string
+          nullable: true
+          description: |
+            Full poster URL (`w500` width) or `null` when TMDB has no `poster_path`.
+          example: https://image.tmdb.org/t/p/w500/yDWJYRAfMNu9y2A0jN0aYf6APmn.jpg
+        releaseDate:
+          type: string
+          description: First air date (from TMDB `first_air_date`, ISO `YYYY-MM-DD` when present; may be empty).
+          example: '2021-03-26'
+        episodeCount:
+          type: integer
+          description: Number of episodes in the series.
+          example: 12
+        seasonCount:
+          type: integer
+          description: Number of seasons in the series.
+          example: 2

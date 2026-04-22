@@ -4,12 +4,14 @@ import fs from 'fs';
 import YAML from 'yaml';
 import { apiReference } from '@scalar/express-api-reference';
 import { routes } from './routes/index';
+import { logger } from './middleware/logger';
 
 const app = express();
 
 // Application-level middleware
 app.use(cors());
 app.use(express.json());
+app.use(logger);
 
 // OpenAPI documentation
 const specFile = fs.readFileSync('./openapi.yaml', 'utf8');

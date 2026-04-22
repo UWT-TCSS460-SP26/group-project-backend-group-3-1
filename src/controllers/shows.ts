@@ -7,7 +7,6 @@ const POSTER_BASE = 'https://image.tmdb.org/t/p/w500';
 export const searchShows = async (req: Request, res: Response) => {
   const title = req.query.title;
   const token = process.env.TMDB_BEARER_TOKEN;
-
   if (!token) {
     return res.status(500).json({ error: 'TMDB token is not configured' });
   }

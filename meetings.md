@@ -38,7 +38,7 @@ on different projects for other courses since all my courses this quarter are gr
 life. Something I want others to know about me is I love playing roblox, volleyball and traveling outside the US.
 
 Hey everyone, my name is Kevin and you can just call me that.
-I went to Green River CC and also took 142&143 there (Michael Wood my goat).
+I went to Green River CC and also took 142&143 there.
 It's been a very long time since I took those classes but they definitely helped
 build a foundation for the rest of my classes. My strength is that I have experience
 with OOP for backend; but my weakness is frontend but also getting lost often on knowing
@@ -95,6 +95,7 @@ Wrap-up
 Good introduction meeting getting to know each other and our schedules.
 
 ---
+---
 
 Second Meeting
 
@@ -104,4 +105,17 @@ Second Meeting
 
 - Members spoke up and asked any confusions regarding routes.
 
+![The designed endpoints for movies and shows](./meeting_images/endpoints_design.png)
+
+Third Meeting, Week 4
+
+- Give everyone tasks for the week from the sprint
+
+- Create db schema, made user, review, and rating tables
+
+- Discuss the types for each column
+
+![The designed db schema](./meeting_images/db_schema.png)
+
+![Assigned tasks to each person](./meeting_images/task_spread.png)
 ![The designed endpoints for movies and shows](endpoints_design.png)
