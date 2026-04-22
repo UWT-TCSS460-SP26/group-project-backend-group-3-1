@@ -18,6 +18,7 @@ export default [
         console: 'readonly',
         process: 'readonly',
         fetch: 'readonly',
+        URLSearchParams: 'readonly',
         __dirname: 'readonly',
         __filename: 'readonly',
         require: 'readonly',

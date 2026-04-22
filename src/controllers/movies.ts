@@ -4,15 +4,15 @@ import { TMDBResponse, TMDBMovieDetailed } from '../types/tmdb';
 const BASE_URL = 'https://api.themoviedb.org/3';
 
 export const searchMovies = async (req: Request, res: Response) => {
-  const { title } = req.query;
   const token = process.env.TMDB_BEARER_TOKEN;
-
-  if (!title) {
-    return res.status(400).json({ error: 'Title is required' });
-  }
+  const { title } = req.query;
 
   if (!token) {
     return res.status(500).json({ error: 'TMDB token is not configured' });
+  }
+
+  if (!title) {
+    return res.status(400).json({ error: 'Title is required' });
   }
 
   try {
@@ -37,11 +37,11 @@ export const searchMovies = async (req: Request, res: Response) => {
     const data = (await result.json()) as TMDBResponse;
 
     const movies = data.results.map((movie) => ({
+      id: movie.id,
       title: movie.title,
       poster: movie.poster_path,
       releaseDate: movie.release_date,
       description: movie.overview,
-      id: movie.id,
     }));
 
     if (movies.length === 0) {
@@ -55,15 +55,15 @@ export const searchMovies = async (req: Request, res: Response) => {
 };
 
 export const getMovieDetails = async (req: Request, res: Response) => {
-  const { id } = req.params;
   const token = process.env.TMDB_BEARER_TOKEN;
-
-  if (!id) {
-    return res.status(400).json({ error: 'ID required' });
-  }
+  const { id } = req.params;
 
   if (!token) {
     return res.status(500).json({ error: 'TMDB token is not configured' });
+  }
+
+  if (!id) {
+    return res.status(400).json({ error: 'ID required' });
   }
 
   try {
