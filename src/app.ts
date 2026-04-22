@@ -7,12 +7,15 @@ import { routes } from './routes/index';
 import { logger } from './middleware/logger';
 import devAuthRouter from './routes/devAuth';
 
+
 const app = express();
 
 // Application-level middleware
 app.use(cors());
 app.use(express.json());
 app.use(logger);
+
+// TEMPORARY — Sprint 2 only. Use this router for local development.
 //app.use('/auth', devAuthRouter);
 
 // OpenAPI documentation
