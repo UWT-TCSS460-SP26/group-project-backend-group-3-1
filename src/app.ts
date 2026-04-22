@@ -7,7 +7,6 @@ import { routes } from './routes/index';
 import { logger } from './middleware/logger';
 import devAuthRouter from './routes/devAuth';
 
-
 const app = express();
 
 // Application-level middleware
