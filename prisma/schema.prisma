@@ -11,3 +11,24 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+// Placeholder: adjust with email, name, etc. as this grows
+model User {
+  userId  String  @id @default(uuid()) @db.Uuid @map("UserID")
+  reviews Review[]
+
+  @@map("User")
+}
+
+model Review {
+  reviewId     Int      @default(autoincrement()) @map("ReviewID")
+  userId       String   @map("UserID") @db.Uuid
+  /// 0 = movie, 1 = show
+  content      Int      @map("Content")
+  dateOfReview DateTime @map("DateOfReview") @db.Date
+
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@id([reviewId, userId])
+  @@map("reviews")
+}

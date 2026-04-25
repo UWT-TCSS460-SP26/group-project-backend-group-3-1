@@ -6,8 +6,8 @@ services:
     container_name: tcss460-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: christian
-      POSTGRES_PASSWORD: 62097600
+      POSTGRES_USER: kevin
+      POSTGRES_PASSWORD: verysecretpassword
       POSTGRES_DB: group_project_backend_3
     ports:
       - '5432:5432'
