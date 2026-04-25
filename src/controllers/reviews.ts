@@ -18,14 +18,14 @@ export const createReview = async (req: Request, res: Response) => {
     const review = await prisma.review.create({
       data: {
         userId: req.user.sub,
-        content: resolvedContent,
+        movieShow: resolvedContent === 0,
         dateOfReview: new Date(dateOfReview),
       },
     });
     return res.status(201).json({
       reviewId: review.reviewId,
       userId: review.userId,
-      content: review.content,
+      content: review.movieShow ? 0 : 1,
       dateOfReview: review.dateOfReview.toISOString().slice(0, 10),
     });
   } catch (e) {
