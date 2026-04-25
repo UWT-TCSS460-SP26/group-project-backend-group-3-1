@@ -28,8 +28,12 @@ describe('Reviews (integration, requires DB + JWT in .env)', () => {
       throw new Error('DATABASE_URL must be set in .env to run review integration tests');
     }
     await prisma.user.upsert({
-      where: { userId: DEV_USER_ID },
-      create: { userId: DEV_USER_ID },
+      where: { id: DEV_USER_ID },
+      create: {
+        id: DEV_USER_ID,
+        username: 'test-user',
+        email: 'dev@test.local',
+      },
       update: {},
     });
   });
