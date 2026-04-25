@@ -1,8 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 
 /** Matches a canonical UUID (version nibble 1–8, variant in 8, 9, a, or b). */
-const UUID_REGEX =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 /**
  * Validates that the named route parameter is a UUID (e.g. for `UserID`).
@@ -11,9 +10,7 @@ export const validateUuidParam = (paramName: string) => {
   return (request: Request, response: Response, next: NextFunction) => {
     const value = request.params[paramName];
     if (typeof value !== 'string' || !UUID_REGEX.test(value)) {
-      response
-        .status(400)
-        .json({ error: `Parameter "${paramName}" must be a valid UUID` });
+      response.status(400).json({ error: `Parameter "${paramName}" must be a valid UUID` });
       return;
     }
     next();
@@ -41,9 +38,7 @@ export const validateReviewBody = (request: Request, response: Response, next: N
   const { content, dateOfReview } = request.body as { content?: unknown; dateOfReview?: unknown };
   const c = typeof content === 'string' ? Number.parseInt(content, 10) : content;
   if (typeof c !== 'number' || !Number.isInteger(c) || (c !== 0 && c !== 1)) {
-    response
-      .status(400)
-      .json({ error: 'Field "content" must be 0 (movie) or 1 (show)' });
+    response.status(400).json({ error: 'Field "content" must be 0 (movie) or 1 (show)' });
     return;
   }
   if (dateOfReview === undefined || dateOfReview === null || dateOfReview === '') {
