@@ -12,23 +12,37 @@ datasource db {
   provider = "postgresql"
 }
 
-// Placeholder: adjust with email, name, etc. as this grows
 model User {
-  userId  String  @id @default(uuid()) @db.Uuid @map("UserID")
-  reviews Review[]
+  id       String   @id @default(uuid())
+  username String   @db.VarChar(20)
 
-  @@map("User")
+  // optional fields mentioned in diagram
+  email    String? // remove question mark if decided to keep email
+
+  // relations
+  ratings  Rating[]
+  reviews  Review[]
+}
+
+model Rating {
+  ratingId  Int      @default(autoincrement())
+  userId    String
+  movieShow Boolean  // true = movie, false = show
+
+  // relations
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@id([ratingId, userId])
 }
 
 model Review {
-  reviewId     Int      @default(autoincrement()) @map("ReviewID")
-  userId       String   @map("UserID") @db.Uuid
-  /// 0 = movie, 1 = show
-  content      Int      @map("Content")
-  dateOfReview DateTime @map("DateOfReview") @db.Date
+  reviewId     Int      @default(autoincrement())
+  userId       String
+  movieShow    Boolean
+  dateOfReview DateTime
 
-  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  // relations
+  user         User     @relation(fields: [userId], references: [id])
 
   @@id([reviewId, userId])
-  @@map("reviews")
 }
