@@ -130,11 +130,21 @@ export const getPopularShows = async (_req: Request, res: Response) => {
     const data = (await result.json()) as {
       results: Array<{
         id: number;
+        name: string;
+        poster_path: string | null;
+        first_air_date: string;
+        overview: string;
+        genre_ids?: number[];
       }>;
     };
 
     const popularShows = data.results.slice(0, 10).map((show) => ({
-      showId: show.id,
+      id: show.id,
+      title: show.name,
+      posterImage: show.poster_path ? `${POSTER_BASE}${show.poster_path}` : null,
+      releaseDate: show.first_air_date,
+      shortDescription: show.overview,
+      genreIds: show.genre_ids ?? [],
     }));
 
     return res.json({ count: popularShows.length, results: popularShows });
