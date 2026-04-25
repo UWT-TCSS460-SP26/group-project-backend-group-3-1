@@ -15,9 +15,7 @@ datasource db {
 model User {
   id       String   @id @default(uuid())
   username String   @db.VarChar(20)
-
-  // optional fields mentioned in diagram
-  email    String? // remove question mark if decided to keep email
+  email    String 
 
   // relations
   ratings  Rating[]
