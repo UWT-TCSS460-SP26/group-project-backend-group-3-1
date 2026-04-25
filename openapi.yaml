@@ -23,9 +23,7 @@ tags:
   - name: Shows
     description: TV show endpoints
   - name: Reviews
-    description: |
-      User reviews stored in the application database. All routes require a valid JWT
-      in the `Authorization: Bearer` header. The user id in the token (`sub`, or `userId` / `id` as a string) must match an existing `User` row; `POST` creates a review for that user and `DELETE` only removes a review that belongs to that user.
+    description: Review endpoints
 
 paths:
   /heartbeat:
@@ -473,10 +471,7 @@ paths:
     post:
       tags: [Reviews]
       summary: Create a review
-      description: |
-        Creates a review for the authenticated user. The `UserID` on the row is taken from the
-        verified JWT: `sub` (or string `userId` / `id` if `sub` is not set). The database assigns
-        `ReviewID` (autoincrement). You must not send `UserID` in the body.
+      description: Adds a review for the current user. Requires a Bearer token.
       security:
         - bearerAuth: []
       requestBody:
@@ -485,101 +480,61 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ReviewCreateRequest'
-            examples:
-              movie:
-                summary: Review for a movie
-                value:
-                  content: 0
-                  dateOfReview: '2026-04-25'
-              show:
-                summary: Review for a show
-                value:
-                  content: 1
-                  dateOfReview: '2026-04-25'
       responses:
         '201':
-          description: Review created. Response echoes ids and the normalized date (calendar day).
+          description: OK Created Successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ReviewCreated'
         '400':
-          description: |
-            Request body failed validation, or the JWT user id is not a foreign key to an existing
-            `User` row.
+          description: Bad request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
-              examples:
-                validationContent:
-                  summary: Invalid or missing `content` / `dateOfReview`
-                  value:
-                    error: 'Field "content" must be 0 (movie) or 1 (show)'
-                missingDate:
-                  value:
-                    error: 'Field "dateOfReview" is required'
-                userMissing:
-                  summary: No `User` for JWT subject
-                  value:
-                    error: User does not exist
         '401':
-          description: |
-            Missing/invalid `Authorization: Bearer` header, invalid or expired token, or token
-            missing a resolvable user id claim (`sub` / `userId` / `id`).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorMessage'
-              examples:
-                missingHeader:
-                  value:
-                    error: Missing or malformed Authorization header
-                invalidToken:
-                  value:
-                    error: Invalid or expired token
-                noSubject:
-                  value:
-                    error: 'Token must include user id: set "sub", or "userId", or "id" to your User UUID'
-        '500':
-          description: Server misconfiguration (e.g. `JWT_SECRET` not set in the environment).
+          description: Unauthorized
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
-                error: JWT_SECRET is not configured
+                error: Invalid or expired token
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Internal server error
 
   /reviews/{reviewId}:
     delete:
       tags: [Reviews]
       summary: Delete a review
-      description: |
-        Permanently deletes a single review that belongs to the authenticated user. The composite
-        key `(ReviewID, UserID)` must match a row; `UserID` is taken from the JWT, not the URL.
+      description: Removes a review for the current user. Requires a Bearer token.
       security:
         - bearerAuth: []
       parameters:
         - name: reviewId
           in: path
           required: true
-          description: |
-            Integer primary-key part of the review (`ReviewID`). Must be a positive integer.
-            Must belong to the calling user; otherwise the server responds with **404** (same as not found).
+          description: Review id
           schema:
             type: integer
             minimum: 1
             example: 1
       responses:
         '200':
-          description: Review was deleted.
+          description: OK Deleted Successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ReviewDeleteSuccess'
         '400':
-          description: |
-            The path parameter reviewId is not a positive integer.
+          description: Bad request
           content:
             application/json:
               schema:
@@ -587,13 +542,14 @@ paths:
               example:
                 error: 'Parameter "reviewId" must be a positive integer'
         '401':
-          description: Same as `POST /reviews` — unauthenticated or bad JWT.
+          description: Unauthorized
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
         '404':
-          description: No review with this `reviewId` for the authenticated user.
+          description: |
+            There is no review with that id for that account, or it was already deleted.
           content:
             application/json:
               schema:
@@ -601,11 +557,13 @@ paths:
               example:
                 error: Review not found
         '500':
-          description: Server misconfiguration.
+          description: Server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Internal server error
 
 components:
   securitySchemes:
@@ -613,9 +571,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: |
-        HS256 JWT signed with `JWT_SECRET`. Body must include at least one of `sub`, `userId` (string),
-        or `id` (string) for the `User` UUID, plus optional `email` and `role`.
+      description: Bearer token from sign-in
 
   schemas:
     ErrorMessage:
@@ -625,29 +581,26 @@ components:
         error:
           type: string
           description: Human-readable error message from this API.
+      example:
+        error: Something went wrong
 
     ReviewCreateRequest:
       type: object
       required: [content, dateOfReview]
-      description: |
-        `content` selects whether the review targets a movie (`0`) or a TV show (`1`).
-        `dateOfReview` is parsed as a date (e.g. ISO `YYYY-MM-DD`).
       properties:
         content:
           type: integer
           enum: [0, 1]
-          description: 0 = movie, 1 = show.
+          description: Movie or show
           example: 0
         dateOfReview:
           type: string
           format: date
-          description: Day of the review; stored with date-only precision in the database.
           example: '2026-04-25'
 
     ReviewCreated:
       type: object
       required: [reviewId, userId, content, dateOfReview]
-      description: Newly created review as returned by the API (date as `YYYY-MM-DD` string).
       properties:
         reviewId:
           type: integer
