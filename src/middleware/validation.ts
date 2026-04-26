@@ -30,6 +30,18 @@ export const validateReviewIdParam = (request: Request, response: Response, next
 };
 
 /**
+ * Validates that the ':ratingId' route parameter is a positive integer.
+ */
+export const validateRatingIdParam = (request: Request, response: Response, next: NextFunction) => {
+  const id = Number(request.params.ratingId);
+  if (!Number.isInteger(id) || id <= 0) {
+    response.status(400).json({ error: 'Parameter "ratingId" must be a positive integer' });
+    return;
+  }
+  next();
+};
+
+/**
  * Validates JSON body for creating or updating a review:
  *   content — 0 = movie, 1 = show
  *   dateOfReview — parseable date string (e.g. YYYY-MM-DD)
@@ -52,6 +64,20 @@ export const validateReviewBody = (request: Request, response: Response, next: N
   const parsed = new Date(dateOfReview);
   if (Number.isNaN(parsed.getTime())) {
     response.status(400).json({ error: 'Field "dateOfReview" must be a valid date' });
+    return;
+  }
+  next();
+};
+
+/**
+ * Validates JSON body for updating a rating with the current schema:
+ *   content — 0 = movie, 1 = show
+ */
+export const validateRatingBody = (request: Request, response: Response, next: NextFunction) => {
+  const { content } = request.body as { content?: unknown };
+  const c = typeof content === 'string' ? Number.parseInt(content, 10) : content;
+  if (typeof c !== 'number' || !Number.isInteger(c) || (c !== 0 && c !== 1)) {
+    response.status(400).json({ error: 'Field "content" must be 0 (movie) or 1 (show)' });
     return;
   }
   next();
