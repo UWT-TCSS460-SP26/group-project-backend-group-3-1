@@ -84,7 +84,7 @@ Additional routes on `app` (`src/app.ts`): `GET /openapi.json` (parsed YAML spec
 | **Purpose** | Top 10 English popular movies from TMDB discover                               |
 | **Auth**    | `TMDB_BEARER_TOKEN` required                                                   |
 | **Errors**  | No token → `500`; TMDB non-OK → forwards status; network → `502`               |
-| **Success** | `200` `{ count: 10, results: [{ movieId }, ...] }` (first 10 of discover page) |
+| **Success** | `200` `{ count: 10, results: [{ id, title, poster, releaseDate, description, genreIds }, ...] }` (first 10 of discover page) |
 
 ---
 
@@ -132,7 +132,7 @@ Additional routes on `app` (`src/app.ts`): `GET /openapi.json` (parsed YAML spec
 | **Purpose** | Top 10 English popular TV series from TMDB discover TV                |
 | **Auth**    | `TMDB_BEARER_TOKEN` only (no API-key fallback in this handler)        |
 | **Errors**  | No token → `500`; TMDB non-OK → forwards TMDB status; network → `502` |
-| **Success** | `200` `{ count: 10, results: [{ showId }, ...] }`                     |
+| **Success** | `200` `{ count: 10, results: [{ id, title, posterImage, releaseDate, shortDescription, genreIds }, ...] }` |
 
 ---
 
@@ -172,7 +172,7 @@ Additional routes on `app` (`src/app.ts`): `GET /openapi.json` (parsed YAML spec
 
 | Test                                                                        | What it verifies                                                  |
 | --------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| `GET /movies/popular returns transformed top 10 movie list`                 | 12 mocked results → response has `count` 10, first item `movieId` |
+| `GET /movies/popular returns transformed top 10 movie list`                 | 12 mocked results → response has `count` 10, first item card fields |
 | `GET /movies/popular returns 500 when token is missing`                     | Config error                                                      |
 | `GET /movies/popular forwards TMDB status when discover response is not ok` | TMDB `503` → same status + `status` / `error` body                |
 | `GET /movies/popular returns 502 when fetch rejects`                        | Network failure                                                   |
@@ -207,7 +207,7 @@ Additional routes on `app` (`src/app.ts`): `GET /openapi.json` (parsed YAML spec
 
 | Test                                                                       | What it verifies                                                                    |
 | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `GET /shows/popular returns transformed top 10 show list`                  | Mock 12 TV rows → `count` 10, `showId` on first element                             |
+| `GET /shows/popular returns transformed top 10 show list`                  | Mock 12 TV rows → `count` 10, first element card fields                             |
 | `GET /shows/popular returns 500 when token is missing`                     | Missing bearer                                                                      |
 | `GET /shows/popular forwards TMDB status when discover response is not ok` | TMDB `401` → `{ error: 'TMDB API error' }` (no `status` text field on this handler) |
 | `GET /shows/popular returns 502 when fetch rejects`                        | Network failure                                                                     |

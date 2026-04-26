@@ -303,11 +303,28 @@ paths:
                     type: array
                     items:
                       type: object
-                      required: [movieId]
+                      required: [id, title, releaseDate, description, genreIds]
                       properties:
-                        movieId:
+                        id:
                           type: integer
                           example: 603
+                        title:
+                          type: string
+                          example: Fight Club
+                        poster:
+                          type: string
+                          nullable: true
+                          example: /f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg
+                        releaseDate:
+                          type: string
+                          example: '1999-10-15'
+                        description:
+                          type: string
+                        genreIds:
+                          type: array
+                          items:
+                            type: integer
+                          example: [18, 53]
         '500':
           description: Missing TMDB token configuration.
           content:
@@ -439,11 +456,28 @@ paths:
                     type: array
                     items:
                       type: object
-                      required: [showId]
+                      required: [id, title, releaseDate, shortDescription, genreIds]
                       properties:
-                        showId:
+                        id:
                           type: integer
                           example: 1399
+                        title:
+                          type: string
+                          example: Game of Thrones
+                        posterImage:
+                          type: string
+                          nullable: true
+                          example: https://image.tmdb.org/t/p/w500/1.png
+                        releaseDate:
+                          type: string
+                          example: '2011-04-17'
+                        shortDescription:
+                          type: string
+                        genreIds:
+                          type: array
+                          items:
+                            type: integer
+                          example: [10765, 18, 10759]
         '500':
           description: Missing TMDB token configuration.
           content:
