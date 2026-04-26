@@ -24,6 +24,8 @@ tags:
     description: TV show endpoints
   - name: Reviews
     description: Review endpoints
+  - name: Ratings
+    description: Rating endpoints
 
 paths:
   /heartbeat:
@@ -599,6 +601,109 @@ paths:
               example:
                 error: Internal server error
 
+  /ratings/{ratingId}:
+    get:
+      tags: [Ratings]
+      summary: Get a rating
+      description: Reads one rating by id.
+      parameters:
+        - name: ratingId
+          in: path
+          required: true
+          description: Rating id
+          schema:
+            type: integer
+            minimum: 1
+            example: 1
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rating'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: 'Parameter "ratingId" must be a positive integer'
+        '404':
+          description: Rating not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Rating not found
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Internal server error
+    patch:
+      tags: [Ratings]
+      summary: Update a rating
+      description: Updates the current user's rating. Requires a Bearer token.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ratingId
+          in: path
+          required: true
+          description: Rating id
+          schema:
+            type: integer
+            minimum: 1
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RatingUpdateRequest'
+      responses:
+        '200':
+          description: OK Updated Successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rating'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: |
+            There is no rating with that id for that account, or it does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Rating not found
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Internal server error
+
 components:
   securitySchemes:
     bearerAuth:
@@ -658,6 +763,32 @@ components:
         message:
           type: string
           example: Review deleted successfully
+
+    RatingUpdateRequest:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: integer
+          enum: [0, 1]
+          description: Movie or show
+          example: 0
+
+    Rating:
+      type: object
+      required: [ratingId, userId, content]
+      properties:
+        ratingId:
+          type: integer
+          example: 1
+        userId:
+          type: string
+          format: uuid
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        content:
+          type: integer
+          enum: [0, 1]
+          example: 0
 
     ShowSearchResult:
       type: object
