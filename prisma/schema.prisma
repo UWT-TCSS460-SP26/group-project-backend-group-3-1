@@ -11,3 +11,36 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model User {
+  id       String   @id @default(uuid())
+  username String   @db.VarChar(20)
+  email    String 
+
+  // relations
+  ratings  Rating[]
+  reviews  Review[]
+}
+
+model Rating {
+  ratingId  Int      @default(autoincrement())
+  userId    String
+  movieShow Boolean  // true = movie, false = show
+
+  // relations
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@id([ratingId, userId])
+}
+
+model Review {
+  reviewId     Int      @default(autoincrement())
+  userId       String
+  movieShow    Boolean
+  dateOfReview DateTime
+
+  // relations
+  user         User     @relation(fields: [userId], references: [id])
+
+  @@id([reviewId, userId])
+}

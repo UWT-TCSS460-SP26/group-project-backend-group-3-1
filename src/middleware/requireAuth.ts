@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
 export interface AuthenticatedUser {
-  sub: number;
+  sub: string;
   email: string;
   role: string;
 }
@@ -37,9 +37,22 @@ export const requireAuth = (request: Request, response: Response, next: NextFunc
   const token = header.slice('Bearer '.length).trim();
 
   try {
-    //remove the as unknown as AuthenticatedUser to see the error
-    const payload = jwt.verify(token, secret) as unknown as AuthenticatedUser;
-    request.user = payload;
+    const decoded = jwt.verify(token, secret) as unknown as AuthenticatedUser & {
+      userId?: string;
+      id?: string;
+    };
+    const sub = decoded.sub || decoded.userId || decoded.id;
+    if (!sub) {
+      response.status(401).json({
+        error: 'Token must include user id: set "sub", or "userId", or "id" to your User UUID',
+      });
+      return;
+    }
+    request.user = {
+      sub,
+      email: decoded.email ?? '',
+      role: decoded.role ?? 'user',
+    };
     next();
   } catch {
     response.status(401).json({ error: 'Invalid or expired token' });
