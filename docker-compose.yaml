@@ -6,11 +6,11 @@ services:
     container_name: tcss460-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: christian
+      POSTGRES_USER: group_3_admin
       POSTGRES_PASSWORD: 62097600
       POSTGRES_DB: group_project_backend_3
     ports:
-      - '5432:5432'
+      - '5433:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
 
