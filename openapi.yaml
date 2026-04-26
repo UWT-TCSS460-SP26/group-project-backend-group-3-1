@@ -522,7 +522,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReviewCreated'
+                $ref: '#/components/schemas/Review'
         '400':
           description: Bad request
           content:
@@ -547,6 +547,115 @@ paths:
                 error: Internal server error
 
   /reviews/{reviewId}:
+    get:
+      tags: [Reviews]
+      summary: Get a single review
+      description: |
+        Get one review belonging to the logged-in user.
+        Requires authentication (Bearer token).
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          description: Review id
+          schema:
+            type: integer
+            minimum: 1
+            example: 1
+      responses:
+        '200':
+          description: Review found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: 'Parameter "reviewId" must be a positive integer'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: No review with that id for the current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Review not found
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+    put:
+      tags: [Reviews]
+      summary: Update a review
+      description: |
+        Replace an existing review for the logged-in user.
+
+        Requires authentication (Bearer token).
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          description: Review id
+          schema:
+            type: integer
+            minimum: 1
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewCreateRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: No review with that id for the current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Review not found
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
     delete:
       tags: [Reviews]
       summary: Delete a review
@@ -725,21 +834,26 @@ components:
 
     ReviewCreateRequest:
       type: object
-      required: [content, dateOfReview]
+      required: [text, type, dateOfReview]
       properties:
-        content:
+        text:
+          type: string
+          description: Review body (stored in DB as reviewContent)
+          example: A thoughtful take on the film.
+        type:
           type: integer
           enum: [0, 1]
-          description: Movie or show
+          description: 0 = movie, 1 = show
           example: 0
         dateOfReview:
           type: string
           format: date
           example: '2026-04-25'
 
-    ReviewCreated:
+    Review:
       type: object
-      required: [reviewId, userId, content, dateOfReview]
+      required: [reviewId, userId, content, isMovie, dateOfReview]
+      description: Review resource; `content` is the review text; `isMovie` is true for movie, false for show.
       properties:
         reviewId:
           type: integer
@@ -749,9 +863,12 @@ components:
           format: uuid
           example: f47ac10b-58cc-4372-a567-0e02b2c3d479
         content:
-          type: integer
-          enum: [0, 1]
-          example: 0
+          type: string
+          example: A thoughtful take on the film.
+        isMovie:
+          type: boolean
+          description: true = movie, false = show
+          example: true
         dateOfReview:
           type: string
           example: '2026-04-25'
@@ -776,7 +893,7 @@ components:
 
     Rating:
       type: object
-      required: [ratingId, userId, content]
+      required: [ratingId, userId, content, value]
       properties:
         ratingId:
           type: integer
@@ -788,7 +905,12 @@ components:
         content:
           type: integer
           enum: [0, 1]
+          description: 0 = movie, 1 = show
           example: 0
+        value:
+          type: integer
+          description: Score (e.g. 1–10), maps from DB column `rating`
+          example: 8
 
     ShowSearchResult:
       type: object

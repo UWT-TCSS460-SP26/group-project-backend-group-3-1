@@ -4,6 +4,7 @@ import { movieRouter } from './movies';
 import { showRouter } from './shows';
 import { reviewRouter } from './reviews';
 import { ratingRouter } from './ratings';
+import { devAuthRouter } from './devAuth';
 
 const routes = Router();
 
@@ -12,5 +13,6 @@ routes.use('/movies', movieRouter);
 routes.use('/shows', showRouter);
 routes.use('/reviews', reviewRouter);
 routes.use('/ratings', ratingRouter);
+routes.use('/dev-auth', devAuthRouter);
 
 export { routes };

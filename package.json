@@ -18,6 +18,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint:fix": "eslint --fix .",
+    "prisma:seed": "tsx prisma/seed.ts",
     "prisma:generate": "npx prisma generate"
   },
   "dependencies": {

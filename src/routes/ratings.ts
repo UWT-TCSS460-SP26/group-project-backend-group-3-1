@@ -6,6 +6,12 @@ import { validateRatingBody, validateRatingIdParam } from '../middleware/validat
 const ratingRouter = Router();
 
 ratingRouter.get('/:ratingId', validateRatingIdParam, getRating);
-ratingRouter.patch('/:ratingId', requireAuth, validateRatingIdParam, validateRatingBody, updateRating);
+ratingRouter.patch(
+  '/:ratingId',
+  requireAuth,
+  validateRatingIdParam,
+  validateRatingBody,
+  updateRating
+);
 
 export { ratingRouter };

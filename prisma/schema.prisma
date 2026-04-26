@@ -25,7 +25,8 @@ model User {
 model Rating {
   ratingId  Int      @default(autoincrement())
   userId    String
-  movieShow Boolean  // true = movie, false = show
+  isMovie  Boolean  // true = movie, false = show
+  rating   Int  // 1–10 (or your scale)
 
   // relations
   user      User     @relation(fields: [userId], references: [id])
@@ -36,7 +37,8 @@ model Rating {
 model Review {
   reviewId     Int      @default(autoincrement())
   userId       String
-  movieShow    Boolean
+  isMovie        Boolean
+  reviewContent  String
   dateOfReview DateTime
 
   // relations

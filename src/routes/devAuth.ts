@@ -1,8 +1,11 @@
 import { Router } from 'express';
+import { Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
+import { prisma } from '../lib/prisma';
 
 const router = Router();
 
-/**
+/*
  * POST /auth/dev-login
  *
  * TEMPORARY — Sprint 2 only. Accepts a username, find-or-creates a user row
@@ -37,7 +40,7 @@ const router = Router();
  * Admin accounts must be seeded separately — this endpoint only creates
  * regular users. To log in as an admin, create the user via your seed
  * script and then POST the same username here.
- 
+ */
 router.post('/dev-login', async (request: Request, response: Response): Promise<void> => {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
@@ -52,12 +55,12 @@ router.post('/dev-login', async (request: Request, response: Response): Promise<
   }
 
   const user = await prisma.user.upsert({
-    where: { username },
+    where: { id: username },
     update: {},
     create: {
       username,
       email: email ?? `${username}@dev.local`,
-      role: 'user',
+      // role: 'user',
     },
   });
 
@@ -65,13 +68,13 @@ router.post('/dev-login', async (request: Request, response: Response): Promise<
     {
       sub: user.id,
       email: user.email,
-      role: user.role,
+      // role: user.role,
     },
     secret,
-    { expiresIn: '24h' },
+    { expiresIn: '24h' }
   );
 
   response.json({ token });
 });
-*/
-export default router;
+
+export { router as devAuthRouter };

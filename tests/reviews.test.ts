@@ -47,7 +47,7 @@ describe('Reviews (integration, requires DB + JWT in .env)', () => {
     it('returns 401 when Authorization is missing', async () => {
       const response = await request(app)
         .post('/reviews')
-        .send({ content: 0, dateOfReview: '2026-01-10' });
+        .send({ text: 'hello', type: 0, dateOfReview: '2026-01-10' });
 
       expect(response.status).toBe(401);
       expect(response.body.error).toBeDefined();
@@ -60,7 +60,7 @@ describe('Reviews (integration, requires DB + JWT in .env)', () => {
       const response = await request(app)
         .post('/reviews')
         .set('Authorization', `Bearer ${badToken}`)
-        .send({ content: 0, dateOfReview: '2026-01-10' });
+        .send({ text: 'hello', type: 0, dateOfReview: '2026-01-10' });
 
       expect(response.status).toBe(401);
     });
@@ -69,32 +69,33 @@ describe('Reviews (integration, requires DB + JWT in .env)', () => {
       const response = await request(app)
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ content: 0 });
+        .send({ text: 'hello', type: 0 });
 
       expect(response.status).toBe(400);
       expect(response.body.error).toBe('Field "dateOfReview" is required');
     });
 
-    it('returns 400 when content is not 0 or 1', async () => {
+    it('returns 400 when type is not 0 or 1', async () => {
       const response = await request(app)
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ content: 2, dateOfReview: '2026-01-10' });
+        .send({ text: 'hello', type: 2, dateOfReview: '2026-01-10' });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toMatch(/content/);
+      expect(response.body.error).toMatch(/type/);
     });
 
     it('returns 201 and creates a review with valid token and body', async () => {
       const response = await request(app)
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ content: 0, dateOfReview: '2026-01-10' });
+        .send({ text: 'Great film', type: 0, dateOfReview: '2026-01-10' });
 
       expect(response.status).toBe(201);
       expect(response.body).toMatchObject({
         userId: DEV_USER_ID,
-        content: 0,
+        isMovie: true,
+        content: 'Great film',
       });
       expect(response.body.reviewId).toEqual(expect.any(Number));
       expect(response.body.dateOfReview).toBe('2026-01-10');
@@ -130,7 +131,7 @@ describe('Reviews (integration, requires DB + JWT in .env)', () => {
       const created = await request(app)
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ content: 1, dateOfReview: '2026-02-01' });
+        .send({ text: 'ok', type: 1, dateOfReview: '2026-02-01' });
 
       expect(created.status).toBe(201);
       const reviewId = created.body.reviewId as number;
@@ -141,6 +142,108 @@ describe('Reviews (integration, requires DB + JWT in .env)', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({ message: 'Review deleted successfully' });
+    });
+  });
+
+  describe('GET /reviews/:reviewId', () => {
+    it('returns 401 when Authorization is missing', async () => {
+      const response = await request(app).get('/reviews/1');
+      expect(response.status).toBe(401);
+    });
+
+    it('returns 400 for invalid reviewId', async () => {
+      const response = await request(app)
+        .get('/reviews/abc')
+        .set('Authorization', `Bearer ${signToken()}`);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toMatch(/reviewId/);
+    });
+
+    it('returns 404 when review does not exist for this user', async () => {
+      const response = await request(app)
+        .get('/reviews/999999')
+        .set('Authorization', `Bearer ${signToken()}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.error).toBe('Review not found');
+    });
+
+    it('returns 200 and the review when it exists', async () => {
+      const created = await request(app)
+        .post('/reviews')
+        .set('Authorization', `Bearer ${signToken()}`)
+        .send({ text: 'Read me', type: 0, dateOfReview: '2026-03-15' });
+
+      expect(created.status).toBe(201);
+      const reviewId = created.body.reviewId as number;
+
+      const response = await request(app)
+        .get(`/reviews/${reviewId}`)
+        .set('Authorization', `Bearer ${signToken()}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({
+        reviewId,
+        userId: DEV_USER_ID,
+        content: 'Read me',
+        isMovie: true,
+        dateOfReview: '2026-03-15',
+      });
+    });
+  });
+
+  describe('PUT /reviews/:reviewId', () => {
+    it('returns 401 when Authorization is missing', async () => {
+      const response = await request(app)
+        .put('/reviews/1')
+        .send({ text: 'x', type: 0, dateOfReview: '2026-01-01' });
+
+      expect(response.status).toBe(401);
+    });
+
+    it('returns 400 for invalid reviewId', async () => {
+      const response = await request(app)
+        .put('/reviews/abc')
+        .set('Authorization', `Bearer ${signToken()}`)
+        .send({ text: 'x', type: 0, dateOfReview: '2026-01-01' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toMatch(/reviewId/);
+    });
+
+    it('returns 404 when review does not exist for this user', async () => {
+      const response = await request(app)
+        .put('/reviews/999999')
+        .set('Authorization', `Bearer ${signToken()}`)
+        .send({ text: 'x', type: 0, dateOfReview: '2026-01-01' });
+
+      expect(response.status).toBe(404);
+      expect(response.body.error).toBe('Review not found');
+    });
+
+    it('returns 200 and updated review when update succeeds', async () => {
+      const created = await request(app)
+        .post('/reviews')
+        .set('Authorization', `Bearer ${signToken()}`)
+        .send({ text: 'before', type: 1, dateOfReview: '2026-01-01' });
+
+      expect(created.status).toBe(201);
+      const reviewId = created.body.reviewId as number;
+
+      const response = await request(app)
+        .put(`/reviews/${reviewId}`)
+        .set('Authorization', `Bearer ${signToken()}`)
+        .send({ text: 'after', type: 0, dateOfReview: '2026-06-20' });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({
+        reviewId,
+        userId: DEV_USER_ID,
+        content: 'after',
+        isMovie: true,
+        dateOfReview: '2026-06-20',
+      });
     });
   });
 });

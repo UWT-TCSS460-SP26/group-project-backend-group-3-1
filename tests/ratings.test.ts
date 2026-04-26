@@ -76,7 +76,8 @@ describe('Ratings (integration, requires DB + JWT in .env)', () => {
       const rating = await prisma.rating.create({
         data: {
           userId: DEV_USER_ID,
-          movieShow: true,
+          isMovie: true,
+          rating: 5,
         },
       });
 
@@ -87,6 +88,7 @@ describe('Ratings (integration, requires DB + JWT in .env)', () => {
         ratingId: rating.ratingId,
         userId: DEV_USER_ID,
         content: 0,
+        value: 5,
       });
     });
   });
@@ -122,7 +124,8 @@ describe('Ratings (integration, requires DB + JWT in .env)', () => {
       const rating = await prisma.rating.create({
         data: {
           userId: OTHER_USER_ID,
-          movieShow: true,
+          isMovie: true,
+          rating: 5,
         },
       });
 
@@ -139,7 +142,8 @@ describe('Ratings (integration, requires DB + JWT in .env)', () => {
       const rating = await prisma.rating.create({
         data: {
           userId: DEV_USER_ID,
-          movieShow: true,
+          isMovie: true,
+          rating: 5,
         },
       });
 

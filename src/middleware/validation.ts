@@ -42,15 +42,28 @@ export const validateRatingIdParam = (request: Request, response: Response, next
 };
 
 /**
- * Validates JSON body for creating or updating a review:
- *   content — 0 = movie, 1 = show
+ * Validates JSON body for creating or replacing a review (POST /reviews, PUT /reviews/:reviewId):
+ *   text — review body (maps to Prisma `Review.reviewContent`)
+ *   type — 0 = movie, 1 = show (maps to `isMovie`: true = movie, false = show)
  *   dateOfReview — parseable date string (e.g. YYYY-MM-DD)
  */
 export const validateReviewBody = (request: Request, response: Response, next: NextFunction) => {
-  const { content, dateOfReview } = request.body as { content?: unknown; dateOfReview?: unknown };
-  const c = typeof content === 'string' ? Number.parseInt(content, 10) : content;
-  if (typeof c !== 'number' || !Number.isInteger(c) || (c !== 0 && c !== 1)) {
-    response.status(400).json({ error: 'Field "content" must be 0 (movie) or 1 (show)' });
+  const { text, type, dateOfReview } = request.body as {
+    text?: unknown;
+    type?: unknown;
+    dateOfReview?: unknown;
+  };
+  if (text === undefined || text === null || String(text).trim() === '') {
+    response.status(400).json({ error: 'Field "text" is required' });
+    return;
+  }
+  if (typeof text !== 'string') {
+    response.status(400).json({ error: 'Field "text" must be a string' });
+    return;
+  }
+  const t = typeof type === 'string' ? Number.parseInt(type, 10) : type;
+  if (typeof t !== 'number' || !Number.isInteger(t) || (t !== 0 && t !== 1)) {
+    response.status(400).json({ error: 'Field "type" must be 0 (movie) or 1 (show)' });
     return;
   }
   if (dateOfReview === undefined || dateOfReview === null || dateOfReview === '') {

@@ -2,10 +2,16 @@ import { Request, Response } from 'express';
 import { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 
-const toRatingResponse = (rating: { ratingId: number; userId: string; movieShow: boolean }) => ({
+const toRatingResponse = (rating: {
+  ratingId: number;
+  userId: string;
+  isMovie: boolean;
+  rating: number;
+}) => ({
   ratingId: rating.ratingId,
   userId: rating.userId,
-  content: rating.movieShow ? 0 : 1,
+  content: rating.isMovie ? 0 : 1,
+  value: rating.rating,
 });
 
 /**
@@ -46,7 +52,7 @@ export const updateRating = async (req: Request, res: Response) => {
         },
       },
       data: {
-        movieShow: resolvedContent === 0,
+        isMovie: resolvedContent === 0,
       },
     });
 
