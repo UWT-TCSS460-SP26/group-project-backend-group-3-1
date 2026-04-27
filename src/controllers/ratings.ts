@@ -32,7 +32,7 @@ export const getRating = async (req: Request, res: Response) => {
 };
 
 /**
- * PATCH /ratings/:ratingId — updates the authenticated user's rating.
+ * PATCH /ratings/:ratingId — sets the numeric score from body field `rating` (1–10). Validated in middleware.
  */
 export const updateRating = async (req: Request, res: Response) => {
   if (!req.user) {
@@ -40,8 +40,8 @@ export const updateRating = async (req: Request, res: Response) => {
   }
 
   const ratingId = Number(req.params.ratingId);
-  const { content } = req.body as { content: unknown };
-  const resolvedContent = typeof content === 'string' ? Number.parseInt(content, 10) : content;
+  const raw = (req.body as { rating: unknown }).rating;
+  const nextRating = typeof raw === 'string' ? Number.parseInt(raw, 10) : (raw as number);
 
   try {
     const rating = await prisma.rating.update({
@@ -51,9 +51,7 @@ export const updateRating = async (req: Request, res: Response) => {
           userId: req.user.sub,
         },
       },
-      data: {
-        isMovie: resolvedContent === 0,
-      },
+      data: { rating: nextRating },
     });
 
     return res.status(200).json(toRatingResponse(rating));

@@ -95,7 +95,7 @@ describe('Ratings (integration, requires DB + JWT in .env)', () => {
 
   describe('PATCH /ratings/:ratingId', () => {
     it('returns 401 when Authorization is missing', async () => {
-      const response = await request(app).patch('/ratings/1').send({ content: 1 });
+      const response = await request(app).patch('/ratings/1').send({ rating: 5 });
 
       expect(response.status).toBe(401);
     });
@@ -104,20 +104,30 @@ describe('Ratings (integration, requires DB + JWT in .env)', () => {
       const response = await request(app)
         .patch('/ratings/abc')
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ content: 1 });
+        .send({ rating: 5 });
 
       expect(response.status).toBe(400);
       expect(response.body.error).toMatch(/ratingId/);
     });
 
-    it('returns 400 when content is not 0 or 1', async () => {
+    it('returns 400 when rating is missing', async () => {
       const response = await request(app)
         .patch('/ratings/1')
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ content: 2 });
+        .send({});
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toMatch(/content/);
+      expect(response.body.error).toMatch(/rating/);
+    });
+
+    it('returns 400 when rating is not between 1 and 10', async () => {
+      const response = await request(app)
+        .patch('/ratings/1')
+        .set('Authorization', `Bearer ${signToken()}`)
+        .send({ rating: 0 });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toMatch(/rating/);
     });
 
     it('returns 404 when rating does not belong to the authenticated user', async () => {
@@ -132,31 +142,32 @@ describe('Ratings (integration, requires DB + JWT in .env)', () => {
       const response = await request(app)
         .patch(`/ratings/${rating.ratingId}`)
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ content: 1 });
+        .send({ rating: 8 });
 
       expect(response.status).toBe(404);
       expect(response.body.error).toBe('Rating not found');
     });
 
-    it('returns 200 and updates the authenticated user rating', async () => {
-      const rating = await prisma.rating.create({
+    it('returns 200 and updates the numeric score', async () => {
+      const created = await prisma.rating.create({
         data: {
           userId: DEV_USER_ID,
           isMovie: true,
-          rating: 5,
+          rating: 3,
         },
       });
 
       const response = await request(app)
-        .patch(`/ratings/${rating.ratingId}`)
+        .patch(`/ratings/${created.ratingId}`)
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ content: 1 });
+        .send({ rating: 8 });
 
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
-        ratingId: rating.ratingId,
+        ratingId: created.ratingId,
         userId: DEV_USER_ID,
-        content: 1,
+        content: 0,
+        value: 8,
       });
     });
   });

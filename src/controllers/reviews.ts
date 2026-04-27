@@ -107,26 +107,24 @@ export const getReview = async (req: Request, res: Response) => {
 };
 
 /**
- * PUT /reviews/:reviewId — full replace: body same as POST (`text`, `type`, `dateOfReview`).
+ * PATCH /reviews/:reviewId — body: `text`, `dateOfReview` only. Does not change movie vs show (`isMovie` is fixed at create).
  */
 export const updateReview = async (req: Request, res: Response) => {
   if (!req.user) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
 
-  const { text, type, dateOfReview } = req.body as {
+  const { text, dateOfReview } = req.body as {
     text: string;
-    type: number;
     dateOfReview: string;
   };
-  const kind = typeof type === 'string' ? Number.parseInt(type, 10) : type;
+
   const reviewId = Number(req.params.reviewId);
 
   try {
     const review = await prisma.review.update({
       data: {
         reviewContent: text,
-        isMovie: kind === 0,
         dateOfReview: new Date(dateOfReview),
       },
       where: {
@@ -136,6 +134,7 @@ export const updateReview = async (req: Request, res: Response) => {
         },
       },
     });
+
     return res.status(200).json({
       reviewId: review.reviewId,
       userId: review.userId,
