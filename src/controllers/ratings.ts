@@ -76,8 +76,8 @@ export const createRating = async (req: Request, res: Response) => {
   }
 
   const { content, value } = req.body as {
-    content?: unknown;
-    value?: unknown;
+    content?: number;
+    value?: number;
   };
 
   const resolvedContent = typeof content === 'string' ? Number.parseInt(content, 10) : (content as number);
