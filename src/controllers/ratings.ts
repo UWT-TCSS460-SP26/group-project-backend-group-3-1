@@ -72,20 +72,20 @@ export const createRating = async (req: Request, res: Response) => {
     return res.status(401).json({ error: 'Not authenticated' });
   }
 
-  const { content, value } = req.body as {
+  const { content, rating } = req.body as {
     content?: number;
-    value?: number;
+    rating?: number;
   };
 
   const resolvedContent =
     typeof content === 'string' ? Number.parseInt(content, 10) : (content as number);
-  const resolvedValue = typeof value === 'string' ? Number.parseInt(value, 10) : (value as number);
+  const resolvedValue = typeof rating === 'string' ? Number.parseInt(rating, 10) : (rating as number);
 
   if (!Number.isFinite(resolvedContent) || !Number.isFinite(resolvedValue)) {
     return res.status(400).json({ error: 'content and value are required numbers' });
   }
 
-  const rating = await prisma.rating.create({
+  const ratingResult = await prisma.rating.create({
     data: {
       userId: req.user.sub,
       isMovie: resolvedContent === 0,
@@ -93,7 +93,7 @@ export const createRating = async (req: Request, res: Response) => {
     },
   });
 
-  return res.status(201).json(toRatingResponse(rating));
+  return res.status(201).json(toRatingResponse(ratingResult));
 };
 
 /**
