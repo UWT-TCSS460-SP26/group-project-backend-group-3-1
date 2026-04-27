@@ -41,8 +41,10 @@ export const updateRating = async (req: Request, res: Response) => {
 
   const ratingId = Number(req.params.ratingId);
   const { content, value } = req.body as { content?: unknown; value?: unknown };
-  const resolvedContent = typeof content === 'string' ? Number.parseInt(content, 10) : (content as number | undefined);
-  const resolvedValue = typeof value === 'string' ? Number.parseInt(value, 10) : (value as number | undefined);
+  const resolvedContent =
+    typeof content === 'string' ? Number.parseInt(content, 10) : (content as number | undefined);
+  const resolvedValue =
+    typeof value === 'string' ? Number.parseInt(value, 10) : (value as number | undefined);
 
   try {
     const rating = await prisma.rating.update({
@@ -80,7 +82,8 @@ export const createRating = async (req: Request, res: Response) => {
     value?: number;
   };
 
-  const resolvedContent = typeof content === 'string' ? Number.parseInt(content, 10) : (content as number);
+  const resolvedContent =
+    typeof content === 'string' ? Number.parseInt(content, 10) : (content as number);
   const resolvedValue = typeof value === 'string' ? Number.parseInt(value, 10) : (value as number);
 
   if (!Number.isFinite(resolvedContent) || !Number.isFinite(resolvedValue)) {

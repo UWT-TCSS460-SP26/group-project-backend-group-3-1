@@ -712,11 +712,11 @@ paths:
 
   /ratings:
     post:
-      tags: [ Ratings ]
+      tags: [Ratings]
       summary: Create a rating
       description: Adds a rating for the current user. Requires a Bearer token.
       security:
-        - bearerAuth: [ ]
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -752,7 +752,6 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
                 error: Internal server error
-
 
   /ratings/{ratingId}:
     get:
@@ -819,13 +818,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/RatingDeleteSuccess'
         '400':
-            description: Bad request
-            content:
-                application/json:
-                  schema:
-                    $ref: '#/components/schemas/ErrorMessage'
-                  example:
-                    error: Content and value are required numbers
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Content and value are required numbers
         '401':
           description: Unauthorized
           content:
@@ -833,13 +832,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
         '404':
-            description: Rating not found
-            content:
-                application/json:
-                  schema:
-                    $ref: '#/components/schemas/ErrorMessage'
-                  example:
-                    error: Rating not found
+          description: Rating not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Rating not found
 
         '500':
           description: Server error
@@ -907,8 +906,6 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
                 error: Internal server error
-
-
 
 components:
   securitySchemes:
@@ -993,18 +990,18 @@ components:
       required: [content, value]
       properties:
         content:
-            type: integer
-            enum: [0, 1]
-            description: Movie or show
-            example: 0
+          type: integer
+          enum: [0, 1]
+          description: Movie or show
+          example: 0
         value:
-            type: integer
-            description: rating out of 10
-            example: 10
+          type: integer
+          description: rating out of 10
+          example: 10
 
     RatingDeleteSuccess:
       type: object
-      required: [ message ]
+      required: [message]
       properties:
         message:
           type: string
