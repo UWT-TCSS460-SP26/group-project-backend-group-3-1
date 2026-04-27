@@ -1,0 +1,411 @@
+
+> tcss460-group-project-backend@1.0.0 test
+> jest
+ PASS  tests/show.popular.test.ts
+  ● Console
+    console.log
+      [2026-04-26T22:59:12.897Z] GET /shows/popular
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:12.915Z] GET /shows/popular
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:12.918Z] GET /shows/popular
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:12.923Z] GET /shows/popular
+      at logger (src/middleware/logger.ts:7:11)
+ FAIL  tests/ratings.test.ts
+  ● Ratings (integration, requires DB + JWT in .env) › GET /ratings/:ratingId › returns 400 for invalid ratingId
+    DATABASE_URL must be set in .env to run rating integration tests
+      29 |   beforeAll(async () => {
+      30 |     if (!hasDatabaseUrl) {
+    > 31 |       throw new Error('DATABASE_URL must be set in .env to run rating integration tests');
+         |             ^
+      32 |     }
+      33 |     await prisma.user.upsert({
+      34 |       where: { id: DEV_USER_ID },
+      at Object.<anonymous> (tests/ratings.test.ts:31:13)
+  ● Ratings (integration, requires DB + JWT in .env) › GET /ratings/:ratingId › returns 404 when rating does not exist
+    DATABASE_URL must be set in .env to run rating integration tests
+      29 |   beforeAll(async () => {
+      30 |     if (!hasDatabaseUrl) {
+    > 31 |       throw new Error('DATABASE_URL must be set in .env to run rating integration tests');
+         |             ^
+      32 |     }
+      33 |     await prisma.user.upsert({
+      34 |       where: { id: DEV_USER_ID },
+      at Object.<anonymous> (tests/ratings.test.ts:31:13)
+  ● Ratings (integration, requires DB + JWT in .env) › GET /ratings/:ratingId › returns 200 and reads a rating
+    DATABASE_URL must be set in .env to run rating integration tests
+      29 |   beforeAll(async () => {
+      30 |     if (!hasDatabaseUrl) {
+    > 31 |       throw new Error('DATABASE_URL must be set in .env to run rating integration tests');
+         |             ^
+      32 |     }
+      33 |     await prisma.user.upsert({
+      34 |       where: { id: DEV_USER_ID },
+      at Object.<anonymous> (tests/ratings.test.ts:31:13)
+  ● Ratings (integration, requires DB + JWT in .env) › PATCH /ratings/:ratingId › returns 401 when Authorization is missing
+    DATABASE_URL must be set in .env to run rating integration tests
+      29 |   beforeAll(async () => {
+      30 |     if (!hasDatabaseUrl) {
+    > 31 |       throw new Error('DATABASE_URL must be set in .env to run rating integration tests');
+         |             ^
+      32 |     }
+      33 |     await prisma.user.upsert({
+      34 |       where: { id: DEV_USER_ID },
+      at Object.<anonymous> (tests/ratings.test.ts:31:13)
+  ● Ratings (integration, requires DB + JWT in .env) › PATCH /ratings/:ratingId › returns 400 for invalid ratingId
+    DATABASE_URL must be set in .env to run rating integration tests
+      29 |   beforeAll(async () => {
+      30 |     if (!hasDatabaseUrl) {
+    > 31 |       throw new Error('DATABASE_URL must be set in .env to run rating integration tests');
+         |             ^
+      32 |     }
+      33 |     await prisma.user.upsert({
+      34 |       where: { id: DEV_USER_ID },
+      at Object.<anonymous> (tests/ratings.test.ts:31:13)
+  ● Ratings (integration, requires DB + JWT in .env) › PATCH /ratings/:ratingId › returns 400 when content is not 0 or 1
+    DATABASE_URL must be set in .env to run rating integration tests
+      29 |   beforeAll(async () => {
+      30 |     if (!hasDatabaseUrl) {
+    > 31 |       throw new Error('DATABASE_URL must be set in .env to run rating integration tests');
+         |             ^
+      32 |     }
+      33 |     await prisma.user.upsert({
+      34 |       where: { id: DEV_USER_ID },
+      at Object.<anonymous> (tests/ratings.test.ts:31:13)
+  ● Ratings (integration, requires DB + JWT in .env) › PATCH /ratings/:ratingId › returns 404 when rating does not belong to the authenticated user
+    DATABASE_URL must be set in .env to run rating integration tests
+      29 |   beforeAll(async () => {
+      30 |     if (!hasDatabaseUrl) {
+    > 31 |       throw new Error('DATABASE_URL must be set in .env to run rating integration tests');
+         |             ^
+      32 |     }
+      33 |     await prisma.user.upsert({
+      34 |       where: { id: DEV_USER_ID },
+      at Object.<anonymous> (tests/ratings.test.ts:31:13)
+  ● Ratings (integration, requires DB + JWT in .env) › PATCH /ratings/:ratingId › returns 200 and updates the authenticated user rating
+    DATABASE_URL must be set in .env to run rating integration tests
+      29 |   beforeAll(async () => {
+      30 |     if (!hasDatabaseUrl) {
+    > 31 |       throw new Error('DATABASE_URL must be set in .env to run rating integration tests');
+         |             ^
+      32 |     }
+      33 |     await prisma.user.upsert({
+      34 |       where: { id: DEV_USER_ID },
+      at Object.<anonymous> (tests/ratings.test.ts:31:13)
+ PASS  tests/heartbeat.test.ts
+  ● Console
+    console.log
+      [2026-04-26T22:59:12.904Z] GET /heartbeat
+      at logger (src/middleware/logger.ts:7:11)
+ PASS  tests/show.details.test.ts
+  ● Console
+    console.log
+      [2026-04-26T22:59:12.938Z] GET /shows/95557
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:12.974Z] GET /shows/2
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:12.981Z] GET /shows/999999999
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:12.984Z] GET /shows/95557
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:12.997Z] GET /shows/1
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:12.999Z] GET /shows/1
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:13.002Z] GET /shows/55
+      at logger (src/middleware/logger.ts:7:11)
+ PASS  tests/movie.test.ts
+  ● Console
+    console.log
+      [2026-04-26T22:59:12.974Z] GET /movies
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:12.992Z] GET /movies
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:12.994Z] GET /movies
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:12.999Z] GET /movies
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:13.003Z] GET /movies
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:13.011Z] GET /movies
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:13.018Z] GET /movies/123
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:13.020Z] GET /movies/999
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:13.024Z] GET /movies/550
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:13.027Z] GET /movies/1
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:13.030Z] GET /movies/popular
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:13.032Z] GET /movies/popular
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:13.034Z] GET /movies/popular
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:13.037Z] GET /movies/popular
+      at logger (src/middleware/logger.ts:7:11)
+ PASS  tests/show.search.test.ts
+  ● Console
+    console.log
+      [2026-04-26T22:59:13.016Z] GET /shows
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:13.032Z] GET /shows
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:13.035Z] GET /shows
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:13.036Z] GET /shows
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:13.042Z] GET /shows
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:13.044Z] GET /shows
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:13.048Z] GET /shows
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:13.050Z] GET /shows
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:13.053Z] GET /shows
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:13.059Z] GET /shows
+      at logger (src/middleware/logger.ts:7:11)
+ PASS  tests/app.routes.test.ts
+  ● Console
+    console.log
+      [2026-04-26T22:59:13.109Z] GET /openapi.json
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:13.113Z] GET /api-docs
+      at logger (src/middleware/logger.ts:7:11)
+    console.log
+      [2026-04-26T22:59:13.114Z] GET /no-such-route-for-test-xyz
+      at logger (src/middleware/logger.ts:7:11)
+ FAIL  tests/reviews.test.ts
+  ● Reviews (integration, requires DB + JWT in .env) › POST /reviews › returns 401 when Authorization is missing
+    DATABASE_URL must be set in .env to run review integration tests
+      26 |   beforeAll(async () => {
+      27 |     if (!process.env.DATABASE_URL) {
+    > 28 |       throw new Error('DATABASE_URL must be set in .env to run review integration tests');
+         |             ^
+      29 |     }
+      30 |     await prisma.user.upsert({
+      31 |       where: { id: DEV_USER_ID },
+      at Object.<anonymous> (tests/reviews.test.ts:28:13)
+  ● Reviews (integration, requires DB + JWT in .env) › POST /reviews › returns 401 when token is signed with the wrong secret
+    DATABASE_URL must be set in .env to run review integration tests
+      26 |   beforeAll(async () => {
+      27 |     if (!process.env.DATABASE_URL) {
+    > 28 |       throw new Error('DATABASE_URL must be set in .env to run review integration tests');
+         |             ^
+      29 |     }
+      30 |     await prisma.user.upsert({
+      31 |       where: { id: DEV_USER_ID },
+      at Object.<anonymous> (tests/reviews.test.ts:28:13)
+  ● Reviews (integration, requires DB + JWT in .env) › POST /reviews › returns 400 when body fails validation (missing dateOfReview)
+    DATABASE_URL must be set in .env to run review integration tests
+      26 |   beforeAll(async () => {
+      27 |     if (!process.env.DATABASE_URL) {
+    > 28 |       throw new Error('DATABASE_URL must be set in .env to run review integration tests');
+         |             ^
+      29 |     }
+      30 |     await prisma.user.upsert({
+      31 |       where: { id: DEV_USER_ID },
+      at Object.<anonymous> (tests/reviews.test.ts:28:13)
+  ● Reviews (integration, requires DB + JWT in .env) › POST /reviews › returns 400 when type is not 0 or 1
+    DATABASE_URL must be set in .env to run review integration tests
+      26 |   beforeAll(async () => {
+      27 |     if (!process.env.DATABASE_URL) {
+    > 28 |       throw new Error('DATABASE_URL must be set in .env to run review integration tests');
+         |             ^
+      29 |     }
+      30 |     await prisma.user.upsert({
+      31 |       where: { id: DEV_USER_ID },
+      at Object.<anonymous> (tests/reviews.test.ts:28:13)
+  ● Reviews (integration, requires DB + JWT in .env) › POST /reviews › returns 201 and creates a review with valid token and body
+    DATABASE_URL must be set in .env to run review integration tests
+      26 |   beforeAll(async () => {
+      27 |     if (!process.env.DATABASE_URL) {
+    > 28 |       throw new Error('DATABASE_URL must be set in .env to run review integration tests');
+         |             ^
+      29 |     }
+      30 |     await prisma.user.upsert({
+      31 |       where: { id: DEV_USER_ID },
+      at Object.<anonymous> (tests/reviews.test.ts:28:13)
+  ● Reviews (integration, requires DB + JWT in .env) › DELETE /reviews/:reviewId › returns 401 when Authorization is missing
+    DATABASE_URL must be set in .env to run review integration tests
+      26 |   beforeAll(async () => {
+      27 |     if (!process.env.DATABASE_URL) {
+    > 28 |       throw new Error('DATABASE_URL must be set in .env to run review integration tests');
+         |             ^
+      29 |     }
+      30 |     await prisma.user.upsert({
+      31 |       where: { id: DEV_USER_ID },
+      at Object.<anonymous> (tests/reviews.test.ts:28:13)
+  ● Reviews (integration, requires DB + JWT in .env) › DELETE /reviews/:reviewId › returns 400 for invalid reviewId
+    DATABASE_URL must be set in .env to run review integration tests
+      26 |   beforeAll(async () => {
+      27 |     if (!process.env.DATABASE_URL) {
+    > 28 |       throw new Error('DATABASE_URL must be set in .env to run review integration tests');
+         |             ^
+      29 |     }
+      30 |     await prisma.user.upsert({
+      31 |       where: { id: DEV_USER_ID },
+      at Object.<anonymous> (tests/reviews.test.ts:28:13)
+  ● Reviews (integration, requires DB + JWT in .env) › DELETE /reviews/:reviewId › returns 404 when review does not exist for this user
+    DATABASE_URL must be set in .env to run review integration tests
+      26 |   beforeAll(async () => {
+      27 |     if (!process.env.DATABASE_URL) {
+    > 28 |       throw new Error('DATABASE_URL must be set in .env to run review integration tests');
+         |             ^
+      29 |     }
+      30 |     await prisma.user.upsert({
+      31 |       where: { id: DEV_USER_ID },
+      at Object.<anonymous> (tests/reviews.test.ts:28:13)
+  ● Reviews (integration, requires DB + JWT in .env) › DELETE /reviews/:reviewId › returns 200 when delete succeeds
+    DATABASE_URL must be set in .env to run review integration tests
+      26 |   beforeAll(async () => {
+      27 |     if (!process.env.DATABASE_URL) {
+    > 28 |       throw new Error('DATABASE_URL must be set in .env to run review integration tests');
+         |             ^
+      29 |     }
+      30 |     await prisma.user.upsert({
+      31 |       where: { id: DEV_USER_ID },
+      at Object.<anonymous> (tests/reviews.test.ts:28:13)
+  ● Reviews (integration, requires DB + JWT in .env) › GET /reviews/:reviewId › returns 401 when Authorization is missing
+    DATABASE_URL must be set in .env to run review integration tests
+      26 |   beforeAll(async () => {
+      27 |     if (!process.env.DATABASE_URL) {
+    > 28 |       throw new Error('DATABASE_URL must be set in .env to run review integration tests');
+         |             ^
+      29 |     }
+      30 |     await prisma.user.upsert({
+      31 |       where: { id: DEV_USER_ID },
+      at Object.<anonymous> (tests/reviews.test.ts:28:13)
+  ● Reviews (integration, requires DB + JWT in .env) › GET /reviews/:reviewId › returns 400 for invalid reviewId
+    DATABASE_URL must be set in .env to run review integration tests
+      26 |   beforeAll(async () => {
+      27 |     if (!process.env.DATABASE_URL) {
+    > 28 |       throw new Error('DATABASE_URL must be set in .env to run review integration tests');
+         |             ^
+      29 |     }
+      30 |     await prisma.user.upsert({
+      31 |       where: { id: DEV_USER_ID },
+      at Object.<anonymous> (tests/reviews.test.ts:28:13)
+  ● Reviews (integration, requires DB + JWT in .env) › GET /reviews/:reviewId › returns 404 when review does not exist for this user
+    DATABASE_URL must be set in .env to run review integration tests
+      26 |   beforeAll(async () => {
+      27 |     if (!process.env.DATABASE_URL) {
+    > 28 |       throw new Error('DATABASE_URL must be set in .env to run review integration tests');
+         |             ^
+      29 |     }
+      30 |     await prisma.user.upsert({
+      31 |       where: { id: DEV_USER_ID },
+      at Object.<anonymous> (tests/reviews.test.ts:28:13)
+  ● Reviews (integration, requires DB + JWT in .env) › GET /reviews/:reviewId › returns 200 and the review when it exists
+    DATABASE_URL must be set in .env to run review integration tests
+      26 |   beforeAll(async () => {
+      27 |     if (!process.env.DATABASE_URL) {
+    > 28 |       throw new Error('DATABASE_URL must be set in .env to run review integration tests');
+         |             ^
+      29 |     }
+      30 |     await prisma.user.upsert({
+      31 |       where: { id: DEV_USER_ID },
+      at Object.<anonymous> (tests/reviews.test.ts:28:13)
+  ● Reviews (integration, requires DB + JWT in .env) › PUT /reviews/:reviewId › returns 401 when Authorization is missing
+    DATABASE_URL must be set in .env to run review integration tests
+      26 |   beforeAll(async () => {
+      27 |     if (!process.env.DATABASE_URL) {
+    > 28 |       throw new Error('DATABASE_URL must be set in .env to run review integration tests');
+         |             ^
+      29 |     }
+      30 |     await prisma.user.upsert({
+      31 |       where: { id: DEV_USER_ID },
+      at Object.<anonymous> (tests/reviews.test.ts:28:13)
+  ● Reviews (integration, requires DB + JWT in .env) › PUT /reviews/:reviewId › returns 400 for invalid reviewId
+    DATABASE_URL must be set in .env to run review integration tests
+      26 |   beforeAll(async () => {
+      27 |     if (!process.env.DATABASE_URL) {
+    > 28 |       throw new Error('DATABASE_URL must be set in .env to run review integration tests');
+         |             ^
+      29 |     }
+      30 |     await prisma.user.upsert({
+      31 |       where: { id: DEV_USER_ID },
+      at Object.<anonymous> (tests/reviews.test.ts:28:13)
+  ● Reviews (integration, requires DB + JWT in .env) › PUT /reviews/:reviewId › returns 404 when review does not exist for this user
+    DATABASE_URL must be set in .env to run review integration tests
+      26 |   beforeAll(async () => {
+      27 |     if (!process.env.DATABASE_URL) {
+    > 28 |       throw new Error('DATABASE_URL must be set in .env to run review integration tests');
+         |             ^
+      29 |     }
+      30 |     await prisma.user.upsert({
+      31 |       where: { id: DEV_USER_ID },
+      at Object.<anonymous> (tests/reviews.test.ts:28:13)
+  ● Reviews (integration, requires DB + JWT in .env) › PUT /reviews/:reviewId › returns 200 and updated review when update succeeds
+    DATABASE_URL must be set in .env to run review integration tests
+      26 |   beforeAll(async () => {
+      27 |     if (!process.env.DATABASE_URL) {
+    > 28 |       throw new Error('DATABASE_URL must be set in .env to run review integration tests');
+         |             ^
+      29 |     }
+      30 |     await prisma.user.upsert({
+      31 |       where: { id: DEV_USER_ID },
+      at Object.<anonymous> (tests/reviews.test.ts:28:13)
+  ● Test suite failed to run
+    SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string
+      40 |
+      41 |   afterAll(async () => {
+    > 42 |     await prisma.review.deleteMany({ where: { userId: DEV_USER_ID } });
+         |     ^
+      43 |     await prisma.$disconnect();
+      44 |   });
+      45 |
+      at node_modules/pg-pool/index.js:45:11
+      at PrismaPgAdapter.performIO (node_modules/@prisma/adapter-pg/dist/index.js:654:22)
+      at PrismaPgAdapter.executeRaw (node_modules/@prisma/adapter-pg/dist/index.js:643:13)
+      at e.interpretNode (node_modules/@prisma/client-engine-runtime/src/interpreter/query-interpreter.ts:168:18)
+      at e.interpretNode (node_modules/@prisma/client-engine-runtime/src/interpreter/query-interpreter.ts:272:41)
+      at e.run (node_modules/@prisma/client-engine-runtime/src/interpreter/query-interpreter.ts:94:23)
+      at execute (node_modules/@prisma/client/src/runtime/core/engines/client/LocalExecutor.ts:81:12)
+      at jt.request (node_modules/@prisma/client/src/runtime/core/engines/client/ClientEngine.ts:504:22)
+      at Object.singleLoader (node_modules/@prisma/client/src/runtime/RequestHandler.ts:112:26)
+      at zr.request (node_modules/@prisma/client/src/runtime/RequestHandler.ts:149:14)
+      at a (node_modules/@prisma/client/src/runtime/getPrismaClient.ts:963:24)
+      at Object.<anonymous> (tests/reviews.test.ts:42:5)
+A worker process has failed to exit gracefully and has been force exited. This is likely caused by tests leaking due to improper teardown. Try running with --detectOpenHandles to find leaks. Active timers can also cause this, ensure that .unref() was called on them.
+Test Suites: 2 failed, 6 passed, 8 total
+Tests:       25 failed, 38 passed, 63 total
+Snapshots:   0 total
+Time:        3.952 s
+Ran all test suites.
