@@ -717,6 +717,49 @@ paths:
               example:
                 error: Internal server error
 
+  /ratings:
+    post:
+      tags: [Ratings]
+      summary: Create a rating
+      description: Adds a rating for the current user. Requires a Bearer token.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RatingCreateRequest'
+      responses:
+        '201':
+          description: OK Created Successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rating'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Invalid or expired token
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Internal server error
+
   /ratings/{ratingId}:
     get:
       tags: [Ratings]
@@ -762,6 +805,57 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
                 error: Internal server error
+
+    delete:
+      tags: [Ratings]
+      summary: Delete a rating
+      description: Removes a rating for the current user. Requires a Bearer token.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ratingId
+          in: path
+          required: true
+          description: Rating id
+      responses:
+        '201':
+          description: OK Deleted Successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RatingDeleteSuccess'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Content and value are required numbers
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Rating not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Rating not found
+
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Internal server error
+
     patch:
       tags: [Ratings]
       summary: Update a rating
@@ -912,6 +1006,28 @@ components:
           maximum: 10
           description: New score (1–10); stored in the `rating` column
           example: 8
+
+    RatingCreateRequest:
+      type: object
+      required: [content, value]
+      properties:
+        content:
+          type: integer
+          enum: [0, 1]
+          description: Movie or show
+          example: 0
+        value:
+          type: integer
+          description: rating out of 10
+          example: 10
+
+    RatingDeleteSuccess:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+          example: rating deleted successfully
 
     Rating:
       type: object

@@ -62,3 +62,64 @@ export const updateRating = async (req: Request, res: Response) => {
     throw e;
   }
 };
+
+/**
+ * POST /ratings — creates a new rating for the authenticated user.
+ */
+export const createRating = async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  const { content, value } = req.body as {
+    content?: number;
+    value?: number;
+  };
+
+  const resolvedContent =
+    typeof content === 'string' ? Number.parseInt(content, 10) : (content as number);
+  const resolvedValue = typeof value === 'string' ? Number.parseInt(value, 10) : (value as number);
+
+  if (!Number.isFinite(resolvedContent) || !Number.isFinite(resolvedValue)) {
+    return res.status(400).json({ error: 'content and value are required numbers' });
+  }
+
+  const rating = await prisma.rating.create({
+    data: {
+      userId: req.user.sub,
+      isMovie: resolvedContent === 0,
+      rating: resolvedValue,
+    },
+  });
+
+  return res.status(201).json(toRatingResponse(rating));
+};
+
+/**
+ * DELETE /ratings/:ratingId — deletes the authenticated user's rating.
+ */
+export const deleteRating = async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  const ratingId = Number(req.params.ratingId);
+
+  try {
+    await prisma.rating.delete({
+      where: {
+        ratingId_userId: {
+          ratingId,
+          userId: req.user.sub,
+        },
+      },
+    });
+
+    return res.status(200).json({ message: 'Rating deleted successfully' });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2025') {
+      return res.status(404).json({ error: 'Rating not found' });
+    }
+    throw e;
+  }
+};

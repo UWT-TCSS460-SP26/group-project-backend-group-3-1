@@ -93,6 +93,49 @@ describe('Ratings (integration, requires DB + JWT in .env)', () => {
     });
   });
 
+  describe('POST /ratings', () => {
+    it('returns 401 when Authorization is missing', async () => {
+      const response = await request(app).post('/ratings').send({ content: 0, value: 5 });
+
+      expect(response.status).toBe(401);
+    });
+
+    it('returns 400 when content is missing', async () => {
+      const response = await request(app)
+        .post('/ratings')
+        .set('Authorization', `Bearer ${signToken()}`)
+        .send({ value: 5 });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toMatch(/content/);
+    });
+
+    it('returns 400 when value is missing', async () => {
+      const response = await request(app)
+        .post('/ratings')
+        .set('Authorization', `Bearer ${signToken()}`)
+        .send({ content: 0 });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toMatch(/value/);
+    });
+
+    it('returns 201 and creates a new rating', async () => {
+      const response = await request(app)
+        .post('/ratings')
+        .set('Authorization', `Bearer ${signToken()}`)
+        .send({ content: 1, value: 4 });
+
+      expect(response.status).toBe(201);
+      expect(response.body).toMatchObject({
+        userId: DEV_USER_ID,
+        content: 1,
+        value: 4,
+      });
+      expect(response.body.ratingId).toBeDefined();
+    });
+  });
+
   describe('PATCH /ratings/:ratingId', () => {
     it('returns 401 when Authorization is missing', async () => {
       const response = await request(app).patch('/ratings/1').send({ rating: 5 });
@@ -169,6 +212,68 @@ describe('Ratings (integration, requires DB + JWT in .env)', () => {
         content: 0,
         value: 8,
       });
+    });
+  });
+
+  describe('DELETE /ratings/:ratingId', () => {
+    it('returns 401 when Authorization is missing', async () => {
+      const response = await request(app).delete('/ratings/1');
+
+      expect(response.status).toBe(401);
+    });
+
+    it('returns 400 for invalid ratingId', async () => {
+      const response = await request(app)
+        .delete('/ratings/abc')
+        .set('Authorization', `Bearer ${signToken()}`);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toMatch(/ratingId/);
+    });
+
+    it('returns 404 when rating does not belong to the authenticated user', async () => {
+      const rating = await prisma.rating.create({
+        data: {
+          userId: OTHER_USER_ID,
+          isMovie: true,
+          rating: 5,
+        },
+      });
+
+      const response = await request(app)
+        .delete(`/ratings/${rating.ratingId}`)
+        .set('Authorization', `Bearer ${signToken()}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.error).toBe('Rating not found');
+    });
+
+    it('returns 200 and deletes the authenticated user rating', async () => {
+      const rating = await prisma.rating.create({
+        data: {
+          userId: DEV_USER_ID,
+          isMovie: true,
+          rating: 5,
+        },
+      });
+
+      const response = await request(app)
+        .delete(`/ratings/${rating.ratingId}`)
+        .set('Authorization', `Bearer ${signToken()}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe('Rating deleted successfully');
+
+      // Verify it's actually gone
+      const deletedRating = await prisma.rating.findUnique({
+        where: {
+          ratingId_userId: {
+            ratingId: rating.ratingId,
+            userId: DEV_USER_ID,
+          },
+        },
+      });
+      expect(deletedRating).toBeNull();
     });
   });
 });
