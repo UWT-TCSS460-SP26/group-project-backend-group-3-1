@@ -6,12 +6,7 @@ import { validateRatingBody, validateRatingIdParam } from '../middleware/validat
 const ratingRouter = Router();
 
 ratingRouter.get('/:ratingId', validateRatingIdParam, getRating);
-ratingRouter.patch(
-  '/:ratingId',
-  validateRatingIdParam,
-  validateRatingBody,
-  updateRating
-);
+ratingRouter.patch('/:ratingId', validateRatingIdParam, validateRatingBody, updateRating);
 ratingRouter.post('/', requireAuth, validateRatingBody, createRating);
 ratingRouter.delete('/:ratingId', requireAuth, validateRatingIdParam, deleteRating);
 

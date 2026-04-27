@@ -79,7 +79,8 @@ export const createRating = async (req: Request, res: Response) => {
 
   const resolvedContent =
     typeof content === 'string' ? Number.parseInt(content, 10) : (content as number);
-  const resolvedValue = typeof rating === 'string' ? Number.parseInt(rating, 10) : (rating as number);
+  const resolvedValue =
+    typeof rating === 'string' ? Number.parseInt(rating, 10) : (rating as number);
 
   if (!Number.isFinite(resolvedContent) || !Number.isFinite(resolvedValue)) {
     return res.status(400).json({ error: 'content and value are required numbers' });

@@ -11,12 +11,7 @@ const reviewRouter = Router();
 
 reviewRouter.post('/', requireAuth, validateReviewBody, createReview);
 reviewRouter.get('/:reviewId', requireAuth, validateReviewIdParam, getReview);
-reviewRouter.patch(
-  '/:reviewId',
-  validateReviewIdParam,
-  validateReviewUpdateBody,
-  updateReview
-);
+reviewRouter.patch('/:reviewId', validateReviewIdParam, validateReviewUpdateBody, updateReview);
 reviewRouter.delete('/:reviewId', validateReviewIdParam, deleteReview);
 
 export { reviewRouter };

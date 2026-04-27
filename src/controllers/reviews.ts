@@ -32,7 +32,12 @@ async function findReviewForRequest(reviewId: number, queryUserId: string | unde
  * `text` is stored as `reviewContent`; `type` maps to `isMovie` (0 = movie, 1 = show).
  */
 export const createReview = async (req: Request, res: Response) => {
-  const { text, type, dateOfReview, userId: bodyUserId } = req.body as {
+  const {
+    text,
+    type,
+    dateOfReview,
+    userId: bodyUserId,
+  } = req.body as {
     text: string;
     type: number;
     dateOfReview: string;
