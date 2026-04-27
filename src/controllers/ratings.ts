@@ -32,28 +32,17 @@ export const getRating = async (req: Request, res: Response) => {
 };
 
 /**
- * PATCH /ratings/:ratingId — updates the rating row for this id (first match). For local Postman testing without JWT.
+ * PATCH /ratings/:ratingId — sets the numeric score from body field `rating` (1–10). Validated in middleware.
  */
 export const updateRating = async (req: Request, res: Response) => {
   const ratingId = Number(req.params.ratingId);
-  const { content, value } = req.body as { content?: unknown; value?: unknown };
-  const resolvedContent =
-    typeof content === 'string' ? Number.parseInt(content, 10) : (content as number | undefined);
-  const resolvedValue =
-    typeof value === 'string' ? Number.parseInt(value, 10) : (value as number | undefined);
+  const raw = (req.body as { rating: unknown }).rating;
+  const nextRating = typeof raw === 'string' ? Number.parseInt(raw, 10) : (raw as number);
 
   try {
     const existing = await prisma.rating.findFirst({ where: { ratingId } });
     if (!existing) {
       return res.status(404).json({ error: 'Rating not found' });
-    }
-
-    const data: Prisma.RatingUncheckedUpdateInput = {};
-    if (resolvedContent !== undefined) {
-      data.isMovie = resolvedContent === 0;
-    }
-    if (resolvedValue !== undefined) {
-      data.rating = resolvedValue;
     }
 
     const rating = await prisma.rating.update({
@@ -63,7 +52,7 @@ export const updateRating = async (req: Request, res: Response) => {
           userId: existing.userId,
         },
       },
-      data,
+      data: { rating: nextRating },
     });
 
     return res.status(200).json(toRatingResponse(rating));

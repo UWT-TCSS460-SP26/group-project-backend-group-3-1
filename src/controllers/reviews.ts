@@ -127,15 +127,18 @@ export const getReview = async (req: Request, res: Response) => {
 };
 
 /**
- * PUT /reviews/:reviewId — full replace. Optional query: ?userId=<uuid>.
+ * PATCH /reviews/:reviewId — body: `text`, `dateOfReview` only. Does not change movie vs show (`isMovie` is fixed at create).
  */
 export const updateReview = async (req: Request, res: Response) => {
-  const { text, type, dateOfReview } = req.body as {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
+  const { text, dateOfReview } = req.body as {
     text: string;
-    type: number;
     dateOfReview: string;
   };
-  const kind = typeof type === 'string' ? Number.parseInt(type, 10) : type;
+
   const reviewId = Number(req.params.reviewId);
   const qUser = userIdFromQuery(req);
 
@@ -146,9 +149,8 @@ export const updateReview = async (req: Request, res: Response) => {
     }
     const review = await prisma.review.update({
       data: {
-        isMovie: kind === 0,
-        dateOfReview: new Date(dateOfReview),
         reviewContent: text,
+        dateOfReview: new Date(dateOfReview),
       },
       where: {
         reviewId_userId: {
@@ -157,6 +159,7 @@ export const updateReview = async (req: Request, res: Response) => {
         },
       },
     });
+
     return res.status(200).json({
       reviewId: review.reviewId,
       userId: review.userId,

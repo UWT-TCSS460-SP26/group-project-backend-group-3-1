@@ -507,7 +507,10 @@ paths:
     post:
       tags: [Reviews]
       summary: Create a review
-      description: Adds a review for the current user. Requires a Bearer token.
+      description: |
+        Adds a review for the current user.
+
+        Requires authentication (Bearer token).
       security:
         - bearerAuth: []
       requestBody:
@@ -552,6 +555,7 @@ paths:
       summary: Get a single review
       description: |
         Get one review belonging to the logged-in user.
+
         Requires authentication (Bearer token).
       security:
         - bearerAuth: []
@@ -599,11 +603,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
-    put:
+    patch:
       tags: [Reviews]
       summary: Update a review
       description: |
-        Replace an existing review for the logged-in user.
+        Update an existing review for the logged-in user.
 
         Requires authentication (Bearer token).
       security:
@@ -622,7 +626,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ReviewCreateRequest'
+              $ref: '#/components/schemas/ReviewUpdateRequest'
       responses:
         '200':
           description: OK
@@ -659,7 +663,10 @@ paths:
     delete:
       tags: [Reviews]
       summary: Delete a review
-      description: Removes a review for the current user. Requires a Bearer token.
+      description: |
+        Removes a review for the current user.
+
+        Requires authentication (Bearer token).
       security:
         - bearerAuth: []
       parameters:
@@ -944,6 +951,20 @@ components:
           format: date
           example: '2026-04-25'
 
+    ReviewUpdateRequest:
+      type: object
+      description: Updates review text and date of review.
+      required: [text, dateOfReview]
+      properties:
+        text:
+          type: string
+          description: Review body (stored in DB as reviewContent)
+          example: An updated take.
+        dateOfReview:
+          type: string
+          format: date
+          example: '2026-04-25'
+
     Review:
       type: object
       required: [reviewId, userId, content, isMovie, dateOfReview]
@@ -977,13 +998,14 @@ components:
 
     RatingUpdateRequest:
       type: object
-      required: [content]
+      required: [rating]
       properties:
-        content:
+        rating:
           type: integer
-          enum: [0, 1]
-          description: Movie or show
-          example: 0
+          minimum: 1
+          maximum: 10
+          description: New score (1–10); stored in the `rating` column
+          example: 8
 
     RatingCreateRequest:
       type: object

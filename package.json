@@ -19,7 +19,8 @@
     "format:check": "prettier --check .",
     "lint:fix": "eslint --fix .",
     "prisma:seed": "tsx prisma/seed.ts",
-    "prisma:generate": "npx prisma generate"
+    "prisma:generate": "npx prisma generate",
+    "db:setup": "docker compose up -d && npx prisma migrate dev && npx prisma generate && tsx prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
