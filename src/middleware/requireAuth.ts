@@ -60,6 +60,53 @@ export const requireAuth = (request: Request, response: Response, next: NextFunc
 };
 
 /**
+ * If `Authorization: Bearer <token>` is present, verifies it and sets `request.user`.
+ * If the header is absent, continues without a user (for open dev/Postman routes).
+ * If a Bearer token is present but invalid, responds 401.
+ */
+export const optionalAuth = (request: Request, response: Response, next: NextFunction): void => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    next();
+    return;
+  }
+
+  const header = request.headers.authorization;
+  if (!header || !header.startsWith('Bearer ')) {
+    next();
+    return;
+  }
+
+  const token = header.slice('Bearer '.length).trim();
+  if (!token) {
+    response.status(401).json({ error: 'Missing or malformed Authorization header' });
+    return;
+  }
+
+  try {
+    const decoded = jwt.verify(token, secret) as unknown as AuthenticatedUser & {
+      userId?: string;
+      id?: string;
+    };
+    const sub = decoded.sub || decoded.userId || decoded.id;
+    if (!sub) {
+      response.status(401).json({
+        error: 'Token must include user id: set "sub", or "userId", or "id" to your User UUID',
+      });
+      return;
+    }
+    request.user = {
+      sub,
+      email: decoded.email ?? '',
+      role: decoded.role ?? 'user',
+    };
+    next();
+  } catch {
+    response.status(401).json({ error: 'Invalid or expired token' });
+  }
+};
+
+/**
  * Role gate. Use after requireAuth:
  *
  *   router.delete('/reviews/:id', requireAuth, requireRole('admin'), handler);

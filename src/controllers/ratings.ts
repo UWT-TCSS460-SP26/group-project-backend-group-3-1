@@ -2,16 +2,10 @@ import { Request, Response } from 'express';
 import { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 
-const toRatingResponse = (rating: {
-  ratingId: number;
-  userId: string;
-  isMovie: boolean;
-  rating: number;
-}) => ({
+const toRatingResponse = (rating: { ratingId: number; userId: string; movieShow: boolean }) => ({
   ratingId: rating.ratingId,
   userId: rating.userId,
-  content: rating.isMovie ? 0 : 1,
-  value: rating.rating,
+  content: rating.movieShow ? 0 : 1,
 });
 
 /**
@@ -32,27 +26,28 @@ export const getRating = async (req: Request, res: Response) => {
 };
 
 /**
- * PATCH /ratings/:ratingId — updates the authenticated user's rating.
+ * PATCH /ratings/:ratingId — updates the rating row for this id (first match). For local Postman testing without JWT.
  */
 export const updateRating = async (req: Request, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-
   const ratingId = Number(req.params.ratingId);
   const { content } = req.body as { content: unknown };
   const resolvedContent = typeof content === 'string' ? Number.parseInt(content, 10) : content;
 
   try {
+    const existing = await prisma.rating.findFirst({ where: { ratingId } });
+    if (!existing) {
+      return res.status(404).json({ error: 'Rating not found' });
+    }
+
     const rating = await prisma.rating.update({
       where: {
         ratingId_userId: {
-          ratingId,
-          userId: req.user.sub,
+          ratingId: existing.ratingId,
+          userId: existing.userId,
         },
       },
       data: {
-        isMovie: resolvedContent === 0,
+        movieShow: resolvedContent === 0,
       },
     });
 

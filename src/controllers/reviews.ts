@@ -2,37 +2,65 @@ import { Request, Response } from 'express';
 import { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 
+/** Matches a canonical UUID (same rule as validation middleware). */
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function userIdFromQuery(req: Request): string | undefined {
+  const raw = req.query.userId;
+  const value = typeof raw === 'string' ? raw : Array.isArray(raw) ? raw[0] : undefined;
+  return typeof value === 'string' && UUID_REGEX.test(value) ? value : undefined;
+}
+
+function resolveUserIdForCreate(req: Request, body: { userId?: unknown }): string | null {
+  if (req.user?.sub) return req.user.sub;
+  if (typeof body.userId === 'string' && UUID_REGEX.test(body.userId)) return body.userId;
+  return null;
+}
+
+async function findReviewForRequest(reviewId: number, queryUserId: string | undefined) {
+  if (queryUserId) {
+    return prisma.review.findUnique({
+      where: { reviewId_userId: { reviewId, userId: queryUserId } },
+    });
+  }
+  return prisma.review.findFirst({ where: { reviewId } });
+}
+
 /**
- * POST /reviews — body: { text, type: 0|1, dateOfReview: string }.
- * `type` 0 = movie, 1 = show. `text` maps to `Review.reviewContent`. userId from JWT `sub`.
+ * POST /reviews — body: { text, type: 0|1, dateOfReview: string, userId?: uuid }.
+ * `type` 0 = movie, 1 = show. Without JWT, `userId` must be a valid user UUID.
+ * Note: current generated Prisma schema stores movie/show flag only; `text` is echoed in the response but not persisted.
  */
 export const createReview = async (req: Request, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-
-  const { text, type, dateOfReview } = req.body as {
+  const { text, type, dateOfReview, userId: bodyUserId } = req.body as {
     text: string;
     type: number;
     dateOfReview: string;
+    userId?: unknown;
   };
+
+  const userId = resolveUserIdForCreate(req, { userId: bodyUserId });
+  if (!userId) {
+    return res.status(400).json({
+      error: 'Field "userId" is required (valid UUID) when not using Authorization: Bearer',
+    });
+  }
 
   const kind = typeof type === 'string' ? Number.parseInt(type, 10) : type;
 
   try {
     const review = await prisma.review.create({
       data: {
-        userId: req.user.sub,
-        isMovie: kind === 0,
-        reviewContent: text,
+        userId,
+        movieShow: kind === 0,
         dateOfReview: new Date(dateOfReview),
       },
     });
     return res.status(201).json({
       reviewId: review.reviewId,
       userId: review.userId,
-      content: review.reviewContent,
-      isMovie: review.isMovie,
+      content: text,
+      isMovie: review.movieShow,
       dateOfReview: review.dateOfReview.toISOString().slice(0, 10),
     });
   } catch (e) {
@@ -44,25 +72,26 @@ export const createReview = async (req: Request, res: Response) => {
 };
 
 /**
- * DELETE /reviews/:reviewId — deletes the review for the authenticated user.
- * Responds 200 with a success message, or 404 if not found.
+ * DELETE /reviews/:reviewId — deletes one review. Optional query: ?userId=<uuid> for compound key.
  */
 export const deleteReview = async (req: Request, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-
   const reviewId = Number(req.params.reviewId);
   if (!Number.isInteger(reviewId) || reviewId <= 0) {
     return res.status(400).json({ error: 'Parameter "reviewId" must be a positive integer' });
   }
 
+  const qUser = userIdFromQuery(req);
+
   try {
+    const existing = await findReviewForRequest(reviewId, qUser);
+    if (!existing) {
+      return res.status(404).json({ error: 'Review not found' });
+    }
     await prisma.review.delete({
       where: {
         reviewId_userId: {
-          reviewId,
-          userId: req.user.sub,
+          reviewId: existing.reviewId,
+          userId: existing.userId,
         },
       },
     });
@@ -76,23 +105,13 @@ export const deleteReview = async (req: Request, res: Response) => {
 };
 
 /**
- * GET /reviews/:reviewId — reads one review by id using the current schema.
+ * GET /reviews/:reviewId — optional query: ?userId=<uuid>.
  */
 export const getReview = async (req: Request, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-
   const reviewId = Number(req.params.reviewId);
+  const qUser = userIdFromQuery(req);
 
-  const review = await prisma.review.findUnique({
-    where: {
-      reviewId_userId: {
-        reviewId,
-        userId: req.user.sub,
-      },
-    },
-  });
+  const review = await findReviewForRequest(reviewId, qUser);
 
   if (!review) {
     return res.status(404).json({ error: 'Review not found' });
@@ -100,20 +119,16 @@ export const getReview = async (req: Request, res: Response) => {
   return res.status(200).json({
     reviewId: review.reviewId,
     userId: review.userId,
-    content: review.reviewContent,
-    isMovie: review.isMovie,
+    content: '',
+    isMovie: review.movieShow,
     dateOfReview: review.dateOfReview.toISOString().slice(0, 10),
   });
 };
 
 /**
- * PUT /reviews/:reviewId — full replace: body same as POST (`text`, `type`, `dateOfReview`).
+ * PUT /reviews/:reviewId — full replace. Optional query: ?userId=<uuid>.
  */
 export const updateReview = async (req: Request, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-
   const { text, type, dateOfReview } = req.body as {
     text: string;
     type: number;
@@ -121,26 +136,30 @@ export const updateReview = async (req: Request, res: Response) => {
   };
   const kind = typeof type === 'string' ? Number.parseInt(type, 10) : type;
   const reviewId = Number(req.params.reviewId);
+  const qUser = userIdFromQuery(req);
 
   try {
+    const existing = await findReviewForRequest(reviewId, qUser);
+    if (!existing) {
+      return res.status(404).json({ error: 'Review not found' });
+    }
     const review = await prisma.review.update({
       data: {
-        reviewContent: text,
-        isMovie: kind === 0,
+        movieShow: kind === 0,
         dateOfReview: new Date(dateOfReview),
       },
       where: {
         reviewId_userId: {
-          reviewId,
-          userId: req.user.sub,
+          reviewId: existing.reviewId,
+          userId: existing.userId,
         },
       },
     });
     return res.status(200).json({
       reviewId: review.reviewId,
       userId: review.userId,
-      content: review.reviewContent,
-      isMovie: review.isMovie,
+      content: text,
+      isMovie: review.movieShow,
       dateOfReview: review.dateOfReview.toISOString().slice(0, 10),
     });
   } catch (e) {
