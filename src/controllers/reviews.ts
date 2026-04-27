@@ -29,7 +29,7 @@ async function findReviewForRequest(reviewId: number, queryUserId: string | unde
 /**
  * POST /reviews — body: { text, type: 0|1, dateOfReview: string, userId?: uuid }.
  * `type` 0 = movie, 1 = show. Without JWT, `userId` must be a valid user UUID.
- * Note: current generated Prisma schema stores movie/show flag only; `text` is echoed in the response but not persisted.
+ * `text` is stored as `reviewContent`; `type` maps to `isMovie` (0 = movie, 1 = show).
  */
 export const createReview = async (req: Request, res: Response) => {
   const { text, type, dateOfReview, userId: bodyUserId } = req.body as {
@@ -52,15 +52,16 @@ export const createReview = async (req: Request, res: Response) => {
     const review = await prisma.review.create({
       data: {
         userId,
-        movieShow: kind === 0,
+        isMovie: kind === 0,
         dateOfReview: new Date(dateOfReview),
+        reviewContent: text,
       },
     });
     return res.status(201).json({
       reviewId: review.reviewId,
       userId: review.userId,
       content: text,
-      isMovie: review.movieShow,
+      isMovie: review.isMovie,
       dateOfReview: review.dateOfReview.toISOString().slice(0, 10),
     });
   } catch (e) {
@@ -119,8 +120,8 @@ export const getReview = async (req: Request, res: Response) => {
   return res.status(200).json({
     reviewId: review.reviewId,
     userId: review.userId,
-    content: '',
-    isMovie: review.movieShow,
+    content: review.reviewContent,
+    isMovie: review.isMovie,
     dateOfReview: review.dateOfReview.toISOString().slice(0, 10),
   });
 };
@@ -145,8 +146,9 @@ export const updateReview = async (req: Request, res: Response) => {
     }
     const review = await prisma.review.update({
       data: {
-        movieShow: kind === 0,
+        isMovie: kind === 0,
         dateOfReview: new Date(dateOfReview),
+        reviewContent: text,
       },
       where: {
         reviewId_userId: {
@@ -159,7 +161,7 @@ export const updateReview = async (req: Request, res: Response) => {
       reviewId: review.reviewId,
       userId: review.userId,
       content: text,
-      isMovie: review.movieShow,
+      isMovie: review.isMovie,
       dateOfReview: review.dateOfReview.toISOString().slice(0, 10),
     });
   } catch (e) {

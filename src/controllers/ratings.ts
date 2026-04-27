@@ -2,10 +2,16 @@ import { Request, Response } from 'express';
 import { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 
-const toRatingResponse = (rating: { ratingId: number; userId: string; movieShow: boolean }) => ({
+const toRatingResponse = (rating: {
+  ratingId: number;
+  userId: string;
+  isMovie: boolean;
+  rating: number;
+}) => ({
   ratingId: rating.ratingId,
   userId: rating.userId,
-  content: rating.movieShow ? 0 : 1,
+  content: rating.isMovie ? 0 : 1,
+  value: rating.rating,
 });
 
 /**
@@ -42,6 +48,14 @@ export const updateRating = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Rating not found' });
     }
 
+    const data: Prisma.RatingUncheckedUpdateInput = {};
+    if (resolvedContent !== undefined) {
+      data.isMovie = resolvedContent === 0;
+    }
+    if (resolvedValue !== undefined) {
+      data.rating = resolvedValue;
+    }
+
     const rating = await prisma.rating.update({
       where: {
         ratingId_userId: {
@@ -49,10 +63,7 @@ export const updateRating = async (req: Request, res: Response) => {
           userId: existing.userId,
         },
       },
-      data: {
-        ...(resolvedContent !== undefined && { isMovie: resolvedContent === 0 }),
-        ...(resolvedValue !== undefined && { rating: resolvedValue }),
-      },
+      data,
     });
 
     return res.status(200).json(toRatingResponse(rating));
