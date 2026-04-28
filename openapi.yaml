@@ -505,7 +505,7 @@ paths:
                     type: string
                     example: Failed to reach TMDB service
 
-  /dev/dev-login:
+  /auth/dev-login:
     post:
       tags: [DevAuth]
       summary: Create dev JWT for local testing
