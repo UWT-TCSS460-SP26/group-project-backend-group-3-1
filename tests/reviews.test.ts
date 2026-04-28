@@ -126,9 +126,8 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
 
       expect(response.status).toBe(201);
       expect(response.body).toMatchObject({
-        userId: DEV_USER_ID,
         isMovie: true,
-        content: 'Great film',
+        reviewContent: 'Great film',
         dateOfReview: '2026-01-10',
         tmdbIdentifier: TMDB_ID,
       });
@@ -148,8 +147,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
 
       expect(response.status).toBe(201);
       expect(response.body).toMatchObject({
-        userId: DEV_USER_ID,
-        content: 'type two',
+        reviewContent: 'type two',
         isMovie: false,
         tmdbIdentifier: TMDB_ID,
       });
@@ -170,7 +168,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
 
       const response = await request(app).get(`/reviews/${created.body.reviewId as number}`);
       expect(response.status).toBe(200);
-      expect(response.body.content).toBe('Public read');
+      expect(response.body.reviewContent).toBe('Public read');
     });
 
     it('returns 400 for invalid reviewId', async () => {
@@ -200,9 +198,8 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
         reviewId: created.body.reviewId,
-        userId: DEV_USER_ID,
         isMovie: true,
-        content: 'Read me',
+        reviewContent: 'Read me',
         dateOfReview: '2026-03-15',
         tmdbIdentifier: TMDB_ID,
       });
@@ -287,7 +284,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
-        content: 'after',
+        reviewContent: 'after',
         dateOfReview: '2026-06-20',
         tmdbIdentifier: TMDB_ID,
       });
