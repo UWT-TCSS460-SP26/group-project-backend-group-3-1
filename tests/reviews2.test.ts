@@ -78,7 +78,12 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
     it('returns 401 when Authorization is missing', async () => {
       const response = await request(app)
         .post('/reviews')
-        .send({ text: 'hello', type: 0, dateOfReview: '2026-01-10', tmdbIdentifier: TMDB_ID });
+        .send({
+          text: 'hello',
+          isMovie: true,
+          dateOfReview: '2026-01-10',
+          tmdbIdentifier: TMDB_ID,
+        });
 
       expect(response.status).toBe(401);
     });
@@ -88,7 +93,12 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
       const response = await request(app)
         .post('/reviews')
         .set('Authorization', `Bearer ${badToken}`)
-        .send({ text: 'hello', type: 0, dateOfReview: '2026-01-10', tmdbIdentifier: TMDB_ID });
+        .send({
+          text: 'hello',
+          isMovie: true,
+          dateOfReview: '2026-01-10',
+          tmdbIdentifier: TMDB_ID,
+        });
 
       expect(response.status).toBe(401);
     });
@@ -97,7 +107,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
       const response = await request(app)
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ text: 'hello', type: 0 });
+        .send({ text: 'hello', isMovie: true });
 
       expect(response.status).toBe(400);
       expect(response.body.error).toBe('Field "dateOfReview" is required');
@@ -109,7 +119,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
         .set('Authorization', `Bearer ${signToken()}`)
         .send({
           text: 'Great film',
-          type: 0,
+          isMovie: true,
           dateOfReview: '2026-01-10',
           tmdbIdentifier: TMDB_ID,
         });
@@ -125,11 +135,16 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
       expect(typeof response.body.reviewId).toBe('number');
     });
 
-    it('accepts non-binary type and maps isMovie=false', async () => {
+    it('accepts isMovie=false for TV show reviews', async () => {
       const response = await request(app)
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ text: 'type two', type: 2, dateOfReview: '2026-03-01', tmdbIdentifier: TMDB_ID });
+        .send({
+          text: 'type two',
+          isMovie: false,
+          dateOfReview: '2026-03-01',
+          tmdbIdentifier: TMDB_ID,
+        });
 
       expect(response.status).toBe(201);
       expect(response.body).toMatchObject({
@@ -148,7 +163,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
         .set('Authorization', `Bearer ${signToken()}`)
         .send({
           text: 'Public read',
-          type: 0,
+          isMovie: true,
           dateOfReview: '2026-03-15',
           tmdbIdentifier: TMDB_ID,
         });
@@ -174,7 +189,12 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
       const created = await request(app)
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ text: 'Read me', type: 0, dateOfReview: '2026-03-15', tmdbIdentifier: TMDB_ID });
+        .send({
+          text: 'Read me',
+          isMovie: true,
+          dateOfReview: '2026-03-15',
+          tmdbIdentifier: TMDB_ID,
+        });
 
       const response = await request(app).get(`/reviews/${created.body.reviewId as number}`);
       expect(response.status).toBe(200);
@@ -213,7 +233,12 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
       const created = await request(app)
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ text: 'before', type: 1, dateOfReview: '2026-01-01', tmdbIdentifier: TMDB_ID });
+        .send({
+          text: 'before',
+          isMovie: false,
+          dateOfReview: '2026-01-01',
+          tmdbIdentifier: TMDB_ID,
+        });
 
       const response = await request(app)
         .patch(`/reviews/${created.body.reviewId as number}`)
@@ -228,7 +253,12 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
       const created = await request(app)
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken({ sub: OTHER_USER_ID })}`)
-        .send({ text: 'theirs', type: 0, dateOfReview: '2026-02-01', tmdbIdentifier: TMDB_ID });
+        .send({
+          text: 'theirs',
+          isMovie: true,
+          dateOfReview: '2026-02-01',
+          tmdbIdentifier: TMDB_ID,
+        });
 
       const response = await request(app)
         .patch(`/reviews/${created.body.reviewId as number}`)
@@ -243,7 +273,12 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
       const created = await request(app)
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ text: 'before', type: 1, dateOfReview: '2026-01-01', tmdbIdentifier: TMDB_ID });
+        .send({
+          text: 'before',
+          isMovie: false,
+          dateOfReview: '2026-01-01',
+          tmdbIdentifier: TMDB_ID,
+        });
 
       const response = await request(app)
         .patch(`/reviews/${created.body.reviewId as number}`)
@@ -287,7 +322,12 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
       const created = await request(app)
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken({ sub: OTHER_USER_ID })}`)
-        .send({ text: 'to delete', type: 0, dateOfReview: '2026-08-01', tmdbIdentifier: TMDB_ID });
+        .send({
+          text: 'to delete',
+          isMovie: true,
+          dateOfReview: '2026-08-01',
+          tmdbIdentifier: TMDB_ID,
+        });
 
       const response = await request(app)
         .delete(`/reviews/${created.body.reviewId as number}`)
@@ -301,7 +341,12 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
       const created = await request(app)
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ text: 'remove me', type: 1, dateOfReview: '2026-02-20', tmdbIdentifier: TMDB_ID });
+        .send({
+          text: 'remove me',
+          isMovie: false,
+          dateOfReview: '2026-02-20',
+          tmdbIdentifier: TMDB_ID,
+        });
 
       const response = await request(app)
         .delete(`/reviews/${created.body.reviewId as number}`)
@@ -315,7 +360,12 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
       const created = await request(app)
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken({ sub: OTHER_USER_ID })}`)
-        .send({ text: 'moderated', type: 0, dateOfReview: '2026-09-01', tmdbIdentifier: TMDB_ID });
+        .send({
+          text: 'moderated',
+          isMovie: true,
+          dateOfReview: '2026-09-01',
+          tmdbIdentifier: TMDB_ID,
+        });
 
       const response = await request(app)
         .delete(`/reviews/${created.body.reviewId as number}`)

@@ -593,11 +593,7 @@ paths:
       tags: [Reviews]
       summary: Get a single review
       description: |
-        Get one review belonging to the logged-in user.
-
-        Requires authentication (Bearer token).
-      security:
-        - bearerAuth: []
+        Get one review by review id (public endpoint).
       parameters:
         - name: reviewId
           in: path
@@ -622,14 +618,8 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
                 error: 'Parameter "reviewId" must be a positive integer'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorMessage'
         '404':
-          description: No review with that id for the current user
+          description: No review with that id
           content:
             application/json:
               schema:
@@ -685,6 +675,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Authenticated user does not own this review
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: You can only update your own reviews
         '404':
           description: No review with that id for the current user
           content:
@@ -738,6 +736,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Authenticated user is not owner and not admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: You can only delete your own reviews
         '404':
           description: |
             There is no review with that id for that account, or it was already deleted.
@@ -857,7 +863,7 @@ paths:
           required: true
           description: Rating id
       responses:
-        '201':
+        '200':
           description: OK Deleted Successfully
           content:
             application/json:
@@ -870,7 +876,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
-                error: Content and value are required numbers
+                error: Parameter "ratingId" must be a positive integer
         '401':
           description: Unauthorized
           content:
@@ -997,17 +1003,16 @@ components:
 
     ReviewCreateRequest:
       type: object
-      required: [text, type, dateOfReview, tmdbIdentifier]
+      required: [reviewContent, isMovie, dateOfReview, tmdbIdentifier]
       properties:
-        text:
+        reviewContent:
           type: string
-          description: Review body (stored in DB as reviewContent)
+          description: Review body
           example: A thoughtful take on the film.
-        type:
-          type: integer
-          enum: [0, 1]
-          description: 0 = movie, 1 = show
-          example: 0
+        isMovie:
+          type: boolean
+          description: true = movie, false = show
+          example: true
         dateOfReview:
           type: string
           format: date
@@ -1034,17 +1039,13 @@ components:
 
     Review:
       type: object
-      required: [reviewId, userId, content, isMovie, dateOfReview, tmdbIdentifier]
+      required: [reviewId, content, isMovie, dateOfReview, tmdbIdentifier]
       description: Review resource; `content` is the review text; `isMovie` is true for movie, false for show.
       properties:
         reviewId:
           type: integer
           example: 1
-        userId:
-          type: string
-          format: uuid
-          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
-        content:
+        reviewContent:
           type: string
           example: A thoughtful take on the film.
         isMovie:
@@ -1080,13 +1081,12 @@ components:
 
     RatingCreateRequest:
       type: object
-      required: [content, rating, tmdbIdentifier]
+      required: [isMovie, rating, tmdbIdentifier]
       properties:
-        content:
-          type: integer
-          enum: [0, 1]
-          description: 0 = movie, 1 = show
-          example: 0
+        isMovie:
+          type: boolean
+          description: true = movie, false = show
+          example: true
         rating:
           type: integer
           minimum: 1
@@ -1109,21 +1109,16 @@ components:
 
     Rating:
       type: object
-      required: [ratingId, userId, content, value, tmdbIdentifier]
+      required: [ratingId, isMovie, rating, tmdbIdentifier]
       properties:
         ratingId:
           type: integer
           example: 1
-        userId:
-          type: string
-          format: uuid
-          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
-        content:
-          type: integer
-          enum: [0, 1]
-          description: 0 = movie, 1 = show
-          example: 0
-        value:
+        isMovie:
+          type: boolean
+          description: true = movie, false = show
+          example: true
+        rating:
           type: integer
           description: Score (e.g. 1–10), maps from DB column `rating`
           example: 8

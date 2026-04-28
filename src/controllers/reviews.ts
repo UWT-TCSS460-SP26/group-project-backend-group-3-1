@@ -10,14 +10,13 @@ export const createReview = async (req: Request, res: Response) => {
     return res.status(401).json({ error: 'Not authenticated' });
   }
 
-  const { text, type, dateOfReview, tmdbIdentifier } = req.body as {
+  const { text, isMovie, dateOfReview, tmdbIdentifier } = req.body as {
     text: string;
-    type: number;
+    isMovie: boolean;
     dateOfReview: string;
     tmdbIdentifier: number;
   };
 
-  const kind = typeof type === 'string' ? Number.parseInt(type, 10) : type;
   const resolvedTmdb =
     typeof tmdbIdentifier === 'string'
       ? Number.parseInt(tmdbIdentifier, 10)
@@ -27,7 +26,7 @@ export const createReview = async (req: Request, res: Response) => {
     const review = await prisma.review.create({
       data: {
         userId: req.user.sub,
-        isMovie: kind === 0,
+        isMovie,
         dateOfReview: new Date(dateOfReview),
         reviewContent: text,
         tmdbIdentifier: resolvedTmdb,
@@ -35,8 +34,7 @@ export const createReview = async (req: Request, res: Response) => {
     });
     return res.status(201).json({
       reviewId: review.reviewId,
-      userId: review.userId,
-      content: text,
+      reviewContent: text,
       isMovie: review.isMovie,
       dateOfReview: review.dateOfReview.toISOString().slice(0, 10),
       tmdbIdentifier: review.tmdbIdentifier,
@@ -48,10 +46,6 @@ export const createReview = async (req: Request, res: Response) => {
     throw e;
   }
 };
-
-async function findReviewByReviewId(reviewId: number) {
-  return prisma.review.findFirst({ where: { reviewId } });
-}
 
 /**
  * DELETE /reviews/:reviewId — owner or admin (role === "admin"). Hard delete.
@@ -67,7 +61,8 @@ export const deleteReview = async (req: Request, res: Response) => {
   }
 
   try {
-    const existing = await findReviewByReviewId(reviewId);
+    const existing = await prisma.review.findFirst({ where: { reviewId } });
+
     if (!existing) {
       return res.status(404).json({ error: 'Review not found' });
     }
@@ -101,15 +96,14 @@ export const deleteReview = async (req: Request, res: Response) => {
 export const getReview = async (req: Request, res: Response) => {
   const reviewId = Number(req.params.reviewId);
 
-  const review = await findReviewByReviewId(reviewId);
+  const review = await prisma.review.findFirst({ where: { reviewId } });
 
   if (!review) {
     return res.status(404).json({ error: 'Review not found' });
   }
   return res.status(200).json({
     reviewId: review.reviewId,
-    userId: review.userId,
-    content: review.reviewContent,
+    reviewContent: review.reviewContent,
     isMovie: review.isMovie,
     dateOfReview: review.dateOfReview.toISOString().slice(0, 10),
     tmdbIdentifier: review.tmdbIdentifier,
@@ -132,7 +126,8 @@ export const updateReview = async (req: Request, res: Response) => {
   const reviewId = Number(req.params.reviewId);
 
   try {
-    const existing = await findReviewByReviewId(reviewId);
+    const existing = await prisma.review.findFirst({ where: { reviewId } });
+
     if (!existing) {
       return res.status(404).json({ error: 'Review not found' });
     }
@@ -155,8 +150,7 @@ export const updateReview = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       reviewId: review.reviewId,
-      userId: review.userId,
-      content: text,
+      reviewContent: text,
       isMovie: review.isMovie,
       dateOfReview: review.dateOfReview.toISOString().slice(0, 10),
       tmdbIdentifier: review.tmdbIdentifier,

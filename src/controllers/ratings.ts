@@ -4,14 +4,12 @@ import { prisma } from '../lib/prisma';
 
 const toRatingResponse = (rating: {
   ratingId: number;
-  userId: string;
   isMovie: boolean;
   rating: number;
   tmdbIdentifier: number;
 }) => ({
   ratingId: rating.ratingId,
-  userId: rating.userId,
-  content: rating.isMovie ? 0 : 1,
+  isMovie: rating.isMovie,
   value: rating.rating,
   tmdbIdentifier: rating.tmdbIdentifier,
 });
@@ -73,14 +71,13 @@ export const createRating = async (req: Request, res: Response) => {
     return res.status(401).json({ error: 'Not authenticated' });
   }
 
-  const { content, rating, tmdbIdentifier } = req.body as {
-    content: number;
+  const { isMovie, rating, tmdbIdentifier } = req.body as {
+    isMovie: boolean;
     rating: number;
     tmdbIdentifier: number;
   };
 
-  const resolvedContent =
-    typeof content === 'string' ? Number.parseInt(content, 10) : (content as number);
+  const resolvedIsMovie = Boolean(isMovie);
   const resolvedValue =
     typeof rating === 'string' ? Number.parseInt(rating, 10) : (rating as number);
   const resolvedTmdb =
@@ -91,7 +88,7 @@ export const createRating = async (req: Request, res: Response) => {
   const ratingResult = await prisma.rating.create({
     data: {
       userId: req.user.sub,
-      isMovie: resolvedContent === 0,
+      isMovie: resolvedIsMovie,
       rating: resolvedValue,
       tmdbIdentifier: resolvedTmdb,
     },

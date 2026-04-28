@@ -13,6 +13,6 @@ routes.use('/movies', movieRouter);
 routes.use('/shows', showRouter);
 routes.use('/reviews', reviewRouter);
 routes.use('/ratings', ratingRouter);
-routes.use('/dev', devAuthRouter);
+routes.use('/auth', devAuthRouter);
 
 export { routes };

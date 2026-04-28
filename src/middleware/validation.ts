@@ -43,11 +43,12 @@ export const validateRatingIdParam = (request: Request, response: Response, next
 
 /**
  * Validates JSON body for POST /reviews:
- *   text, type (0|1), dateOfReview — `type` sets whether the review is for a movie or show and is fixed after create.
+ *   text, isMovie (boolean), dateOfReview, tmdbIdentifier.
  */
 export const validateReviewBody = (request: Request, response: Response, next: NextFunction) => {
-  const { text, dateOfReview, tmdbIdentifier } = request.body as {
+  const { text, isMovie, dateOfReview, tmdbIdentifier } = request.body as {
     text?: unknown;
+    isMovie?: unknown;
     dateOfReview?: unknown;
     tmdbIdentifier?: unknown;
   };
@@ -70,6 +71,10 @@ export const validateReviewBody = (request: Request, response: Response, next: N
   const parsed = new Date(dateOfReview);
   if (Number.isNaN(parsed.getTime())) {
     response.status(400).json({ error: 'Field "dateOfReview" must be a valid date' });
+    return;
+  }
+  if (typeof isMovie !== 'boolean') {
+    response.status(400).json({ error: 'Field "isMovie" must be a boolean' });
     return;
   }
   if (tmdbIdentifier === undefined || tmdbIdentifier === null) {
@@ -143,26 +148,25 @@ export const validateRatingPatchBody = (
 };
 
 /**
- * Validates JSON body for POST /ratings — `content` (0|1), `rating` (1–10), `tmdbIdentifier` (positive TMDB id).
+ * Validates JSON body for POST /ratings — `isMovie` (boolean), `rating` (1–10), `tmdbIdentifier` (positive TMDB id).
  */
 export const validateRatingCreateBody = (
   request: Request,
   response: Response,
   next: NextFunction
 ) => {
-  const { content, rating, tmdbIdentifier } = request.body as {
-    content?: unknown;
+  const { isMovie, rating, tmdbIdentifier } = request.body as {
+    isMovie?: unknown;
     rating?: unknown;
     tmdbIdentifier?: unknown;
   };
 
-  if (content === undefined || content === null) {
-    response.status(400).json({ error: 'Field "content" is required' });
+  if (isMovie === undefined || isMovie === null) {
+    response.status(400).json({ error: 'Field "isMovie" is required' });
     return;
   }
-  const c = typeof content === 'string' ? Number.parseInt(content, 10) : content;
-  if (typeof c !== 'number' || !Number.isInteger(c) || (c !== 0 && c !== 1)) {
-    response.status(400).json({ error: 'Field "content" must be 0 (movie) or 1 (show)' });
+  if (typeof isMovie !== 'boolean') {
+    response.status(400).json({ error: 'Field "isMovie" must be a boolean' });
     return;
   }
 

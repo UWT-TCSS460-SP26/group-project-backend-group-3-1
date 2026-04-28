@@ -90,8 +90,7 @@ describeIfDb('Ratings2 (integration, current behavior)', () => {
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
         ratingId: row.ratingId,
-        userId: DEV_USER_ID,
-        content: 0,
+        isMovie: true,
         value: 6,
         tmdbIdentifier: TMDB_ID,
       });
@@ -102,7 +101,7 @@ describeIfDb('Ratings2 (integration, current behavior)', () => {
     it('returns 401 when Authorization is missing', async () => {
       const response = await request(app)
         .post('/ratings')
-        .send({ content: 0, rating: 7, tmdbIdentifier: TMDB_ID });
+        .send({ isMovie: true, rating: 7, tmdbIdentifier: TMDB_ID });
       expect(response.status).toBe(401);
     });
 
@@ -110,7 +109,7 @@ describeIfDb('Ratings2 (integration, current behavior)', () => {
       const response = await request(app)
         .post('/ratings')
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ content: 0 });
+        .send({ isMovie: true });
 
       expect(response.status).toBe(400);
       expect(response.body.error).toMatch(/rating/i);
@@ -120,42 +119,41 @@ describeIfDb('Ratings2 (integration, current behavior)', () => {
       const response = await request(app)
         .post('/ratings')
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ content: 0, rating: 11, tmdbIdentifier: TMDB_ID });
+        .send({ isMovie: true, rating: 11, tmdbIdentifier: TMDB_ID });
 
       expect(response.status).toBe(400);
       expect(response.body.error).toMatch(/1 to 10/);
     });
 
-    it('returns 400 when content is missing', async () => {
+    it('returns 400 when isMovie is missing', async () => {
       const response = await request(app)
         .post('/ratings')
         .set('Authorization', `Bearer ${signToken()}`)
         .send({ rating: 8, tmdbIdentifier: TMDB_ID });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toMatch(/content/i);
+      expect(response.body.error).toMatch(/isMovie/i);
     });
 
     it('returns 400 when tmdbIdentifier is missing', async () => {
       const response = await request(app)
         .post('/ratings')
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ content: 0, rating: 5 });
+        .send({ isMovie: true, rating: 5 });
 
       expect(response.status).toBe(400);
       expect(response.body.error).toMatch(/tmdbIdentifier/i);
     });
 
-    it('creates a rating from content + rating body', async () => {
+    it('creates a rating from isMovie + rating body', async () => {
       const response = await request(app)
         .post('/ratings')
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ content: 1, rating: 4, tmdbIdentifier: TMDB_ID });
+        .send({ isMovie: false, rating: 4, tmdbIdentifier: TMDB_ID });
 
       expect(response.status).toBe(201);
       expect(response.body).toMatchObject({
-        userId: DEV_USER_ID,
-        content: 1,
+        isMovie: false,
         value: 4,
         tmdbIdentifier: TMDB_ID,
       });
@@ -166,12 +164,11 @@ describeIfDb('Ratings2 (integration, current behavior)', () => {
       const response = await request(app)
         .post('/ratings')
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ content: 0, rating: '7abc', tmdbIdentifier: TMDB_ID });
+        .send({ isMovie: true, rating: '7abc', tmdbIdentifier: TMDB_ID });
 
       expect(response.status).toBe(201);
       expect(response.body).toMatchObject({
-        userId: DEV_USER_ID,
-        content: 0,
+        isMovie: true,
         value: 7,
         tmdbIdentifier: TMDB_ID,
       });
@@ -231,8 +228,7 @@ describeIfDb('Ratings2 (integration, current behavior)', () => {
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
         ratingId: created.ratingId,
-        userId: OTHER_USER_ID,
-        content: 0,
+        isMovie: true,
         value: 9,
         tmdbIdentifier: TMDB_ID,
       });
