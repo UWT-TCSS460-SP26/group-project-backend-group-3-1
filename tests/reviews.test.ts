@@ -76,14 +76,12 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
 
   describe('POST /reviews', () => {
     it('returns 401 when Authorization is missing', async () => {
-      const response = await request(app)
-        .post('/reviews')
-        .send({
-          text: 'hello',
-          isMovie: true,
-          dateOfReview: '2026-01-10',
-          tmdbIdentifier: TMDB_ID,
-        });
+      const response = await request(app).post('/reviews').send({
+        text: 'hello',
+        isMovie: true,
+        dateOfReview: '2026-01-10',
+        tmdbIdentifier: TMDB_ID,
+      });
 
       expect(response.status).toBe(401);
     });
