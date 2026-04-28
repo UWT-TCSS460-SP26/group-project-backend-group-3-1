@@ -60,7 +60,7 @@ router.post('/dev-login', async (request: Request, response: Response): Promise<
     create: {
       username,
       email: email ?? `${username}@dev.local`,
-      // role: 'user',
+      role: 'user',
     },
   });
 
@@ -68,7 +68,7 @@ router.post('/dev-login', async (request: Request, response: Response): Promise<
     {
       sub: user.id,
       email: user.email,
-      // role: user.role,
+      role: user.role,
     },
     secret,
     { expiresIn: '24h' }

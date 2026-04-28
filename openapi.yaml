@@ -22,6 +22,8 @@ tags:
     description: Movie endpoints
   - name: Shows
     description: TV show endpoints
+  - name: DevAuth
+    description: Local development authentication endpoint
   - name: Reviews
     description: Review endpoints
   - name: Ratings
@@ -503,6 +505,43 @@ paths:
                     type: string
                     example: Failed to reach TMDB service
 
+  /dev/dev-login:
+    post:
+      tags: [DevAuth]
+      summary: Create dev JWT for local testing
+      description: |
+        Finds or creates a local development user and returns a signed JWT.
+        This endpoint is for local/dev workflows only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DevLoginRequest'
+      responses:
+        '200':
+          description: JWT issued successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DevLoginResponse'
+        '400':
+          description: Missing or invalid username
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: username is required
+        '500':
+          description: JWT secret is not configured on the server
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: JWT_SECRET is not configured
+
   /reviews:
     post:
       tags: [Reviews]
@@ -933,9 +972,32 @@ components:
       example:
         error: Something went wrong
 
+    DevLoginRequest:
+      type: object
+      required: [username]
+      properties:
+        username:
+          type: string
+          description: Username to find or create
+          example: alice
+        email:
+          type: string
+          format: email
+          description: Optional; defaults to <username>@dev.local
+          example: alice@example.test
+
+    DevLoginResponse:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+          description: Signed JWT containing sub, email, role, iat, and exp
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
     ReviewCreateRequest:
       type: object
-      required: [text, type, dateOfReview]
+      required: [text, type, dateOfReview, tmdbIdentifier]
       properties:
         text:
           type: string
@@ -950,6 +1012,11 @@ components:
           type: string
           format: date
           example: '2026-04-25'
+        tmdbIdentifier:
+          type: integer
+          minimum: 1
+          description: TMDB movie id or TV series id for the reviewed title
+          example: 550
 
     ReviewUpdateRequest:
       type: object
@@ -967,7 +1034,7 @@ components:
 
     Review:
       type: object
-      required: [reviewId, userId, content, isMovie, dateOfReview]
+      required: [reviewId, userId, content, isMovie, dateOfReview, tmdbIdentifier]
       description: Review resource; `content` is the review text; `isMovie` is true for movie, false for show.
       properties:
         reviewId:
@@ -987,6 +1054,10 @@ components:
         dateOfReview:
           type: string
           example: '2026-04-25'
+        tmdbIdentifier:
+          type: integer
+          description: TMDB id for the movie or TV series
+          example: 550
 
     ReviewDeleteSuccess:
       type: object
@@ -1009,17 +1080,24 @@ components:
 
     RatingCreateRequest:
       type: object
-      required: [content, value]
+      required: [content, rating, tmdbIdentifier]
       properties:
         content:
           type: integer
           enum: [0, 1]
-          description: Movie or show
+          description: 0 = movie, 1 = show
           example: 0
-        value:
+        rating:
           type: integer
-          description: rating out of 10
-          example: 10
+          minimum: 1
+          maximum: 10
+          description: Score 1–10
+          example: 8
+        tmdbIdentifier:
+          type: integer
+          minimum: 1
+          description: TMDB movie id or TV series id
+          example: 550
 
     RatingDeleteSuccess:
       type: object
@@ -1031,7 +1109,7 @@ components:
 
     Rating:
       type: object
-      required: [ratingId, userId, content, value]
+      required: [ratingId, userId, content, value, tmdbIdentifier]
       properties:
         ratingId:
           type: integer
@@ -1049,6 +1127,10 @@ components:
           type: integer
           description: Score (e.g. 1–10), maps from DB column `rating`
           example: 8
+        tmdbIdentifier:
+          type: integer
+          description: TMDB id for the rated title
+          example: 550
 
     ShowSearchResult:
       type: object

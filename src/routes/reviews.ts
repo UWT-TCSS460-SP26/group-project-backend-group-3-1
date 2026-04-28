@@ -10,8 +10,14 @@ import {
 const reviewRouter = Router();
 
 reviewRouter.post('/', requireAuth, validateReviewBody, createReview);
-reviewRouter.get('/:reviewId', requireAuth, validateReviewIdParam, getReview);
-reviewRouter.patch('/:reviewId', validateReviewIdParam, validateReviewUpdateBody, updateReview);
-reviewRouter.delete('/:reviewId', validateReviewIdParam, deleteReview);
+reviewRouter.get('/:reviewId', validateReviewIdParam, getReview);
+reviewRouter.patch(
+  '/:reviewId',
+  requireAuth,
+  validateReviewIdParam,
+  validateReviewUpdateBody,
+  updateReview
+);
+reviewRouter.delete('/:reviewId', requireAuth, validateReviewIdParam, deleteReview);
 
 export { reviewRouter };

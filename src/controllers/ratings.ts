@@ -7,11 +7,13 @@ const toRatingResponse = (rating: {
   userId: string;
   isMovie: boolean;
   rating: number;
+  tmdbIdentifier: number;
 }) => ({
   ratingId: rating.ratingId,
   userId: rating.userId,
   content: rating.isMovie ? 0 : 1,
   value: rating.rating,
+  tmdbIdentifier: rating.tmdbIdentifier,
 });
 
 /**
@@ -35,21 +37,20 @@ export const getRating = async (req: Request, res: Response) => {
  * PATCH /ratings/:ratingId — sets the numeric score from body field `rating` (1–10). Validated in middleware.
  */
 export const updateRating = async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+
   const ratingId = Number(req.params.ratingId);
   const raw = (req.body as { rating: unknown }).rating;
   const nextRating = typeof raw === 'string' ? Number.parseInt(raw, 10) : (raw as number);
 
   try {
-    const existing = await prisma.rating.findFirst({ where: { ratingId } });
-    if (!existing) {
-      return res.status(404).json({ error: 'Rating not found' });
-    }
-
     const rating = await prisma.rating.update({
       where: {
         ratingId_userId: {
-          ratingId: existing.ratingId,
-          userId: existing.userId,
+          ratingId,
+          userId: req.user.sub,
         },
       },
       data: { rating: nextRating },
@@ -72,25 +73,27 @@ export const createRating = async (req: Request, res: Response) => {
     return res.status(401).json({ error: 'Not authenticated' });
   }
 
-  const { content, rating } = req.body as {
-    content?: number;
-    rating?: number;
+  const { content, rating, tmdbIdentifier } = req.body as {
+    content: number;
+    rating: number;
+    tmdbIdentifier: number;
   };
 
   const resolvedContent =
     typeof content === 'string' ? Number.parseInt(content, 10) : (content as number);
   const resolvedValue =
     typeof rating === 'string' ? Number.parseInt(rating, 10) : (rating as number);
-
-  if (!Number.isFinite(resolvedContent) || !Number.isFinite(resolvedValue)) {
-    return res.status(400).json({ error: 'content and value are required numbers' });
-  }
+  const resolvedTmdb =
+    typeof tmdbIdentifier === 'string'
+      ? Number.parseInt(tmdbIdentifier, 10)
+      : (tmdbIdentifier as number);
 
   const ratingResult = await prisma.rating.create({
     data: {
       userId: req.user.sub,
       isMovie: resolvedContent === 0,
       rating: resolvedValue,
+      tmdbIdentifier: resolvedTmdb,
     },
   });
 

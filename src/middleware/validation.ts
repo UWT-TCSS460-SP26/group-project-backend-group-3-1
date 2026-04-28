@@ -46,10 +46,10 @@ export const validateRatingIdParam = (request: Request, response: Response, next
  *   text, type (0|1), dateOfReview — `type` sets whether the review is for a movie or show and is fixed after create.
  */
 export const validateReviewBody = (request: Request, response: Response, next: NextFunction) => {
-  const { text, type, dateOfReview } = request.body as {
+  const { text, dateOfReview, tmdbIdentifier } = request.body as {
     text?: unknown;
-    type?: unknown;
     dateOfReview?: unknown;
+    tmdbIdentifier?: unknown;
   };
   if (text === undefined || text === null || String(text).trim() === '') {
     response.status(400).json({ error: 'Field "text" is required' });
@@ -70,6 +70,16 @@ export const validateReviewBody = (request: Request, response: Response, next: N
   const parsed = new Date(dateOfReview);
   if (Number.isNaN(parsed.getTime())) {
     response.status(400).json({ error: 'Field "dateOfReview" must be a valid date' });
+    return;
+  }
+  if (tmdbIdentifier === undefined || tmdbIdentifier === null) {
+    response.status(400).json({ error: 'Field "tmdbIdentifier" is required' });
+    return;
+  }
+  const tmdb =
+    typeof tmdbIdentifier === 'string' ? Number.parseInt(tmdbIdentifier, 10) : tmdbIdentifier;
+  if (typeof tmdb !== 'number' || !Number.isInteger(tmdb) || tmdb < 1) {
+    response.status(400).json({ error: 'Field "tmdbIdentifier" must be a positive integer' });
     return;
   }
   next();
@@ -112,9 +122,13 @@ export const validateReviewUpdateBody = (
 };
 
 /**
- * Validates JSON body for PATCH /ratings/:id — required `rating` (1–10), stored in column `rating`.
+ * Validates JSON body for PATCH /ratings/:ratingId — required `rating` (1–10).
  */
-export const validateRatingBody = (request: Request, response: Response, next: NextFunction) => {
+export const validateRatingPatchBody = (
+  request: Request,
+  response: Response,
+  next: NextFunction
+) => {
   const { rating } = request.body as { rating?: unknown };
   if (rating === undefined || rating === null) {
     response.status(400).json({ error: 'Field "rating" is required' });
@@ -125,6 +139,54 @@ export const validateRatingBody = (request: Request, response: Response, next: N
     response.status(400).json({ error: 'Field "rating" must be an integer from 1 to 10' });
     return;
   }
+  next();
+};
+
+/**
+ * Validates JSON body for POST /ratings — `content` (0|1), `rating` (1–10), `tmdbIdentifier` (positive TMDB id).
+ */
+export const validateRatingCreateBody = (
+  request: Request,
+  response: Response,
+  next: NextFunction
+) => {
+  const { content, rating, tmdbIdentifier } = request.body as {
+    content?: unknown;
+    rating?: unknown;
+    tmdbIdentifier?: unknown;
+  };
+
+  if (content === undefined || content === null) {
+    response.status(400).json({ error: 'Field "content" is required' });
+    return;
+  }
+  const c = typeof content === 'string' ? Number.parseInt(content, 10) : content;
+  if (typeof c !== 'number' || !Number.isInteger(c) || (c !== 0 && c !== 1)) {
+    response.status(400).json({ error: 'Field "content" must be 0 (movie) or 1 (show)' });
+    return;
+  }
+
+  if (rating === undefined || rating === null) {
+    response.status(400).json({ error: 'Field "rating" is required' });
+    return;
+  }
+  const n = typeof rating === 'string' ? Number.parseInt(rating, 10) : rating;
+  if (typeof n !== 'number' || !Number.isInteger(n) || n < 1 || n > 10) {
+    response.status(400).json({ error: 'Field "rating" must be an integer from 1 to 10' });
+    return;
+  }
+
+  if (tmdbIdentifier === undefined || tmdbIdentifier === null) {
+    response.status(400).json({ error: 'Field "tmdbIdentifier" is required' });
+    return;
+  }
+  const tmdb =
+    typeof tmdbIdentifier === 'string' ? Number.parseInt(tmdbIdentifier, 10) : tmdbIdentifier;
+  if (typeof tmdb !== 'number' || !Number.isInteger(tmdb) || tmdb < 1) {
+    response.status(400).json({ error: 'Field "tmdbIdentifier" must be a positive integer' });
+    return;
+  }
+
   next();
 };
 

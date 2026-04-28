@@ -6,10 +6,12 @@ import { prisma } from '../src/lib/prisma';
 
 const DEV_USER_ID = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
 const OTHER_USER_ID = '6f1ed002-ab65-4c86-a994-7cfa0f55df0f';
+const ADMIN_USER_ID = 'a0000000-0000-4000-8000-000000000001';
+const TMDB_ID = 550;
 
 const describeIfDb = describe;
 
-function signToken(overrides: { sub?: string } = {}): string {
+function signToken(overrides: { sub?: string; role?: string } = {}): string {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
     throw new Error('JWT_SECRET must be set (e.g. in .env) to run reviews2 tests');
@@ -18,7 +20,7 @@ function signToken(overrides: { sub?: string } = {}): string {
     {
       sub: overrides.sub ?? DEV_USER_ID,
       email: 'dev@test.local',
-      role: 'user',
+      role: overrides.role ?? 'user',
     },
     secret,
     { expiresIn: '1h' }
@@ -50,6 +52,17 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
       },
       update: {},
     });
+
+    await prisma.user.upsert({
+      where: { id: ADMIN_USER_ID },
+      create: {
+        id: ADMIN_USER_ID,
+        username: 'review2-admin',
+        email: 'review2-admin@test.local',
+        role: 'admin',
+      },
+      update: { role: 'admin' },
+    });
   });
 
   beforeEach(async () => {
@@ -65,7 +78,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
     it('returns 401 when Authorization is missing', async () => {
       const response = await request(app)
         .post('/reviews')
-        .send({ text: 'hello', type: 0, dateOfReview: '2026-01-10' });
+        .send({ text: 'hello', type: 0, dateOfReview: '2026-01-10', tmdbIdentifier: TMDB_ID });
 
       expect(response.status).toBe(401);
     });
@@ -75,7 +88,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
       const response = await request(app)
         .post('/reviews')
         .set('Authorization', `Bearer ${badToken}`)
-        .send({ text: 'hello', type: 0, dateOfReview: '2026-01-10' });
+        .send({ text: 'hello', type: 0, dateOfReview: '2026-01-10', tmdbIdentifier: TMDB_ID });
 
       expect(response.status).toBe(401);
     });
@@ -94,7 +107,12 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
       const response = await request(app)
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ text: 'Great film', type: 0, dateOfReview: '2026-01-10' });
+        .send({
+          text: 'Great film',
+          type: 0,
+          dateOfReview: '2026-01-10',
+          tmdbIdentifier: TMDB_ID,
+        });
 
       expect(response.status).toBe(201);
       expect(response.body).toMatchObject({
@@ -102,6 +120,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
         isMovie: true,
         content: 'Great film',
         dateOfReview: '2026-01-10',
+        tmdbIdentifier: TMDB_ID,
       });
       expect(typeof response.body.reviewId).toBe('number');
     });
@@ -110,37 +129,43 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
       const response = await request(app)
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ text: 'type two', type: 2, dateOfReview: '2026-03-01' });
+        .send({ text: 'type two', type: 2, dateOfReview: '2026-03-01', tmdbIdentifier: TMDB_ID });
 
       expect(response.status).toBe(201);
       expect(response.body).toMatchObject({
         userId: DEV_USER_ID,
         content: 'type two',
         isMovie: false,
+        tmdbIdentifier: TMDB_ID,
       });
     });
   });
 
   describe('GET /reviews/:reviewId', () => {
-    it('returns 401 when Authorization is missing', async () => {
-      const response = await request(app).get('/reviews/1');
-      expect(response.status).toBe(401);
+    it('returns 200 without Authorization (public read)', async () => {
+      const created = await request(app)
+        .post('/reviews')
+        .set('Authorization', `Bearer ${signToken()}`)
+        .send({
+          text: 'Public read',
+          type: 0,
+          dateOfReview: '2026-03-15',
+          tmdbIdentifier: TMDB_ID,
+        });
+
+      const response = await request(app).get(`/reviews/${created.body.reviewId as number}`);
+      expect(response.status).toBe(200);
+      expect(response.body.content).toBe('Public read');
     });
 
     it('returns 400 for invalid reviewId', async () => {
-      const response = await request(app)
-        .get('/reviews/abc')
-        .set('Authorization', `Bearer ${signToken()}`);
-
+      const response = await request(app).get('/reviews/abc');
       expect(response.status).toBe(400);
       expect(response.body.error).toMatch(/reviewId/);
     });
 
     it('returns 404 when review does not exist', async () => {
-      const response = await request(app)
-        .get('/reviews/999999')
-        .set('Authorization', `Bearer ${signToken()}`);
-
+      const response = await request(app).get('/reviews/999999');
       expect(response.status).toBe(404);
       expect(response.body.error).toBe('Review not found');
     });
@@ -149,12 +174,9 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
       const created = await request(app)
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ text: 'Read me', type: 0, dateOfReview: '2026-03-15' });
+        .send({ text: 'Read me', type: 0, dateOfReview: '2026-03-15', tmdbIdentifier: TMDB_ID });
 
-      const response = await request(app)
-        .get(`/reviews/${created.body.reviewId as number}`)
-        .set('Authorization', `Bearer ${signToken()}`);
-
+      const response = await request(app).get(`/reviews/${created.body.reviewId as number}`);
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
         reviewId: created.body.reviewId,
@@ -162,36 +184,19 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
         isMovie: true,
         content: 'Read me',
         dateOfReview: '2026-03-15',
-      });
-    });
-
-    it('ignores invalid query userId and falls back to reviewId lookup', async () => {
-      const created = await request(app)
-        .post('/reviews')
-        .set('Authorization', `Bearer ${signToken()}`)
-        .send({ text: 'Query fallback', type: 1, dateOfReview: '2026-04-01' });
-
-      const response = await request(app)
-        .get(`/reviews/${created.body.reviewId as number}?userId=not-a-uuid`)
-        .set('Authorization', `Bearer ${signToken()}`);
-
-      expect(response.status).toBe(200);
-      expect(response.body).toMatchObject({
-        reviewId: created.body.reviewId,
-        userId: DEV_USER_ID,
-        content: 'Query fallback',
+        tmdbIdentifier: TMDB_ID,
       });
     });
   });
 
   describe('PATCH /reviews/:reviewId', () => {
-    it('returns 401 when Authorization is missing (controller-level auth)', async () => {
+    it('returns 401 when Authorization is missing', async () => {
       const response = await request(app)
         .patch('/reviews/1')
         .send({ text: 'x', dateOfReview: '2026-01-01' });
 
       expect(response.status).toBe(401);
-      expect(response.body.error).toMatch(/authenticated/i);
+      expect(response.body.error).toBe('Missing or malformed Authorization header');
     });
 
     it('returns 400 for invalid reviewId', async () => {
@@ -208,7 +213,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
       const created = await request(app)
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ text: 'before', type: 1, dateOfReview: '2026-01-01' });
+        .send({ text: 'before', type: 1, dateOfReview: '2026-01-01', tmdbIdentifier: TMDB_ID });
 
       const response = await request(app)
         .patch(`/reviews/${created.body.reviewId as number}`)
@@ -219,71 +224,103 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
       expect(response.body.error).toMatch(/text|dateOfReview/);
     });
 
-    it('returns 401 even with Authorization header (no auth middleware on PATCH route)', async () => {
+    it('returns 403 when authenticated user does not own the review', async () => {
       const created = await request(app)
         .post('/reviews')
-        .set('Authorization', `Bearer ${signToken()}`)
-        .send({ text: 'mine', type: 0, dateOfReview: '2026-02-01' });
+        .set('Authorization', `Bearer ${signToken({ sub: OTHER_USER_ID })}`)
+        .send({ text: 'theirs', type: 0, dateOfReview: '2026-02-01', tmdbIdentifier: TMDB_ID });
 
       const response = await request(app)
-        .patch(`/reviews/${created.body.reviewId as number}?userId=${OTHER_USER_ID}`)
+        .patch(`/reviews/${created.body.reviewId as number}`)
         .set('Authorization', `Bearer ${signToken()}`)
         .send({ text: 'after', dateOfReview: '2026-02-02' });
 
-      expect(response.status).toBe(401);
-      expect(response.body.error).toMatch(/authenticated/i);
+      expect(response.status).toBe(403);
+      expect(response.body.error).toMatch(/own reviews/i);
     });
 
-    it('returns 401 for otherwise valid PATCH requests', async () => {
+    it('returns 200 when owner updates their review', async () => {
       const created = await request(app)
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ text: 'before', type: 1, dateOfReview: '2026-01-01' });
+        .send({ text: 'before', type: 1, dateOfReview: '2026-01-01', tmdbIdentifier: TMDB_ID });
 
       const response = await request(app)
         .patch(`/reviews/${created.body.reviewId as number}`)
         .set('Authorization', `Bearer ${signToken()}`)
         .send({ text: 'after', dateOfReview: '2026-06-20' });
 
-      expect(response.status).toBe(401);
-      expect(response.body.error).toMatch(/authenticated/i);
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({
+        content: 'after',
+        dateOfReview: '2026-06-20',
+        tmdbIdentifier: TMDB_ID,
+      });
     });
   });
 
   describe('DELETE /reviews/:reviewId', () => {
+    it('returns 401 when Authorization is missing', async () => {
+      const response = await request(app).delete('/reviews/1');
+      expect(response.status).toBe(401);
+    });
+
     it('returns 400 for invalid reviewId', async () => {
-      const response = await request(app).delete('/reviews/abc');
+      const response = await request(app)
+        .delete('/reviews/abc')
+        .set('Authorization', `Bearer ${signToken()}`);
+
       expect(response.status).toBe(400);
       expect(response.body.error).toMatch(/reviewId/);
     });
 
     it('returns 404 when review does not exist', async () => {
-      const response = await request(app).delete('/reviews/999999');
-      expect(response.status).toBe(404);
-      expect(response.body.error).toBe('Review not found');
-    });
-
-    it('returns 404 when query userId is valid UUID but does not match', async () => {
-      const created = await request(app)
-        .post('/reviews')
-        .set('Authorization', `Bearer ${signToken()}`)
-        .send({ text: 'to delete', type: 0, dateOfReview: '2026-08-01' });
-
-      const response = await request(app).delete(
-        `/reviews/${created.body.reviewId as number}?userId=${OTHER_USER_ID}`
-      );
+      const response = await request(app)
+        .delete('/reviews/999999')
+        .set('Authorization', `Bearer ${signToken()}`);
 
       expect(response.status).toBe(404);
       expect(response.body.error).toBe('Review not found');
     });
 
-    it('returns 200 and deletes successfully without auth middleware', async () => {
+    it('returns 403 when authenticated user does not own the review', async () => {
+      const created = await request(app)
+        .post('/reviews')
+        .set('Authorization', `Bearer ${signToken({ sub: OTHER_USER_ID })}`)
+        .send({ text: 'to delete', type: 0, dateOfReview: '2026-08-01', tmdbIdentifier: TMDB_ID });
+
+      const response = await request(app)
+        .delete(`/reviews/${created.body.reviewId as number}`)
+        .set('Authorization', `Bearer ${signToken()}`);
+
+      expect(response.status).toBe(403);
+      expect(response.body.error).toMatch(/own reviews/i);
+    });
+
+    it('returns 200 when owner deletes their review', async () => {
       const created = await request(app)
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ text: 'remove me', type: 1, dateOfReview: '2026-02-20' });
+        .send({ text: 'remove me', type: 1, dateOfReview: '2026-02-20', tmdbIdentifier: TMDB_ID });
 
-      const response = await request(app).delete(`/reviews/${created.body.reviewId as number}`);
+      const response = await request(app)
+        .delete(`/reviews/${created.body.reviewId as number}`)
+        .set('Authorization', `Bearer ${signToken()}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ message: 'Review deleted successfully' });
+    });
+
+    it('allows admin to delete another user review', async () => {
+      const created = await request(app)
+        .post('/reviews')
+        .set('Authorization', `Bearer ${signToken({ sub: OTHER_USER_ID })}`)
+        .send({ text: 'moderated', type: 0, dateOfReview: '2026-09-01', tmdbIdentifier: TMDB_ID });
+
+      const response = await request(app)
+        .delete(`/reviews/${created.body.reviewId as number}`)
+        .set('Authorization', `Bearer ${signToken({ sub: ADMIN_USER_ID, role: 'admin' })}`);
+
       expect(response.status).toBe(200);
       expect(response.body).toEqual({ message: 'Review deleted successfully' });
     });

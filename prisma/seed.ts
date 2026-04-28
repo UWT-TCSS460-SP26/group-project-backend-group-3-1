@@ -11,6 +11,7 @@ async function main() {
       id: DEV_USER_ID,
       username: 'dev',
       email: 'dev@local',
+      role: 'user',
     },
     update: {},
   });
