@@ -22,8 +22,6 @@ tags:
     description: Movie endpoints
   - name: Shows
     description: TV show endpoints
-  - name: DevAuth
-    description: Local development authentication endpoint
   - name: Reviews
     description: Review endpoints
   - name: Ratings
