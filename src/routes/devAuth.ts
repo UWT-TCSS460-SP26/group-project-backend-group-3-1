@@ -1,10 +1,11 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
+import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../lib/prisma';
 
 const router = Router();
 
-/**
+/*
  * POST /auth/dev-login
  *
  * TEMPORARY — Sprint 2 only. Accepts a username, find-or-creates a user row
@@ -47,14 +48,17 @@ router.post('/dev-login', async (request: Request, response: Response): Promise<
     return;
   }
 
-  const { username, email } = request.body as { username?: string; email?: string };
+  const { username, email } = (request.body ?? {}) as {
+    username?: string;
+    email?: string;
+  };
   if (!username || typeof username !== 'string') {
     response.status(400).json({ error: 'username is required' });
     return;
   }
 
   const user = await prisma.user.upsert({
-    where: { username },
+    where: { id: username },
     update: {},
     create: {
       username,
@@ -70,10 +74,11 @@ router.post('/dev-login', async (request: Request, response: Response): Promise<
       role: user.role,
     },
     secret,
-    { expiresIn: '24h' },
+    { expiresIn: '24h' }
   );
 
   response.json({ token });
 });
+
+export { router as devAuthRouter };
 */
-export default router;

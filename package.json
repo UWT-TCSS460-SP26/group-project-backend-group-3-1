@@ -10,15 +10,17 @@
   },
   "scripts": {
     "dev": "tsx watch --env-file=.env src/index.ts",
-    "postinstall": "prisma generate",
-    "build": "tsc",
+    "build": "npm run prisma:generate && tsc",
     "start": "node dist/index.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint:fix": "eslint --fix ."
+    "lint:fix": "eslint --fix .",
+    "prisma:seed": "tsx prisma/seed.ts",
+    "prisma:generate": "npx prisma generate",
+    "db:setup": "docker compose up -d && npx prisma migrate dev && npx prisma generate && tsx prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
@@ -27,7 +29,9 @@
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
+    "express-jwt": "^8.5.1",
     "jsonwebtoken": "^9.0.3",
+    "jwks-rsa": "^4.0.1",
     "pg": "^8.20.0",
     "yaml": "^2.8.3"
   },
