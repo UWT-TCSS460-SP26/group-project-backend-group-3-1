@@ -77,7 +77,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
   describe('POST /reviews', () => {
     it('returns 401 when Authorization is missing', async () => {
       const response = await request(app).post('/reviews').send({
-        text: 'hello',
+        reviewContent: 'hello',
         isMovie: true,
         dateOfReview: '2026-01-10',
         tmdbIdentifier: TMDB_ID,
@@ -92,7 +92,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
         .post('/reviews')
         .set('Authorization', `Bearer ${badToken}`)
         .send({
-          text: 'hello',
+          reviewContent: 'hello',
           isMovie: true,
           dateOfReview: '2026-01-10',
           tmdbIdentifier: TMDB_ID,
@@ -105,7 +105,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
       const response = await request(app)
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ text: 'hello', isMovie: true });
+        .send({ reviewContent: 'hello', isMovie: true });
 
       expect(response.status).toBe(400);
       expect(response.body.error).toBe('Field "dateOfReview" is required');
@@ -116,7 +116,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken()}`)
         .send({
-          text: 'Great film',
+          reviewContent: 'Great film',
           isMovie: true,
           dateOfReview: '2026-01-10',
           tmdbIdentifier: TMDB_ID,
@@ -137,7 +137,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken()}`)
         .send({
-          text: 'type two',
+          reviewContent: 'type two',
           isMovie: false,
           dateOfReview: '2026-03-01',
           tmdbIdentifier: TMDB_ID,
@@ -158,7 +158,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken()}`)
         .send({
-          text: 'Public read',
+          reviewContent: 'Public read',
           isMovie: true,
           dateOfReview: '2026-03-15',
           tmdbIdentifier: TMDB_ID,
@@ -186,7 +186,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken()}`)
         .send({
-          text: 'Read me',
+          reviewContent: 'Read me',
           isMovie: true,
           dateOfReview: '2026-03-15',
           tmdbIdentifier: TMDB_ID,
@@ -208,7 +208,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
     it('returns 401 when Authorization is missing', async () => {
       const response = await request(app)
         .patch('/reviews/1')
-        .send({ text: 'x', dateOfReview: '2026-01-01' });
+        .send({ reviewContent: 'x', dateOfReview: '2026-01-01' });
 
       expect(response.status).toBe(401);
       expect(response.body.error).toBe('Missing or malformed Authorization header');
@@ -218,7 +218,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
       const response = await request(app)
         .patch('/reviews/abc')
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ text: 'x', dateOfReview: '2026-01-01' });
+        .send({ reviewContent: 'x', dateOfReview: '2026-01-01' });
 
       expect(response.status).toBe(400);
       expect(response.body.error).toMatch(/reviewId/);
@@ -229,7 +229,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken()}`)
         .send({
-          text: 'before',
+          reviewContent: 'before',
           isMovie: false,
           dateOfReview: '2026-01-01',
           tmdbIdentifier: TMDB_ID,
@@ -238,10 +238,10 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
       const response = await request(app)
         .patch(`/reviews/${created.body.reviewId as number}`)
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ text: '' });
+        .send({ reviewContent: '' });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toMatch(/text|dateOfReview/);
+      expect(response.body.error).toMatch(/reviewContent|dateOfReview/);
     });
 
     it('returns 403 when authenticated user does not own the review', async () => {
@@ -249,7 +249,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken({ sub: OTHER_USER_ID })}`)
         .send({
-          text: 'theirs',
+          reviewContent: 'theirs',
           isMovie: true,
           dateOfReview: '2026-02-01',
           tmdbIdentifier: TMDB_ID,
@@ -258,7 +258,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
       const response = await request(app)
         .patch(`/reviews/${created.body.reviewId as number}`)
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ text: 'after', dateOfReview: '2026-02-02' });
+        .send({ reviewContent: 'after', dateOfReview: '2026-02-02' });
 
       expect(response.status).toBe(403);
       expect(response.body.error).toMatch(/own reviews/i);
@@ -269,7 +269,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken()}`)
         .send({
-          text: 'before',
+          reviewContent: 'before',
           isMovie: false,
           dateOfReview: '2026-01-01',
           tmdbIdentifier: TMDB_ID,
@@ -278,7 +278,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
       const response = await request(app)
         .patch(`/reviews/${created.body.reviewId as number}`)
         .set('Authorization', `Bearer ${signToken()}`)
-        .send({ text: 'after', dateOfReview: '2026-06-20' });
+        .send({ reviewContent: 'after', dateOfReview: '2026-06-20' });
 
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
@@ -318,7 +318,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken({ sub: OTHER_USER_ID })}`)
         .send({
-          text: 'to delete',
+          reviewContent: 'to delete',
           isMovie: true,
           dateOfReview: '2026-08-01',
           tmdbIdentifier: TMDB_ID,
@@ -337,7 +337,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken()}`)
         .send({
-          text: 'remove me',
+          reviewContent: 'remove me',
           isMovie: false,
           dateOfReview: '2026-02-20',
           tmdbIdentifier: TMDB_ID,
@@ -356,7 +356,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
         .post('/reviews')
         .set('Authorization', `Bearer ${signToken({ sub: OTHER_USER_ID })}`)
         .send({
-          text: 'moderated',
+          reviewContent: 'moderated',
           isMovie: true,
           dateOfReview: '2026-09-01',
           tmdbIdentifier: TMDB_ID,

@@ -40,7 +40,7 @@ const router = Router();
  * Admin accounts must be seeded separately — this endpoint only creates
  * regular users. To log in as an admin, create the user via your seed
  * script and then POST the same username here.
- */
+ 
 router.post('/dev-login', async (request: Request, response: Response): Promise<void> => {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
@@ -48,7 +48,10 @@ router.post('/dev-login', async (request: Request, response: Response): Promise<
     return;
   }
 
-  const { username, email } = request.body as { username?: string; email?: string };
+  const { username, email } = (request.body ?? {}) as {
+    username?: string;
+    email?: string;
+  };
   if (!username || typeof username !== 'string') {
     response.status(400).json({ error: 'username is required' });
     return;
@@ -78,3 +81,4 @@ router.post('/dev-login', async (request: Request, response: Response): Promise<
 });
 
 export { router as devAuthRouter };
+*/

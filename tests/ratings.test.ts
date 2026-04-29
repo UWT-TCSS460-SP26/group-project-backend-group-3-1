@@ -4,6 +4,8 @@ import request from 'supertest';
 import { app } from '../src/app';
 import { prisma } from '../src/lib/prisma';
 
+//TESTS NEED TO BE UPDATED TO NEW MIDDLEWARE FOR AUTHENTICATION
+
 const DEV_USER_ID = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
 const OTHER_USER_ID = '6f1ed002-ab65-4c86-a994-7cfa0f55df0f';
 /** Sample TMDB movie id for tests */

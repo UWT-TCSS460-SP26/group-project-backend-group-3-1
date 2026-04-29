@@ -505,43 +505,6 @@ paths:
                     type: string
                     example: Failed to reach TMDB service
 
-  /auth/dev-login:
-    post:
-      tags: [DevAuth]
-      summary: Create dev JWT for local testing
-      description: |
-        Finds or creates a local development user and returns a signed JWT.
-        This endpoint is for local/dev workflows only.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DevLoginRequest'
-      responses:
-        '200':
-          description: JWT issued successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DevLoginResponse'
-        '400':
-          description: Missing or invalid username
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorMessage'
-              example:
-                error: username is required
-        '500':
-          description: JWT secret is not configured on the server
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorMessage'
-              example:
-                error: JWT_SECRET is not configured
-
   /reviews:
     post:
       tags: [Reviews]
@@ -978,29 +941,6 @@ components:
       example:
         error: Something went wrong
 
-    DevLoginRequest:
-      type: object
-      required: [username]
-      properties:
-        username:
-          type: string
-          description: Username to find or create
-          example: alice
-        email:
-          type: string
-          format: email
-          description: Optional; defaults to <username>@dev.local
-          example: alice@example.test
-
-    DevLoginResponse:
-      type: object
-      required: [token]
-      properties:
-        token:
-          type: string
-          description: Signed JWT containing sub, email, role, iat, and exp
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-
     ReviewCreateRequest:
       type: object
       required: [reviewContent, isMovie, dateOfReview, tmdbIdentifier]
@@ -1026,11 +966,11 @@ components:
     ReviewUpdateRequest:
       type: object
       description: Updates review text and date of review.
-      required: [text, dateOfReview]
+      required: [reviewContent, dateOfReview]
       properties:
-        text:
+        reviewContent:
           type: string
-          description: Review body (stored in DB as reviewContent)
+          description: Review body
           example: An updated take.
         dateOfReview:
           type: string
@@ -1039,8 +979,8 @@ components:
 
     Review:
       type: object
-      required: [reviewId, content, isMovie, dateOfReview, tmdbIdentifier]
-      description: Review resource; `content` is the review text; `isMovie` is true for movie, false for show.
+      required: [reviewId, reviewContent, isMovie, dateOfReview, tmdbIdentifier]
+      description: Review resource; `reviewContent` is the review text; `isMovie` is true for movie, false for show.
       properties:
         reviewId:
           type: integer

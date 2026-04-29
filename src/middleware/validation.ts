@@ -43,21 +43,25 @@ export const validateRatingIdParam = (request: Request, response: Response, next
 
 /**
  * Validates JSON body for POST /reviews:
- *   text, isMovie (boolean), dateOfReview, tmdbIdentifier.
+ *   reviewContent, isMovie (boolean), dateOfReview, tmdbIdentifier.
  */
 export const validateReviewBody = (request: Request, response: Response, next: NextFunction) => {
-  const { text, isMovie, dateOfReview, tmdbIdentifier } = request.body as {
-    text?: unknown;
+  const { reviewContent, isMovie, dateOfReview, tmdbIdentifier } = request.body as {
+    reviewContent?: unknown;
     isMovie?: unknown;
     dateOfReview?: unknown;
     tmdbIdentifier?: unknown;
   };
-  if (text === undefined || text === null || String(text).trim() === '') {
-    response.status(400).json({ error: 'Field "text" is required' });
+  if (
+    reviewContent === undefined ||
+    reviewContent === null ||
+    String(reviewContent).trim() === ''
+  ) {
+    response.status(400).json({ error: 'Field "reviewContent" is required' });
     return;
   }
-  if (typeof text !== 'string') {
-    response.status(400).json({ error: 'Field "text" must be a string' });
+  if (typeof reviewContent !== 'string') {
+    response.status(400).json({ error: 'Field "reviewContent" must be a string' });
     return;
   }
   if (dateOfReview === undefined || dateOfReview === null || dateOfReview === '') {
@@ -91,23 +95,27 @@ export const validateReviewBody = (request: Request, response: Response, next: N
 };
 
 /**
- * Validates JSON body for PATCH /reviews/:reviewId — only `text` and `dateOfReview` (does not change movie vs show).
+ * Validates JSON body for PATCH /reviews/:reviewId — only `reviewContent` and `dateOfReview` (does not change movie vs show).
  */
 export const validateReviewUpdateBody = (
   request: Request,
   response: Response,
   next: NextFunction
 ) => {
-  const { text, dateOfReview } = request.body as {
-    text?: unknown;
+  const { reviewContent, dateOfReview } = request.body as {
+    reviewContent?: unknown;
     dateOfReview?: unknown;
   };
-  if (text === undefined || text === null || String(text).trim() === '') {
-    response.status(400).json({ error: 'Field "text" is required' });
+  if (
+    reviewContent === undefined ||
+    reviewContent === null ||
+    String(reviewContent).trim() === ''
+  ) {
+    response.status(400).json({ error: 'Field "reviewContent" is required' });
     return;
   }
-  if (typeof text !== 'string') {
-    response.status(400).json({ error: 'Field "text" must be a string' });
+  if (typeof reviewContent !== 'string') {
+    response.status(400).json({ error: 'Field "reviewContent" must be a string' });
     return;
   }
   if (dateOfReview === undefined || dateOfReview === null || dateOfReview === '') {

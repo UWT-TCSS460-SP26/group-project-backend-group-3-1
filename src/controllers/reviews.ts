@@ -10,8 +10,8 @@ export const createReview = async (req: Request, res: Response) => {
     return res.status(401).json({ error: 'Not authenticated' });
   }
 
-  const { text, isMovie, dateOfReview, tmdbIdentifier } = req.body as {
-    text: string;
+  const { reviewContent, isMovie, dateOfReview, tmdbIdentifier } = req.body as {
+    reviewContent: string;
     isMovie: boolean;
     dateOfReview: string;
     tmdbIdentifier: number;
@@ -28,13 +28,13 @@ export const createReview = async (req: Request, res: Response) => {
         userId: req.user.sub,
         isMovie,
         dateOfReview: new Date(dateOfReview),
-        reviewContent: text,
+        reviewContent,
         tmdbIdentifier: resolvedTmdb,
       },
     });
     return res.status(201).json({
       reviewId: review.reviewId,
-      reviewContent: text,
+      reviewContent,
       isMovie: review.isMovie,
       dateOfReview: review.dateOfReview.toISOString().slice(0, 10),
       tmdbIdentifier: review.tmdbIdentifier,
@@ -118,8 +118,8 @@ export const updateReview = async (req: Request, res: Response) => {
     return res.status(401).json({ error: 'Not authenticated' });
   }
 
-  const { text, dateOfReview } = req.body as {
-    text: string;
+  const { reviewContent, dateOfReview } = req.body as {
+    reviewContent: string;
     dateOfReview: string;
   };
 
@@ -137,7 +137,7 @@ export const updateReview = async (req: Request, res: Response) => {
 
     const review = await prisma.review.update({
       data: {
-        reviewContent: text,
+        reviewContent,
         dateOfReview: new Date(dateOfReview),
       },
       where: {
@@ -150,7 +150,7 @@ export const updateReview = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       reviewId: review.reviewId,
-      reviewContent: text,
+      reviewContent,
       isMovie: review.isMovie,
       dateOfReview: review.dateOfReview.toISOString().slice(0, 10),
       tmdbIdentifier: review.tmdbIdentifier,
