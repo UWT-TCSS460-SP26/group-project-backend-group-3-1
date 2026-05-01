@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 
 /** Matches a canonical UUID (version nibble 1–8, variant in 8, 9, a, or b). */
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+export const ISSUE_STATUSES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'] as const;
 
 /**
  * Validates that the named route parameter is a UUID (e.g. for `UserID`).
@@ -196,6 +197,37 @@ export const validateRatingCreateBody = (
     typeof tmdbIdentifier === 'string' ? Number.parseInt(tmdbIdentifier, 10) : tmdbIdentifier;
   if (typeof tmdb !== 'number' || !Number.isInteger(tmdb) || tmdb < 1) {
     response.status(400).json({ error: 'Field "tmdbIdentifier" must be a positive integer' });
+    return;
+  }
+
+  next();
+};
+
+/**
+ * Validates JSON body for POST /issues — required `issueStatus` and `issueDesc`.
+ */
+export const validateIssueCreateBody = (
+  request: Request,
+  response: Response,
+  next: NextFunction
+) => {
+  const { issueStatus, issueDesc } = request.body as {
+    issueStatus?: unknown;
+    issueDesc?: unknown;
+  };
+
+  if (
+    typeof issueStatus !== 'string' ||
+    !ISSUE_STATUSES.includes(issueStatus as (typeof ISSUE_STATUSES)[number])
+  ) {
+    response.status(400).json({
+      error: `issueStatus must be one of: ${ISSUE_STATUSES.join(', ')}`,
+    });
+    return;
+  }
+
+  if (typeof issueDesc !== 'string' || issueDesc.trim() === '') {
+    response.status(400).json({ error: 'issueDesc is required' });
     return;
   }
 
