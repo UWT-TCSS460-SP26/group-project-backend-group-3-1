@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
+import { resolveLocalUser } from '../auth/resolveLocalUser';
 
 const toRatingResponse = (rating: {
   ratingId: number;
@@ -35,21 +36,27 @@ export const getRating = async (req: Request, res: Response) => {
  * PATCH /ratings/:ratingId — sets the numeric score from body field `rating` (1–10). Validated in middleware.
  */
 export const updateRating = async (req: Request, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-
   const ratingId = Number(req.params.ratingId);
-  const raw = (req.body as { rating: unknown }).rating;
-  const nextRating = typeof raw === 'string' ? Number.parseInt(raw, 10) : (raw as number);
+  const nextRating = Number(req.body.rating);
 
   try {
+    const localUser = await resolveLocalUser(req);
+    const existing = await prisma.rating.findUnique({
+      where: { ratingId },
+      select: { userId: true },
+    });
+
+    if (!existing) {
+      return res.status(404).json({ error: 'Rating not found' });
+    }
+
+    if (existing.userId !== localUser.subjectId) {
+      return res.status(403).json({ error: 'You can only update your own ratings' });
+    }
+
     const rating = await prisma.rating.update({
       where: {
-        ratingId_userId: {
-          ratingId,
-          userId: req.user.sub,
-        },
+        ratingId,
       },
       data: { rating: nextRating },
     });
@@ -67,30 +74,20 @@ export const updateRating = async (req: Request, res: Response) => {
  * POST /ratings — creates a new rating for the authenticated user.
  */
 export const createRating = async (req: Request, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-
   const { isMovie, rating, tmdbIdentifier } = req.body as {
     isMovie: boolean;
     rating: number;
     tmdbIdentifier: number;
   };
 
-  const resolvedIsMovie = Boolean(isMovie);
-  const resolvedValue =
-    typeof rating === 'string' ? Number.parseInt(rating, 10) : (rating as number);
-  const resolvedTmdb =
-    typeof tmdbIdentifier === 'string'
-      ? Number.parseInt(tmdbIdentifier, 10)
-      : (tmdbIdentifier as number);
+  const localUser = await resolveLocalUser(req);
 
   const ratingResult = await prisma.rating.create({
     data: {
-      userId: req.user.sub,
-      isMovie: resolvedIsMovie,
-      rating: resolvedValue,
-      tmdbIdentifier: resolvedTmdb,
+      userId: localUser.subjectId,
+      isMovie,
+      rating,
+      tmdbIdentifier,
     },
   });
 
@@ -101,19 +98,26 @@ export const createRating = async (req: Request, res: Response) => {
  * DELETE /ratings/:ratingId — deletes the authenticated user's rating.
  */
 export const deleteRating = async (req: Request, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-
   const ratingId = Number(req.params.ratingId);
 
   try {
+    const localUser = await resolveLocalUser(req);
+    const existing = await prisma.rating.findUnique({
+      where: { ratingId },
+      select: { userId: true },
+    });
+
+    if (!existing) {
+      return res.status(404).json({ error: 'Rating not found' });
+    }
+
+    if (existing.userId !== localUser.subjectId) {
+      return res.status(403).json({ error: 'You can only delete your own ratings' });
+    }
+
     await prisma.rating.delete({
       where: {
-        ratingId_userId: {
-          ratingId,
-          userId: req.user.sub,
-        },
+        ratingId,
       },
     });
 

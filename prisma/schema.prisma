@@ -8,33 +8,38 @@ datasource db {
 }
 
 model User {
-  email    String
-  username String   @db.VarChar(20)
-  id       String   @id @default(uuid())
-  role     String   @default("user")
-  ratings  Rating[]
-  reviews  Review[]
+  id         Int      @id @default(autoincrement())
+  email      String
+  username   String   @db.VarChar(20)
+  role       String   @default("User")
+
+  subjectId  String   @unique  // 👈 auth identity (JWT sub)
+
+  firstName  String   @default("")
+  lastName   String   @default("")
+
+  ratings    Rating[]
+  reviews    Review[]
 }
 
+//Potentially remove composite keys
 model Rating {
-  ratingId        Int     @default(autoincrement())
-  userId          String
+  ratingId        Int     @id @default(autoincrement())
+  userId          String  
   isMovie         Boolean
   rating          Int
   tmdbIdentifier  Int
-  user            User    @relation(fields: [userId], references: [id])
 
-  @@id([ratingId, userId])
+  user            User    @relation(fields: [userId], references: [subjectId])
 }
 
 model Review {
-  reviewId        Int      @default(autoincrement())
+  reviewId        Int      @id @default(autoincrement())
   userId          String
   isMovie         Boolean
   dateOfReview    DateTime
   reviewContent   String
   tmdbIdentifier  Int
-  user            User     @relation(fields: [userId], references: [id])
 
-  @@id([reviewId, userId])
+  user            User     @relation(fields: [userId], references: [subjectId])
 }

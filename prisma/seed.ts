@@ -6,9 +6,9 @@ const DEV_USER_ID = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
 
 async function main() {
   const user = await prisma.user.upsert({
-    where: { id: DEV_USER_ID },
+    where: { subjectId: DEV_USER_ID },
     create: {
-      id: DEV_USER_ID,
+      subjectId: DEV_USER_ID,
       username: 'dev',
       email: 'dev@local',
       role: 'user',
