@@ -69,21 +69,26 @@ function buildProfileFromUserinfo(
     typeof body.preferred_username === 'string' ? body.preferred_username.trim() : '';
   const fromEmailLocal = email.includes('@') ? (email.split('@')[0] ?? '').trim() : '';
   const username = truncateUsername(
-    fromPreferred || fromEmailLocal || `u_${sub.replace(/[^a-zA-Z0-9]/g, '').slice(0, 12)}` || 'user'
+    fromPreferred ||
+      fromEmailLocal ||
+      `u_${sub.replace(/[^a-zA-Z0-9]/g, '').slice(0, 12)}` ||
+      'user'
   );
 
   return { email, username, firstName, lastName };
 }
 
-function buildProfileFromJwt(tokenSub: string, tokenEmail: string): {
+function buildProfileFromJwt(
+  tokenSub: string,
+  tokenEmail: string
+): {
   email: string;
   username: string;
   firstName: string;
   lastName: string;
 } {
   const email =
-    tokenEmail.trim() ||
-    `${tokenSub.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 48)}@jwt.local`;
+    tokenEmail.trim() || `${tokenSub.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 48)}@jwt.local`;
   const fromEmailLocal = email.includes('@') ? (email.split('@')[0] ?? '').trim() : '';
   const username = truncateUsername(
     fromEmailLocal || `u_${tokenSub.replace(/[^a-zA-Z0-9]/g, '').slice(0, 12)}` || 'user'
