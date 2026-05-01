@@ -11,11 +11,9 @@ jest.mock('../src/middleware/requireAuth', () => {
   return {
     ...actual,
     requireAuth: (req: Request, res: Response, next: NextFunction) => {
-      const { stubRequireAuth } = require('./auth');
       return stubRequireAuth(req, res, next);
     },
-    optionalAuth: (req: Response, res: Response, next: NextFunction) => {
-      const { stubOptionalAuth } = require('./auth');
+    optionalAuth: (req: Request, res: Response, next: NextFunction) => {
       return stubOptionalAuth(req, res, next);
     },
   };

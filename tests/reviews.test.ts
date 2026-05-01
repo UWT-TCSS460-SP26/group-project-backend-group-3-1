@@ -3,18 +3,16 @@ import request from 'supertest';
 import { app } from '../src/app';
 import { prisma } from '../src/lib/prisma';
 import { stubRequireAuth, stubOptionalAuth } from './auth';
-import {Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 
 jest.mock('../src/middleware/requireAuth', () => {
   const actual = jest.requireActual('../src/middleware/requireAuth');
   return {
     ...actual,
     requireAuth: (req: Request, res: Response, next: NextFunction) => {
-      const { stubRequireAuth } = require('./auth');
       return stubRequireAuth(req, res, next);
     },
     optionalAuth: (req: Request, res: Response, next: NextFunction) => {
-      const { stubOptionalAuth } = require('./auth');
       return stubOptionalAuth(req, res, next);
     },
   };
