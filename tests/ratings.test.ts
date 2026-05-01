@@ -1,32 +1,40 @@
 import 'dotenv/config';
-import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { app } from '../src/app';
 import { prisma } from '../src/lib/prisma';
+import { stubRequireAuth, stubOptionalAuth } from './auth';
+import { Request, Response, NextFunction } from 'express';
 
-//TESTS NEED TO BE UPDATED TO NEW MIDDLEWARE FOR AUTHENTICATION
+
+jest.mock('../src/middleware/requireAuth', () => {
+  const actual = jest.requireActual('../src/middleware/requireAuth');
+  return {
+    ...actual,
+    requireAuth: (req: Request, res: Response, next: NextFunction) => {
+      const { stubRequireAuth } = require('./auth');
+      return stubRequireAuth(req, res, next);
+    },
+    optionalAuth: (req: Response, res: Response, next: NextFunction) => {
+      const { stubOptionalAuth } = require('./auth');
+      return stubOptionalAuth(req, res, next);
+    },
+  };
+});
 
 const DEV_USER_ID = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
 const OTHER_USER_ID = '6f1ed002-ab65-4c86-a994-7cfa0f55df0f';
-/** Sample TMDB movie id for tests */
 const TMDB_ID = 550;
 
 const describeIfDb = describe;
 
-function signToken(overrides: { sub?: string } = {}): string {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('JWT_SECRET must be set (e.g. in .env) to run ratings2 tests');
-  }
-  return jwt.sign(
-    {
+function authHeader(overrides: { sub?: string } = {}): Record<string, string> {
+  return {
+    'x-test-user': JSON.stringify({
       sub: overrides.sub ?? DEV_USER_ID,
       email: 'dev@test.local',
       role: 'user',
-    },
-    secret,
-    { expiresIn: '1h' }
-  );
+    }),
+  };
 }
 
 describeIfDb('Ratings2 (integration, current behavior)', () => {
@@ -110,7 +118,7 @@ describeIfDb('Ratings2 (integration, current behavior)', () => {
     it('returns 400 when rating is missing', async () => {
       const response = await request(app)
         .post('/ratings')
-        .set('Authorization', `Bearer ${signToken()}`)
+        .set(authHeader())
         .send({ isMovie: true });
 
       expect(response.status).toBe(400);
@@ -120,7 +128,7 @@ describeIfDb('Ratings2 (integration, current behavior)', () => {
     it('returns 400 when rating is outside 1..10', async () => {
       const response = await request(app)
         .post('/ratings')
-        .set('Authorization', `Bearer ${signToken()}`)
+        .set(authHeader())
         .send({ isMovie: true, rating: 11, tmdbIdentifier: TMDB_ID });
 
       expect(response.status).toBe(400);
@@ -130,7 +138,7 @@ describeIfDb('Ratings2 (integration, current behavior)', () => {
     it('returns 400 when isMovie is missing', async () => {
       const response = await request(app)
         .post('/ratings')
-        .set('Authorization', `Bearer ${signToken()}`)
+        .set(authHeader())
         .send({ rating: 8, tmdbIdentifier: TMDB_ID });
 
       expect(response.status).toBe(400);
@@ -140,7 +148,7 @@ describeIfDb('Ratings2 (integration, current behavior)', () => {
     it('returns 400 when tmdbIdentifier is missing', async () => {
       const response = await request(app)
         .post('/ratings')
-        .set('Authorization', `Bearer ${signToken()}`)
+        .set(authHeader())
         .send({ isMovie: true, rating: 5 });
 
       expect(response.status).toBe(400);
@@ -150,7 +158,7 @@ describeIfDb('Ratings2 (integration, current behavior)', () => {
     it('creates a rating from isMovie + rating body', async () => {
       const response = await request(app)
         .post('/ratings')
-        .set('Authorization', `Bearer ${signToken()}`)
+        .set(authHeader())
         .send({ isMovie: false, rating: 4, tmdbIdentifier: TMDB_ID });
 
       expect(response.status).toBe(201);
@@ -165,7 +173,7 @@ describeIfDb('Ratings2 (integration, current behavior)', () => {
     it('accepts parseable rating strings because middleware/controller use parseInt', async () => {
       const response = await request(app)
         .post('/ratings')
-        .set('Authorization', `Bearer ${signToken()}`)
+        .set(authHeader())
         .send({ isMovie: true, rating: '7abc', tmdbIdentifier: TMDB_ID });
 
       expect(response.status).toBe(201);
@@ -186,7 +194,7 @@ describeIfDb('Ratings2 (integration, current behavior)', () => {
     it('returns 404 when authenticated but rating not found for this user', async () => {
       const response = await request(app)
         .patch('/ratings/999999')
-        .set('Authorization', `Bearer ${signToken()}`)
+        .set(authHeader())
         .send({ rating: 5 });
 
       expect(response.status).toBe(404);
@@ -196,7 +204,7 @@ describeIfDb('Ratings2 (integration, current behavior)', () => {
     it('returns 400 for invalid ratingId', async () => {
       const response = await request(app)
         .patch('/ratings/abc')
-        .set('Authorization', `Bearer ${signToken()}`)
+        .set(authHeader())
         .send({ rating: 6 });
 
       expect(response.status).toBe(400);
@@ -210,7 +218,7 @@ describeIfDb('Ratings2 (integration, current behavior)', () => {
 
       const response = await request(app)
         .patch(`/ratings/${created.ratingId}`)
-        .set('Authorization', `Bearer ${signToken()}`)
+        .set(authHeader())
         .send({});
 
       expect(response.status).toBe(400);
@@ -224,7 +232,7 @@ describeIfDb('Ratings2 (integration, current behavior)', () => {
 
       const response = await request(app)
         .patch(`/ratings/${created.ratingId}`)
-        .set('Authorization', `Bearer ${signToken({ sub: OTHER_USER_ID })}`)
+        .set(authHeader({ sub: OTHER_USER_ID }))
         .send({ rating: 9 });
 
       expect(response.status).toBe(200);
@@ -244,9 +252,7 @@ describeIfDb('Ratings2 (integration, current behavior)', () => {
     });
 
     it('returns 400 for invalid ratingId', async () => {
-      const response = await request(app)
-        .delete('/ratings/abc')
-        .set('Authorization', `Bearer ${signToken()}`);
+      const response = await request(app).delete('/ratings/abc').set(authHeader());
 
       expect(response.status).toBe(400);
       expect(response.body.error).toMatch(/ratingId/);
@@ -257,9 +263,7 @@ describeIfDb('Ratings2 (integration, current behavior)', () => {
         data: { userId: OTHER_USER_ID, isMovie: true, rating: 5, tmdbIdentifier: TMDB_ID },
       });
 
-      const response = await request(app)
-        .delete(`/ratings/${created.ratingId}`)
-        .set('Authorization', `Bearer ${signToken()}`);
+      const response = await request(app).delete(`/ratings/${created.ratingId}`).set(authHeader());
 
       expect(response.status).toBe(404);
       expect(response.body.error).toBe('Rating not found');
@@ -270,9 +274,7 @@ describeIfDb('Ratings2 (integration, current behavior)', () => {
         data: { userId: DEV_USER_ID, isMovie: false, rating: 10, tmdbIdentifier: TMDB_ID },
       });
 
-      const response = await request(app)
-        .delete(`/ratings/${created.ratingId}`)
-        .set('Authorization', `Bearer ${signToken()}`);
+      const response = await request(app).delete(`/ratings/${created.ratingId}`).set(authHeader());
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({ message: 'Rating deleted successfully' });

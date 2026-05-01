@@ -7,5 +7,7 @@ module.exports = {
   moduleFileExtensions: ['ts', 'js', 'json'],
   moduleNameMapper: {
     '^@scalar/express-api-reference$': '<rootDir>/tests/__mocks__/scalarMock.cjs',
+    '^express-jwt$': '<rootDir>/tests/__mocks__/express-jwt.js',
+    '^jwks-rsa$': '<rootDir>/tests/__mocks__/jwks-rsa.js',
   },
 };

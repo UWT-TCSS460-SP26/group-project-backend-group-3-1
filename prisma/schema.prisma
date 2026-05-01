@@ -17,24 +17,24 @@ model User {
 }
 
 model Rating {
-  ratingId        Int     @default(autoincrement())
-  userId          String
-  isMovie         Boolean
-  rating          Int
-  tmdbIdentifier  Int
-  user            User    @relation(fields: [userId], references: [id])
+  ratingId       Int     @default(autoincrement())
+  userId         String
+  isMovie        Boolean
+  rating         Int
+  tmdbIdentifier Int
+  user           User    @relation(fields: [userId], references: [id])
 
   @@id([ratingId, userId])
 }
 
 model Review {
-  reviewId        Int      @default(autoincrement())
-  userId          String
-  isMovie         Boolean
-  dateOfReview    DateTime
-  reviewContent   String
-  tmdbIdentifier  Int
-  user            User     @relation(fields: [userId], references: [id])
+  reviewId       Int      @default(autoincrement())
+  userId         String
+  isMovie        Boolean
+  dateOfReview   DateTime
+  reviewContent  String
+  tmdbIdentifier Int
+  user           User     @relation(fields: [userId], references: [id])
 
   @@id([reviewId, userId])
 }
