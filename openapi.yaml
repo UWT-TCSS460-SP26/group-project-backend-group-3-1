@@ -540,6 +540,8 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
                 error: Invalid or expired token
+        '502':
+          $ref: '#/components/responses/IdentityProviderError'
         '500':
           description: Server error
           content:
@@ -652,6 +654,8 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
                 error: Review not found
+        '502':
+          $ref: '#/components/responses/IdentityProviderError'
         '500':
           description: Server error
           content:
@@ -714,6 +718,8 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
                 error: Review not found
+        '502':
+          $ref: '#/components/responses/IdentityProviderError'
         '500':
           description: Server error
           content:
@@ -757,6 +763,8 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
                 error: Invalid or expired token
+        '502':
+          $ref: '#/components/responses/IdentityProviderError'
         '500':
           description: Server error
           content:
@@ -852,6 +860,8 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
                 error: Rating not found
+        '502':
+          $ref: '#/components/responses/IdentityProviderError'
 
         '500':
           description: Server error
@@ -911,6 +921,8 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
                 error: Rating not found
+        '502':
+          $ref: '#/components/responses/IdentityProviderError'
         '500':
           description: Server error
           content:
@@ -926,7 +938,19 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: Bearer token from sign-in
+      description: |
+        Bearer token from sign-in
+
+  responses:
+    IdentityProviderError:
+      description: |
+        User info could not be loaded when provisioning a new local user.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorMessage'
+          example:
+            error: Failed to load user profile from identity provider
 
   schemas:
     ErrorMessage:

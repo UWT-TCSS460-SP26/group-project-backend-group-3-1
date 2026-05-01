@@ -1,14 +1,14 @@
 import 'dotenv/config';
 import { prisma } from '../src/lib/prisma';
 
-/** Stable dev user for JWT `sub` and `POST /reviews` testing (idempotent upsert). */
-const DEV_USER_ID = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
+/** Stable dev subject for JWT `sub` and local API testing (idempotent upsert). */
+const DEV_SUBJECT_ID = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
 
 async function main() {
   const user = await prisma.user.upsert({
-    where: { id: DEV_USER_ID },
+    where: { subjectId: DEV_SUBJECT_ID },
     create: {
-      id: DEV_USER_ID,
+      subjectId: DEV_SUBJECT_ID,
       username: 'dev',
       email: 'dev@local',
       role: 'user',
@@ -17,9 +17,9 @@ async function main() {
   });
 
   // eslint-disable-next-line no-console
-  console.log('Seed: User ready. Use this UserID in JWT "sub" for local testing:');
+  console.log('Seed: User ready. Use this value in JWT "sub" for local testing:');
   // eslint-disable-next-line no-console
-  console.log(user.id);
+  console.log(user.subjectId);
 }
 
 void main()

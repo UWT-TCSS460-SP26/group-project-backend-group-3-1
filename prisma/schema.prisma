@@ -7,34 +7,57 @@ datasource db {
   provider = "postgresql"
 }
 
+enum IssueStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
 model User {
-  email    String
-  username String   @db.VarChar(20)
-  id       String   @id @default(uuid())
-  role     String   @default("user")
-  ratings  Rating[]
-  reviews  Review[]
+  id         Int      @id @default(autoincrement())
+  email      String
+  username   String   @db.VarChar(20)
+  role       String   @default("user")
+  subjectId  String   @unique
+  firstName  String   @default("")
+  lastName   String   @default("")
+  ratings    Rating[]
+  reviews    Review[]
+  issuesReported Issue[] @relation("IssueReporter")
+  issuesAssigned Issue[] @relation("IssueAssignee")
 }
 
 model Rating {
-  ratingId        Int     @default(autoincrement())
-  userId          String
-  isMovie         Boolean
-  rating          Int
-  tmdbIdentifier  Int
-  user            User    @relation(fields: [userId], references: [id])
-
-  @@id([ratingId, userId])
+  ratingId       Int     @id @default(autoincrement())
+  userId         Int
+  isMovie        Boolean
+  rating         Int
+  tmdbIdentifier Int
+  user           User    @relation(fields: [userId], references: [id])
 }
 
 model Review {
-  reviewId        Int      @default(autoincrement())
-  userId          String
-  isMovie         Boolean
-  dateOfReview    DateTime
-  reviewContent   String
-  tmdbIdentifier  Int
-  user            User     @relation(fields: [userId], references: [id])
+  reviewId       Int      @id @default(autoincrement())
+  userId         Int
+  isMovie        Boolean
+  dateOfReview   DateTime
+  reviewContent  String
+  tmdbIdentifier Int
+  user           User     @relation(fields: [userId], references: [id])
+}
 
-  @@id([reviewId, userId])
+model Issue {
+  issueId        Int         @id @default(autoincrement())
+  title          String
+  description    String      @default("")
+  status         IssueStatus @default(OPEN)
+  reporterId     Int
+  assigneeId     Int?
+  isMovie        Boolean?
+  tmdbIdentifier Int?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  reporter       User        @relation("IssueReporter", fields: [reporterId], references: [id])
+  assignee       User?       @relation("IssueAssignee", fields: [assigneeId], references: [id])
 }

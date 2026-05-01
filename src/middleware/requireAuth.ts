@@ -44,7 +44,8 @@ export const requireAuth = (request: Request, response: Response, next: NextFunc
     const sub = decoded.sub || decoded.userId || decoded.id;
     if (!sub) {
       response.status(401).json({
-        error: 'Token must include user id: set "sub", or "userId", or "id" to your User UUID',
+        error:
+          'Token must include the Auth² subject: set "sub", or "userId", or "id" to a stable subject string',
       });
       return;
     }
@@ -91,7 +92,8 @@ export const optionalAuth = (request: Request, response: Response, next: NextFun
     const sub = decoded.sub || decoded.userId || decoded.id;
     if (!sub) {
       response.status(401).json({
-        error: 'Token must include user id: set "sub", or "userId", or "id" to your User UUID',
+        error:
+          'Token must include the Auth² subject: set "sub", or "userId", or "id" to a stable subject string',
       });
       return;
     }

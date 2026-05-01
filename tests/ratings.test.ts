@@ -4,14 +4,15 @@ import request from 'supertest';
 import { app } from '../src/app';
 import { prisma } from '../src/lib/prisma';
 
-//TESTS NEED TO BE UPDATED TO NEW MIDDLEWARE FOR AUTHENTICATION
-
-const DEV_USER_ID = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
-const OTHER_USER_ID = '6f1ed002-ab65-4c86-a994-7cfa0f55df0f';
+const DEV_SUBJECT = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
+const OTHER_SUBJECT = '6f1ed002-ab65-4c86-a994-7cfa0f55df0f';
 /** Sample TMDB movie id for tests */
 const TMDB_ID = 550;
 
 const describeIfDb = describe;
+
+let devUserPk = 0;
+let otherUserPk = 0;
 
 function signToken(overrides: { sub?: string } = {}): string {
   const secret = process.env.JWT_SECRET;
@@ -20,7 +21,7 @@ function signToken(overrides: { sub?: string } = {}): string {
   }
   return jwt.sign(
     {
-      sub: overrides.sub ?? DEV_USER_ID,
+      sub: overrides.sub ?? DEV_SUBJECT,
       email: 'dev@test.local',
       role: 'user',
     },
@@ -35,33 +36,35 @@ describeIfDb('Ratings2 (integration, current behavior)', () => {
       throw new Error('DATABASE_URL must be set in .env to run ratings2 integration tests');
     }
 
-    await prisma.user.upsert({
-      where: { id: DEV_USER_ID },
+    const dev = await prisma.user.upsert({
+      where: { subjectId: DEV_SUBJECT },
       create: {
-        id: DEV_USER_ID,
+        subjectId: DEV_SUBJECT,
         username: 'rating2-test-user',
         email: 'rating2-dev@test.local',
       },
       update: {},
     });
+    devUserPk = dev.id;
 
-    await prisma.user.upsert({
-      where: { id: OTHER_USER_ID },
+    const other = await prisma.user.upsert({
+      where: { subjectId: OTHER_SUBJECT },
       create: {
-        id: OTHER_USER_ID,
+        subjectId: OTHER_SUBJECT,
         username: 'rating2-other-user',
         email: 'rating2-other@test.local',
       },
       update: {},
     });
+    otherUserPk = other.id;
   });
 
   beforeEach(async () => {
-    await prisma.rating.deleteMany({ where: { userId: { in: [DEV_USER_ID, OTHER_USER_ID] } } });
+    await prisma.rating.deleteMany({ where: { userId: { in: [devUserPk, otherUserPk] } } });
   });
 
   afterAll(async () => {
-    await prisma.rating.deleteMany({ where: { userId: { in: [DEV_USER_ID, OTHER_USER_ID] } } });
+    await prisma.rating.deleteMany({ where: { userId: { in: [devUserPk, otherUserPk] } } });
     await prisma.$disconnect();
   });
 
@@ -81,7 +84,7 @@ describeIfDb('Ratings2 (integration, current behavior)', () => {
     it('returns transformed rating response', async () => {
       const row = await prisma.rating.create({
         data: {
-          userId: DEV_USER_ID,
+          userId: devUserPk,
           isMovie: true,
           rating: 6,
           tmdbIdentifier: TMDB_ID,
@@ -205,7 +208,7 @@ describeIfDb('Ratings2 (integration, current behavior)', () => {
 
     it('returns 400 when rating is missing', async () => {
       const created = await prisma.rating.create({
-        data: { userId: DEV_USER_ID, isMovie: true, rating: 2, tmdbIdentifier: TMDB_ID },
+        data: { userId: devUserPk, isMovie: true, rating: 2, tmdbIdentifier: TMDB_ID },
       });
 
       const response = await request(app)
@@ -219,12 +222,12 @@ describeIfDb('Ratings2 (integration, current behavior)', () => {
 
     it('updates the authenticated user row for that ratingId', async () => {
       const created = await prisma.rating.create({
-        data: { userId: OTHER_USER_ID, isMovie: true, rating: 3, tmdbIdentifier: TMDB_ID },
+        data: { userId: otherUserPk, isMovie: true, rating: 3, tmdbIdentifier: TMDB_ID },
       });
 
       const response = await request(app)
         .patch(`/ratings/${created.ratingId}`)
-        .set('Authorization', `Bearer ${signToken({ sub: OTHER_USER_ID })}`)
+        .set('Authorization', `Bearer ${signToken({ sub: OTHER_SUBJECT })}`)
         .send({ rating: 9 });
 
       expect(response.status).toBe(200);
@@ -254,7 +257,7 @@ describeIfDb('Ratings2 (integration, current behavior)', () => {
 
     it('returns 404 when authenticated user does not own the row', async () => {
       const created = await prisma.rating.create({
-        data: { userId: OTHER_USER_ID, isMovie: true, rating: 5, tmdbIdentifier: TMDB_ID },
+        data: { userId: otherUserPk, isMovie: true, rating: 5, tmdbIdentifier: TMDB_ID },
       });
 
       const response = await request(app)
@@ -267,7 +270,7 @@ describeIfDb('Ratings2 (integration, current behavior)', () => {
 
     it('returns 200 and deletes the authenticated users row', async () => {
       const created = await prisma.rating.create({
-        data: { userId: DEV_USER_ID, isMovie: false, rating: 10, tmdbIdentifier: TMDB_ID },
+        data: { userId: devUserPk, isMovie: false, rating: 10, tmdbIdentifier: TMDB_ID },
       });
 
       const response = await request(app)
@@ -278,12 +281,7 @@ describeIfDb('Ratings2 (integration, current behavior)', () => {
       expect(response.body).toEqual({ message: 'Rating deleted successfully' });
 
       const deleted = await prisma.rating.findUnique({
-        where: {
-          ratingId_userId: {
-            ratingId: created.ratingId,
-            userId: DEV_USER_ID,
-          },
-        },
+        where: { ratingId: created.ratingId },
       });
       expect(deleted).toBeNull();
     });

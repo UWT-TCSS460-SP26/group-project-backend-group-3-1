@@ -35,7 +35,7 @@ export const getRating = async (req: Request, res: Response) => {
  * PATCH /ratings/:ratingId — sets the numeric score from body field `rating` (1–10). Validated in middleware.
  */
 export const updateRating = async (req: Request, res: Response) => {
-  if (!req.user) {
+  if (!req.localUser) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
 
@@ -43,14 +43,16 @@ export const updateRating = async (req: Request, res: Response) => {
   const raw = (req.body as { rating: unknown }).rating;
   const nextRating = typeof raw === 'string' ? Number.parseInt(raw, 10) : (raw as number);
 
+  const owned = await prisma.rating.findFirst({
+    where: { ratingId, userId: req.localUser.id },
+  });
+  if (!owned) {
+    return res.status(404).json({ error: 'Rating not found' });
+  }
+
   try {
     const rating = await prisma.rating.update({
-      where: {
-        ratingId_userId: {
-          ratingId,
-          userId: req.user.sub,
-        },
-      },
+      where: { ratingId },
       data: { rating: nextRating },
     });
 
@@ -67,7 +69,7 @@ export const updateRating = async (req: Request, res: Response) => {
  * POST /ratings — creates a new rating for the authenticated user.
  */
 export const createRating = async (req: Request, res: Response) => {
-  if (!req.user) {
+  if (!req.localUser) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
 
@@ -87,7 +89,7 @@ export const createRating = async (req: Request, res: Response) => {
 
   const ratingResult = await prisma.rating.create({
     data: {
-      userId: req.user.sub,
+      userId: req.localUser.id,
       isMovie: resolvedIsMovie,
       rating: resolvedValue,
       tmdbIdentifier: resolvedTmdb,
@@ -101,20 +103,22 @@ export const createRating = async (req: Request, res: Response) => {
  * DELETE /ratings/:ratingId — deletes the authenticated user's rating.
  */
 export const deleteRating = async (req: Request, res: Response) => {
-  if (!req.user) {
+  if (!req.localUser) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
 
   const ratingId = Number(req.params.ratingId);
 
+  const owned = await prisma.rating.findFirst({
+    where: { ratingId, userId: req.localUser.id },
+  });
+  if (!owned) {
+    return res.status(404).json({ error: 'Rating not found' });
+  }
+
   try {
     await prisma.rating.delete({
-      where: {
-        ratingId_userId: {
-          ratingId,
-          userId: req.user.sub,
-        },
-      },
+      where: { ratingId },
     });
 
     return res.status(200).json({ message: 'Rating deleted successfully' });
