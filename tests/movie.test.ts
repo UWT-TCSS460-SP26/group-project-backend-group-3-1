@@ -215,6 +215,11 @@ describe('Movie Popular Route', () => {
   it('GET /movies/popular returns transformed top 10 movie list', async () => {
     const results = Array.from({ length: 12 }, (_, i) => ({
       id: i + 1,
+      title: `Movie ${i + 1}`,
+      poster_path: `/poster-${i + 1}.jpg`,
+      release_date: `2024-01-${String(i + 1).padStart(2, '0')}`,
+      overview: `Overview ${i + 1}`,
+      genre_ids: [i + 10],
     }));
 
     const mockedResponse = {
@@ -230,7 +235,12 @@ describe('Movie Popular Route', () => {
     expect(response.body.count).toBe(10);
     expect(response.body.results).toHaveLength(10);
     expect(response.body.results[0]).toEqual({
-      movieId: 1,
+      id: 1,
+      title: 'Movie 1',
+      poster: '/poster-1.jpg',
+      releaseDate: '2024-01-01',
+      description: 'Overview 1',
+      genreIds: [10],
     });
   });
 

@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -12,37 +7,46 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id       String   @id @default(uuid())
-  username String   @db.VarChar(20)
-
-  // optional fields mentioned in diagram
-  email    String? // remove question mark if decided to keep email
-
-  // relations
-  ratings  Rating[]
-  reviews  Review[]
+enum IssueStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
 }
 
+model User {
+  id         Int      @id @default(autoincrement())
+  email      String
+  username   String   @db.VarChar(20)
+  role       String   @default("User")
+
+  subjectId  String   @unique  // 👈 auth identity (JWT sub)
+
+  firstName  String   @default("")
+  lastName   String   @default("")
+
+  ratings    Rating[]
+  reviews    Review[]
+}
+
+//Potentially remove composite keys
 model Rating {
-  ratingId  Int      @default(autoincrement())
-  userId    String
-  movieShow Boolean  // true = movie, false = show
+  ratingId        Int     @id @default(autoincrement())
+  userId          String  
+  isMovie         Boolean
+  rating          Int
+  tmdbIdentifier  Int
 
-  // relations
-  user      User     @relation(fields: [userId], references: [id])
-
-  @@id([ratingId, userId])
+  user            User    @relation(fields: [userId], references: [subjectId])
 }
 
 model Review {
-  reviewId     Int      @default(autoincrement())
-  userId       String
-  movieShow    Boolean
-  dateOfReview DateTime
+  reviewId        Int      @id @default(autoincrement())
+  userId          String
+  isMovie         Boolean
+  dateOfReview    DateTime
+  reviewContent   String
+  tmdbIdentifier  Int
 
-  // relations
-  user         User     @relation(fields: [userId], references: [id])
-
-  @@id([reviewId, userId])
+  user            User     @relation(fields: [userId], references: [subjectId])
 }

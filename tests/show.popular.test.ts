@@ -18,6 +18,11 @@ describe('Show Popular Route', () => {
   it('GET /shows/popular returns transformed top 10 show list', async () => {
     const results = Array.from({ length: 12 }, (_, i) => ({
       id: i + 100,
+      name: `Show ${i + 1}`,
+      poster_path: `/poster-${i + 1}.jpg`,
+      first_air_date: `2024-02-${String(i + 1).padStart(2, '0')}`,
+      overview: `Overview ${i + 1}`,
+      genre_ids: [i + 20],
     }));
 
     const mockedResponse = {
@@ -33,7 +38,12 @@ describe('Show Popular Route', () => {
     expect(response.body.count).toBe(10);
     expect(response.body.results).toHaveLength(10);
     expect(response.body.results[0]).toEqual({
-      showId: 100,
+      id: 100,
+      title: 'Show 1',
+      posterImage: 'https://image.tmdb.org/t/p/w500/poster-1.jpg',
+      releaseDate: '2024-02-01',
+      shortDescription: 'Overview 1',
+      genreIds: [20],
     });
   });
 

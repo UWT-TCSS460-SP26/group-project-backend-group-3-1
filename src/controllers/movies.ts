@@ -132,11 +132,21 @@ export const getPopularMovies = async (_req: Request, res: Response) => {
     const data = (await result.json()) as {
       results: Array<{
         id: number;
+        title: string;
+        poster_path: string | null;
+        release_date: string;
+        overview: string;
+        genre_ids?: number[];
       }>;
     };
 
     const popularMovies = data.results.slice(0, 10).map((movie) => ({
-      movieId: movie.id,
+      id: movie.id,
+      title: movie.title,
+      poster: movie.poster_path,
+      releaseDate: movie.release_date,
+      description: movie.overview,
+      genreIds: movie.genre_ids ?? [],
     }));
 
     return res.json({ count: popularMovies.length, results: popularMovies });

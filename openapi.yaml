@@ -22,6 +22,10 @@ tags:
     description: Movie endpoints
   - name: Shows
     description: TV show endpoints
+  - name: Reviews
+    description: Review endpoints
+  - name: Ratings
+    description: Rating endpoints
 
 paths:
   /heartbeat:
@@ -303,11 +307,28 @@ paths:
                     type: array
                     items:
                       type: object
-                      required: [movieId]
+                      required: [id, title, releaseDate, description, genreIds]
                       properties:
-                        movieId:
+                        id:
                           type: integer
                           example: 603
+                        title:
+                          type: string
+                          example: Fight Club
+                        poster:
+                          type: string
+                          nullable: true
+                          example: /f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg
+                        releaseDate:
+                          type: string
+                          example: '1999-10-15'
+                        description:
+                          type: string
+                        genreIds:
+                          type: array
+                          items:
+                            type: integer
+                          example: [18, 53]
         '500':
           description: Missing TMDB token configuration.
           content:
@@ -439,11 +460,28 @@ paths:
                     type: array
                     items:
                       type: object
-                      required: [showId]
+                      required: [id, title, releaseDate, shortDescription, genreIds]
                       properties:
-                        showId:
+                        id:
                           type: integer
                           example: 1399
+                        title:
+                          type: string
+                          example: Game of Thrones
+                        posterImage:
+                          type: string
+                          nullable: true
+                          example: https://image.tmdb.org/t/p/w500/1.png
+                        releaseDate:
+                          type: string
+                          example: '2011-04-17'
+                        shortDescription:
+                          type: string
+                        genreIds:
+                          type: array
+                          items:
+                            type: integer
+                          example: [10765, 18, 10759]
         '500':
           description: Missing TMDB token configuration.
           content:
@@ -465,7 +503,455 @@ paths:
                     type: string
                     example: Failed to reach TMDB service
 
+  /reviews:
+    post:
+      tags: [Reviews]
+      summary: Create a review
+      description: |
+        Adds a review for the current user.
+
+        Requires authentication (Bearer token).
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewCreateRequest'
+      responses:
+        '201':
+          description: OK Created Successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Invalid or expired token
+        '502':
+          $ref: '#/components/responses/IdentityProviderError'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Internal server error
+
+  /reviews/{reviewId}:
+    get:
+      tags: [Reviews]
+      summary: Get a single review
+      description: |
+        Get one review by review id (public endpoint).
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          description: Review id
+          schema:
+            type: integer
+            minimum: 1
+            example: 1
+      responses:
+        '200':
+          description: Review found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: 'Parameter "reviewId" must be a positive integer'
+        '404':
+          description: No review with that id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Review not found
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+    patch:
+      tags: [Reviews]
+      summary: Update a review
+      description: |
+        Update an existing review for the logged-in user.
+
+        Requires authentication (Bearer token).
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          description: Review id
+          schema:
+            type: integer
+            minimum: 1
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewUpdateRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Authenticated user does not own this review
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: You can only update your own reviews
+        '404':
+          description: No review with that id for the current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Review not found
+        '502':
+          $ref: '#/components/responses/IdentityProviderError'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+    delete:
+      tags: [Reviews]
+      summary: Delete a review
+      description: |
+        Removes a review for the current user.
+
+        Requires authentication (Bearer token).
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          description: Review id
+          schema:
+            type: integer
+            minimum: 1
+            example: 1
+      responses:
+        '200':
+          description: OK Deleted Successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewDeleteSuccess'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: 'Parameter "reviewId" must be a positive integer'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Authenticated user is not owner and not admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: You can only delete your own reviews
+        '404':
+          description: |
+            There is no review with that id for that account, or it was already deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Review not found
+        '502':
+          $ref: '#/components/responses/IdentityProviderError'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Internal server error
+
+  /ratings:
+    post:
+      tags: [Ratings]
+      summary: Create a rating
+      description: Adds a rating for the current user. Requires a Bearer token.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RatingCreateRequest'
+      responses:
+        '201':
+          description: OK Created Successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rating'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Invalid or expired token
+        '502':
+          $ref: '#/components/responses/IdentityProviderError'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Internal server error
+
+  /ratings/{ratingId}:
+    get:
+      tags: [Ratings]
+      summary: Get a rating
+      description: Reads one rating by id.
+      parameters:
+        - name: ratingId
+          in: path
+          required: true
+          description: Rating id
+          schema:
+            type: integer
+            minimum: 1
+            example: 1
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rating'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: 'Parameter "ratingId" must be a positive integer'
+        '404':
+          description: Rating not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Rating not found
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Internal server error
+
+    delete:
+      tags: [Ratings]
+      summary: Delete a rating
+      description: Removes a rating for the current user. Requires a Bearer token.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ratingId
+          in: path
+          required: true
+          description: Rating id
+      responses:
+        '200':
+          description: OK Deleted Successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RatingDeleteSuccess'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Parameter "ratingId" must be a positive integer
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Rating not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Rating not found
+        '502':
+          $ref: '#/components/responses/IdentityProviderError'
+
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Internal server error
+
+    patch:
+      tags: [Ratings]
+      summary: Update a rating
+      description: Updates the current user's rating. Requires a Bearer token.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ratingId
+          in: path
+          required: true
+          description: Rating id
+          schema:
+            type: integer
+            minimum: 1
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RatingUpdateRequest'
+      responses:
+        '200':
+          description: OK Updated Successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rating'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: |
+            There is no rating with that id for that account, or it does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Rating not found
+        '502':
+          $ref: '#/components/responses/IdentityProviderError'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Internal server error
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Bearer token from sign-in
+
+  responses:
+    IdentityProviderError:
+      description: |
+        User info could not be loaded when provisioning a new local user.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorMessage'
+          example:
+            error: Failed to load user profile from identity provider
+
   schemas:
     ErrorMessage:
       type: object
@@ -474,6 +960,134 @@ components:
         error:
           type: string
           description: Human-readable error message from this API.
+      example:
+        error: Something went wrong
+
+    ReviewCreateRequest:
+      type: object
+      required: [reviewContent, isMovie, dateOfReview, tmdbIdentifier]
+      properties:
+        reviewContent:
+          type: string
+          description: Review body
+          example: A thoughtful take on the film.
+        isMovie:
+          type: boolean
+          description: true = movie, false = show
+          example: true
+        dateOfReview:
+          type: string
+          format: date
+          example: '2026-04-25'
+        tmdbIdentifier:
+          type: integer
+          minimum: 1
+          description: TMDB movie id or TV series id for the reviewed title
+          example: 550
+
+    ReviewUpdateRequest:
+      type: object
+      description: Updates review text and date of review.
+      required: [reviewContent, dateOfReview]
+      properties:
+        reviewContent:
+          type: string
+          description: Review body
+          example: An updated take.
+        dateOfReview:
+          type: string
+          format: date
+          example: '2026-04-25'
+
+    Review:
+      type: object
+      required: [reviewId, reviewContent, isMovie, dateOfReview, tmdbIdentifier]
+      description: Review resource; `reviewContent` is the review text; `isMovie` is true for movie, false for show.
+      properties:
+        reviewId:
+          type: integer
+          example: 1
+        reviewContent:
+          type: string
+          example: A thoughtful take on the film.
+        isMovie:
+          type: boolean
+          description: true = movie, false = show
+          example: true
+        dateOfReview:
+          type: string
+          example: '2026-04-25'
+        tmdbIdentifier:
+          type: integer
+          description: TMDB id for the movie or TV series
+          example: 550
+
+    ReviewDeleteSuccess:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+          example: Review deleted successfully
+
+    RatingUpdateRequest:
+      type: object
+      required: [rating]
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: New score (1–10); stored in the `rating` column
+          example: 8
+
+    RatingCreateRequest:
+      type: object
+      required: [isMovie, rating, tmdbIdentifier]
+      properties:
+        isMovie:
+          type: boolean
+          description: true = movie, false = show
+          example: true
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Score 1–10
+          example: 8
+        tmdbIdentifier:
+          type: integer
+          minimum: 1
+          description: TMDB movie id or TV series id
+          example: 550
+
+    RatingDeleteSuccess:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+          example: rating deleted successfully
+
+    Rating:
+      type: object
+      required: [ratingId, isMovie, rating, tmdbIdentifier]
+      properties:
+        ratingId:
+          type: integer
+          example: 1
+        isMovie:
+          type: boolean
+          description: true = movie, false = show
+          example: true
+        rating:
+          type: integer
+          description: Score (e.g. 1–10), maps from DB column `rating`
+          example: 8
+        tmdbIdentifier:
+          type: integer
+          description: TMDB id for the rated title
+          example: 550
 
     ShowSearchResult:
       type: object

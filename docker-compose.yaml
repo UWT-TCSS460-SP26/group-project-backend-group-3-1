@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: 62097600
       POSTGRES_DB: group_project_backend_3
     ports:
-      - '5432:5432'
+      - '5433:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
 
