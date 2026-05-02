@@ -1,5 +1,8 @@
 import { Request, Response } from 'express';
+import { prisma } from '../lib/prisma';
+
 const BASE_URL = 'https://api.themoviedb.org/3';
+const RECENT_REVIEW_LIMIT = 5;
 
 export const getEnrichedDetails = async (req: Request, res: Response) => {
   const token = process.env.TMDB_BEARER_TOKEN;
@@ -19,6 +22,7 @@ export const getEnrichedDetails = async (req: Request, res: Response) => {
   }
 
   const tmdbPath = type === 'movie' ? 'movie' : 'tv';
+  const isMovie = type === 'movie';
 
   try {
     const result = await fetch(
@@ -41,10 +45,47 @@ export const getEnrichedDetails = async (req: Request, res: Response) => {
 
     const metadata = (await result.json()) as Record<string, unknown>;
 
+    const [ratingAggregate, reviewCount, recentReviews] = await Promise.all([
+      prisma.rating.aggregate({
+        where: { isMovie, tmdbIdentifier: tmdbId },
+        _avg: { rating: true },
+      }),
+      prisma.review.count({
+        where: { isMovie, tmdbIdentifier: tmdbId },
+      }),
+      prisma.review.findMany({
+        where: { isMovie, tmdbIdentifier: tmdbId },
+        orderBy: { dateOfReview: 'desc' },
+        take: RECENT_REVIEW_LIMIT,
+        select: {
+          reviewId: true,
+          userId: true,
+          reviewContent: true,
+          dateOfReview: true,
+          user: {
+            select: {
+              username: true,
+            },
+          },
+        },
+      }),
+    ]);
+
     return res.status(200).json({
       type,
       tmdbId,
       metadata,
+      community: {
+        averageRating: ratingAggregate._avg.rating,
+        reviewCount,
+        recentReviews: recentReviews.map((review) => ({
+          reviewId: review.reviewId,
+          userId: review.userId,
+          username: review.user.username,
+          reviewContent: review.reviewContent,
+          dateOfReview: review.dateOfReview.toISOString(),
+        })),
+      },
     });
   } catch {
     return res.status(502).json({ error: 'Failed to reach TMDB service' });
