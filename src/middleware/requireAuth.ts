@@ -19,6 +19,7 @@ declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace -- Express type augmentation
   namespace Express {
     interface Request {
+      auth?: AuthenticatedUser;
       user?: AuthenticatedUser;
     }
   }
@@ -53,6 +54,31 @@ const attachUser = (request: JwtRequest, _response: Response, next: NextFunction
   }
   next();
 };
+
+/**
+ * Verifies the Auth² JWT and attaches user to request.user.
+ */
+export const requireAuth = [checkJwt, populateUser];
+
+/**
+ * Optional Auth - continues even if no token is present.
+ */
+export const optionalAuth = [
+  expressjwt({
+    secret: jwksRsa.expressJwtSecret({
+      cache: true,
+      rateLimit: true,
+      jwksRequestsPerMinute: 5,
+      jwksUri:
+        process.env.AUTH0_JWKS_URI || `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`,
+    }) as GetVerificationKey,
+    audience: process.env.AUTH0_AUDIENCE,
+    issuer: process.env.AUTH0_ISSUER || `https://${process.env.AUTH0_DOMAIN}/`,
+    algorithms: ['RS256'],
+    credentialsRequired: false,
+  }),
+  populateUser,
+];
 
 // This is a custom error handler for the auth middleware.
 // It checks if the error is an UnauthorizedError and returns a 401 response.
