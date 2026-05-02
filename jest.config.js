@@ -1,3 +1,7 @@
+/** Dummy issuer/audience so `requireAuth` can load when `.env` is missing (CI, fresh clones). */
+process.env.AUTH_ISSUER ||= 'https://test.example/auth';
+process.env.API_AUDIENCE ||= 'test-api-audience';
+
 /** @type {import('jest').Config} */
 module.exports = {
   preset: 'ts-jest',

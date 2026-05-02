@@ -4,13 +4,9 @@ import { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 
 /**
- * POST /reviews — author is `req.localUser` (set by requireAuth + ensureLocalUser).
+ * POST /reviews — author is always req.user (set by requireAuth).
  */
 export const createReview = async (req: Request, res: Response) => {
-  if (!req.localUser) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-
   const { reviewContent, isMovie, dateOfReview, tmdbIdentifier } = req.body as {
     reviewContent: string;
     isMovie: boolean;
@@ -48,14 +44,7 @@ export const createReview = async (req: Request, res: Response) => {
  * DELETE /reviews/:reviewId — owner or admin (role === "admin"). Hard delete.
  */
 export const deleteReview = async (req: Request, res: Response) => {
-  if (!req.user || !req.localUser) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-
   const reviewId = Number(req.params.reviewId);
-  if (!Number.isInteger(reviewId) || reviewId <= 0) {
-    return res.status(400).json({ error: 'Parameter "reviewId" must be a positive integer' });
-  }
 
   try {
     const existing = await prisma.review.findFirst({ where: { reviewId } });
@@ -64,8 +53,8 @@ export const deleteReview = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Review not found' });
     }
 
-    const isOwner = existing.userId === req.user.sub;
-    const isAdmin = req.user.role === 'Admin';
+    const isOwner = existing.userId === req.user!.sub;
+    const isAdmin = req.user!.role === 'Admin';
     if (!isOwner && !isAdmin) {
       return res.status(403).json({ error: 'You can only delete your own reviews' });
     }
@@ -108,10 +97,6 @@ export const getReview = async (req: Request, res: Response) => {
  * PATCH /reviews/:reviewId — only the author may update (not admin).
  */
 export const updateReview = async (req: Request, res: Response) => {
-  if (!req.localUser) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-
   const { reviewContent, dateOfReview } = req.body as {
     reviewContent: string;
     dateOfReview: string;
@@ -125,7 +110,7 @@ export const updateReview = async (req: Request, res: Response) => {
     if (!existing) {
       return res.status(404).json({ error: 'Review not found' });
     }
-    if (existing.userId !== req.localUser.id) {
+    if (existing.userId !== req.user!.sub) {
       return res.status(403).json({ error: 'You can only update your own reviews' });
     }
 

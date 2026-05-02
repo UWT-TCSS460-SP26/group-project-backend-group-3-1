@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction, RequestHandler, ErrorRequestHandler } from 'express';
-import { expressjwt, type Request as JwtRequest } from 'express-jwt';
+import { expressjwt, type Request as JwtRequest, type GetVerificationKey } from 'express-jwt';
 import jwksRsa from 'jwks-rsa';
 
 export const ROLE_HIERARCHY = ['User', 'Moderator', 'Admin', 'SuperAdmin', 'Owner'] as const;
@@ -56,11 +56,6 @@ const attachUser = (request: JwtRequest, _response: Response, next: NextFunction
 };
 
 /**
- * Verifies the Auth² JWT and attaches user to request.user.
- */
-export const requireAuth = [checkJwt, populateUser];
-
-/**
  * Optional Auth - continues even if no token is present.
  */
 export const optionalAuth = [
@@ -77,7 +72,7 @@ export const optionalAuth = [
     algorithms: ['RS256'],
     credentialsRequired: false,
   }),
-  populateUser,
+  attachUser,
 ];
 
 // This is a custom error handler for the auth middleware.
