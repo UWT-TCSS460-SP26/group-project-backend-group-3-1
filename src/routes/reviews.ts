@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { ensureLocalUser } from '../auth/resolveLocalUser';
+import { resolveLocalUser } from '../auth/resolveLocalUser';
 import { createReview, deleteReview, getReview, updateReview } from '../controllers/reviews';
 import { requireAuth } from '../middleware/requireAuth';
 import {
@@ -10,12 +10,12 @@ import {
 
 const reviewRouter = Router();
 
-reviewRouter.post('/', requireAuth, ensureLocalUser, validateReviewBody, createReview);
+reviewRouter.post('/', requireAuth, resolveLocalUser, validateReviewBody, createReview);
 reviewRouter.get('/:reviewId', validateReviewIdParam, getReview);
 reviewRouter.patch(
   '/:reviewId',
   requireAuth,
-  ensureLocalUser,
+  resolveLocalUser,
   validateReviewIdParam,
   validateReviewUpdateBody,
   updateReview
@@ -23,7 +23,7 @@ reviewRouter.patch(
 reviewRouter.delete(
   '/:reviewId',
   requireAuth,
-  ensureLocalUser,
+  resolveLocalUser,
   validateReviewIdParam,
   deleteReview
 );

@@ -39,13 +39,6 @@ export const updateRating = async (req: Request, res: Response) => {
   const ratingId = Number(req.params.ratingId);
   const nextRating = Number(req.body.rating);
 
-  const owned = await prisma.rating.findFirst({
-    where: { ratingId, userId: req.localUser.id },
-  });
-  if (!owned) {
-    return res.status(404).json({ error: 'Rating not found' });
-  }
-
   try {
     const localUser = await resolveLocalUser(req);
     const existing = await prisma.rating.findUnique({
@@ -106,13 +99,6 @@ export const createRating = async (req: Request, res: Response) => {
  */
 export const deleteRating = async (req: Request, res: Response) => {
   const ratingId = Number(req.params.ratingId);
-
-  const owned = await prisma.rating.findFirst({
-    where: { ratingId, userId: req.localUser.id },
-  });
-  if (!owned) {
-    return res.status(404).json({ error: 'Rating not found' });
-  }
 
   try {
     const localUser = await resolveLocalUser(req);

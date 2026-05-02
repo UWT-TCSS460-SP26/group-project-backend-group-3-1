@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { ensureLocalUser } from '../auth/resolveLocalUser';
+import { resolveLocalUser } from '../auth/resolveLocalUser';
 import { createRating, deleteRating, getRating, updateRating } from '../controllers/ratings';
 import { requireAuth } from '../middleware/requireAuth';
 import {
@@ -14,16 +14,16 @@ ratingRouter.get('/:ratingId', validateRatingIdParam, getRating);
 ratingRouter.patch(
   '/:ratingId',
   requireAuth,
-  ensureLocalUser,
+  resolveLocalUser,
   validateRatingIdParam,
   validateRatingPatchBody,
   updateRating
 );
-ratingRouter.post('/', requireAuth, ensureLocalUser, validateRatingCreateBody, createRating);
+ratingRouter.post('/', requireAuth, resolveLocalUser, validateRatingCreateBody, createRating);
 ratingRouter.delete(
   '/:ratingId',
   requireAuth,
-  ensureLocalUser,
+  resolveLocalUser,
   validateRatingIdParam,
   deleteRating
 );
