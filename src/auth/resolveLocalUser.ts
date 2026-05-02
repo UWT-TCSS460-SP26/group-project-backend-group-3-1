@@ -1,183 +1,79 @@
-import type { NextFunction, Request, Response } from 'express';
-import { Prisma } from '../generated/prisma/client';
-import type { User } from '../generated/prisma/client';
+import type { Request } from 'express';
 import { prisma } from '../lib/prisma';
-
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace -- Express type augmentation
-  namespace Express {
-    interface Request {
-      localUser?: User;
-    }
-  }
-}
-
-const USERNAME_MAX = 20;
-
-type OidcUserInfo = {
-  sub?: string;
-  email?: string;
-  preferred_username?: string;
-  given_name?: string;
-  family_name?: string;
-  name?: string;
-};
-
-function normalizeIssuer(raw: string): string {
-  return raw.replace(/\/+$/, '');
-}
-
-function truncateUsername(value: string): string {
-  const trimmed = value.trim() || 'user';
-  return trimmed.length <= USERNAME_MAX ? trimmed : trimmed.slice(0, USERNAME_MAX);
-}
-
-function splitName(full: string): { firstName: string; lastName: string } {
-  const parts = full.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) {
-    return { firstName: '', lastName: '' };
-  }
-  if (parts.length === 1) {
-    return { firstName: parts[0] ?? '', lastName: '' };
-  }
-  return {
-    firstName: parts[0] ?? '',
-    lastName: parts.slice(1).join(' '),
-  };
-}
-
-function buildProfileFromUserinfo(
-  body: OidcUserInfo,
-  tokenSub: string,
-  tokenEmail: string
-): { email: string; username: string; firstName: string; lastName: string } {
-  const sub = body.sub ?? tokenSub;
-  const email =
-    (typeof body.email === 'string' && body.email.trim()) ||
-    tokenEmail.trim() ||
-    `${sub.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 48)}@placeholder.local`;
-
-  let firstName = typeof body.given_name === 'string' ? body.given_name.trim() : '';
-  let lastName = typeof body.family_name === 'string' ? body.family_name.trim() : '';
-  if (!firstName && !lastName && typeof body.name === 'string' && body.name.trim()) {
-    const split = splitName(body.name);
-    firstName = split.firstName;
-    lastName = split.lastName;
-  }
-
-  const fromPreferred =
-    typeof body.preferred_username === 'string' ? body.preferred_username.trim() : '';
-  const fromEmailLocal = email.includes('@') ? (email.split('@')[0] ?? '').trim() : '';
-  const username = truncateUsername(
-    fromPreferred ||
-      fromEmailLocal ||
-      `u_${sub.replace(/[^a-zA-Z0-9]/g, '').slice(0, 12)}` ||
-      'user'
-  );
-
-  return { email, username, firstName, lastName };
-}
-
-function buildProfileFromJwt(
-  tokenSub: string,
-  tokenEmail: string
-): {
-  email: string;
-  username: string;
-  firstName: string;
-  lastName: string;
-} {
-  const email =
-    tokenEmail.trim() || `${tokenSub.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 48)}@jwt.local`;
-  const fromEmailLocal = email.includes('@') ? (email.split('@')[0] ?? '').trim() : '';
-  const username = truncateUsername(
-    fromEmailLocal || `u_${tokenSub.replace(/[^a-zA-Z0-9]/g, '').slice(0, 12)}` || 'user'
-  );
-  return { email, username, firstName: '', lastName: '' };
-}
-
-async function persistUserFromClaims(
-  subjectId: string,
-  role: string,
-  profile: { email: string; username: string; firstName: string; lastName: string }
-): Promise<User> {
-  try {
-    return await prisma.user.create({
-      data: {
-        subjectId,
-        email: profile.email,
-        username: profile.username,
-        firstName: profile.firstName,
-        lastName: profile.lastName,
-        role,
-      },
-    });
-  } catch (e) {
-    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
-      const existing = await prisma.user.findUnique({ where: { subjectId } });
-      if (existing) {
-        return existing;
-      }
-    }
-    throw e;
-  }
-}
+import type { User } from '../generated/prisma/client';
 
 /**
- * After `requireAuth`, loads or creates the local `User` row keyed by JWT `sub` (Auth² subject).
- * On cache miss: calls `{AUTH_ISSUER}/v2/oauth/userinfo` when `AUTH_ISSUER` is set; otherwise
- * provisions from JWT claims only (for local/tests). Sets `req.localUser`.
+ * Upserts a local User row keyed by the auth-squared `sub` claim, then returns
+ * it. Call at the start of any handler that needs a local User PK — e.g. to
+ * set as a foreign key on Message.authorId. Handlers that don't touch any
+ * User-FK'd table can skip this.
+ *
+ * A plain helper, not express middleware — the DB write stays visible in the
+ * handler body, and the auth middleware itself is side-effect-free.
  */
-export const ensureLocalUser = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  if (!req.user) {
-    res.status(401).json({ error: 'Not authenticated' });
-    return;
-  }
+export const resolveLocalUser = async (request: Request): Promise<User> => {
+  const { sub, email: claimEmail } = request.user!;
 
-  const subjectId = req.user.sub;
-
-  try {
-    const cached = await prisma.user.findUnique({ where: { subjectId } });
-    if (cached) {
-      req.localUser = cached;
-      next();
-      return;
-    }
-
-    const header = req.headers.authorization;
-    const bearer =
-      header && header.startsWith('Bearer ') ? header.slice('Bearer '.length).trim() : '';
-
-    const issuerRaw = process.env.AUTH_ISSUER?.trim();
-    let profile: { email: string; username: string; firstName: string; lastName: string };
-
-    if (issuerRaw) {
-      if (!bearer) {
-        res.status(401).json({ error: 'Missing or malformed Authorization header' });
-        return;
-      }
-      const issuer = normalizeIssuer(issuerRaw);
-      const userinfoUrl = `${issuer}/v2/oauth/userinfo`;
-      const response = await fetch(userinfoUrl, {
-        headers: { Authorization: `Bearer ${bearer}` },
+  // Fast path: the local row itself caches the auth-squared enrichment, so
+  // userinfo is called at most once per sub — not per request.
+  const existing = await prisma.user.findUnique({ where: { subjectId: sub } });
+  if (existing) {
+    if (claimEmail && claimEmail !== existing.email) {
+      return prisma.user.update({
+        where: { subjectId: sub },
+        data: { email: claimEmail },
       });
-      if (!response.ok) {
-        res.status(502).json({ error: 'Failed to load user profile from identity provider' });
-        return;
-      }
-      const body = (await response.json()) as OidcUserInfo;
-      profile = buildProfileFromUserinfo(body, subjectId, req.user.email);
-    } else {
-      profile = buildProfileFromJwt(subjectId, req.user.email);
     }
-
-    req.localUser = await persistUserFromClaims(subjectId, req.user.role, profile);
-    next();
-  } catch (e) {
-    next(e);
+    return existing;
   }
+
+  const token = extractBearerToken(request);
+  const info = token ? await fetchUserInfo(token) : undefined;
+
+  const email = info?.email ?? claimEmail ?? `${sub}@placeholder.local`;
+  const { firstName, lastName } = splitName(info?.name);
+  const username =
+    info?.username ?? (info?.email ? info.email.split('@')[0] : `user-${sub.slice(0, 12)}`);
+
+  // upsert (not create) to tolerate a race between two concurrent first-time
+  // requests for the same sub.
+  return prisma.user.upsert({
+    where: { subjectId: sub },
+    update: {},
+    create: { subjectId: sub, username, email, firstName, lastName },
+  });
+};
+
+interface UserInfoResponse {
+  email?: string;
+  name?: string;
+  username?: string;
+}
+
+const fetchUserInfo = async (accessToken: string): Promise<UserInfoResponse | undefined> => {
+  const issuer = process.env.AUTH_ISSUER;
+  if (!issuer) return undefined;
+  try {
+    const response = await fetch(`${issuer}/v2/oauth/userinfo`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!response.ok) return undefined;
+    return (await response.json()) as UserInfoResponse;
+  } catch {
+    return undefined;
+  }
+};
+
+const extractBearerToken = (request: Request): string | undefined => {
+  const header = request.headers.authorization;
+  if (typeof header !== 'string') return undefined;
+  const [scheme, token] = header.split(' ');
+  return scheme?.toLowerCase() === 'bearer' && token ? token : undefined;
+};
+
+const splitName = (name: string | undefined): { firstName: string; lastName: string } => {
+  const trimmed = name?.trim();
+  if (!trimmed) return { firstName: 'Unknown', lastName: 'User' };
+  const [first, ...rest] = trimmed.split(/\s+/);
+  return { firstName: first, lastName: rest.length ? rest.join(' ') : 'User' };
 };

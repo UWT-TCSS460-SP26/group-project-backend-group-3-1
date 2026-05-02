@@ -18,46 +18,35 @@ model User {
   id         Int      @id @default(autoincrement())
   email      String
   username   String   @db.VarChar(20)
-  role       String   @default("user")
-  subjectId  String   @unique
+  role       String   @default("User")
+
+  subjectId  String   @unique  // 👈 auth identity (JWT sub)
+
   firstName  String   @default("")
   lastName   String   @default("")
+
   ratings    Rating[]
   reviews    Review[]
-  issuesReported Issue[] @relation("IssueReporter")
-  issuesAssigned Issue[] @relation("IssueAssignee")
 }
 
+//Potentially remove composite keys
 model Rating {
-  ratingId       Int     @id @default(autoincrement())
-  userId         Int
-  isMovie        Boolean
-  rating         Int
-  tmdbIdentifier Int
-  user           User    @relation(fields: [userId], references: [id])
+  ratingId        Int     @id @default(autoincrement())
+  userId          String  
+  isMovie         Boolean
+  rating          Int
+  tmdbIdentifier  Int
+
+  user            User    @relation(fields: [userId], references: [subjectId])
 }
 
 model Review {
-  reviewId       Int      @id @default(autoincrement())
-  userId         Int
-  isMovie        Boolean
-  dateOfReview   DateTime
-  reviewContent  String
-  tmdbIdentifier Int
-  user           User     @relation(fields: [userId], references: [id])
-}
+  reviewId        Int      @id @default(autoincrement())
+  userId          String
+  isMovie         Boolean
+  dateOfReview    DateTime
+  reviewContent   String
+  tmdbIdentifier  Int
 
-model Issue {
-  issueId        Int         @id @default(autoincrement())
-  title          String
-  description    String      @default("")
-  status         IssueStatus @default(OPEN)
-  reporterId     Int
-  assigneeId     Int?
-  isMovie        Boolean?
-  tmdbIdentifier Int?
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-  reporter       User        @relation("IssueReporter", fields: [reporterId], references: [id])
-  assignee       User?       @relation("IssueAssignee", fields: [assigneeId], references: [id])
+  user            User     @relation(fields: [userId], references: [subjectId])
 }

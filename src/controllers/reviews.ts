@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { resolveLocalUser } from '../auth/resolveLocalUser';
 import { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 
@@ -17,19 +18,15 @@ export const createReview = async (req: Request, res: Response) => {
     tmdbIdentifier: number;
   };
 
-  const resolvedTmdb =
-    typeof tmdbIdentifier === 'string'
-      ? Number.parseInt(tmdbIdentifier, 10)
-      : (tmdbIdentifier as number);
-
   try {
+    const localUser = await resolveLocalUser(req);
     const review = await prisma.review.create({
       data: {
-        userId: req.localUser.id,
+        userId: localUser.subjectId,
         isMovie,
         dateOfReview: new Date(dateOfReview),
         reviewContent,
-        tmdbIdentifier: resolvedTmdb,
+        tmdbIdentifier: tmdbIdentifier,
       },
     });
     return res.status(201).json({
@@ -67,14 +64,16 @@ export const deleteReview = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Review not found' });
     }
 
-    const isOwner = existing.userId === req.localUser.id;
-    const isAdmin = req.user.role === 'admin';
+    const isOwner = existing.userId === req.user.sub;
+    const isAdmin = req.user.role === 'Admin';
     if (!isOwner && !isAdmin) {
       return res.status(403).json({ error: 'You can only delete your own reviews' });
     }
 
     await prisma.review.delete({
-      where: { reviewId },
+      where: {
+        reviewId,
+      },
     });
     return res.status(200).json({ message: 'Review deleted successfully' });
   } catch (e) {
@@ -135,7 +134,9 @@ export const updateReview = async (req: Request, res: Response) => {
         reviewContent,
         dateOfReview: new Date(dateOfReview),
       },
-      where: { reviewId },
+      where: {
+        reviewId,
+      },
     });
 
     return res.status(200).json({
