@@ -12,6 +12,9 @@ const TMDB_ID = 550;
 
 const describeIfDb = describe;
 
+let devUserPk = 0;
+let otherUserPk = 0;
+
 function signToken(overrides: { sub?: string; role?: string } = {}): string {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
@@ -19,7 +22,7 @@ function signToken(overrides: { sub?: string; role?: string } = {}): string {
   }
   return jwt.sign(
     {
-      sub: overrides.sub ?? DEV_USER_ID,
+      sub: overrides.sub ?? DEV_SUBJECT,
       email: 'dev@test.local',
       role: overrides.role ?? 'user',
     },
@@ -34,30 +37,32 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
       throw new Error('DATABASE_URL must be set in .env to run reviews2 integration tests');
     }
 
-    await prisma.user.upsert({
-      where: { id: DEV_USER_ID },
+    const dev = await prisma.user.upsert({
+      where: { subjectId: DEV_SUBJECT },
       create: {
-        id: DEV_USER_ID,
+        subjectId: DEV_SUBJECT,
         username: 'review2-test-user',
         email: 'review2-dev@test.local',
       },
       update: {},
     });
+    devUserPk = dev.id;
 
-    await prisma.user.upsert({
-      where: { id: OTHER_USER_ID },
+    const other = await prisma.user.upsert({
+      where: { subjectId: OTHER_SUBJECT },
       create: {
-        id: OTHER_USER_ID,
+        subjectId: OTHER_SUBJECT,
         username: 'review2-other-user',
         email: 'review2-other@test.local',
       },
       update: {},
     });
+    otherUserPk = other.id;
 
     await prisma.user.upsert({
-      where: { id: ADMIN_USER_ID },
+      where: { subjectId: ADMIN_SUBJECT },
       create: {
-        id: ADMIN_USER_ID,
+        subjectId: ADMIN_SUBJECT,
         username: 'review2-admin',
         email: 'review2-admin@test.local',
         role: 'admin',
@@ -67,11 +72,11 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
   });
 
   beforeEach(async () => {
-    await prisma.review.deleteMany({ where: { userId: { in: [DEV_USER_ID, OTHER_USER_ID] } } });
+    await prisma.review.deleteMany({ where: { userId: { in: [devUserPk, otherUserPk] } } });
   });
 
   afterAll(async () => {
-    await prisma.review.deleteMany({ where: { userId: { in: [DEV_USER_ID, OTHER_USER_ID] } } });
+    await prisma.review.deleteMany({ where: { userId: { in: [devUserPk, otherUserPk] } } });
     await prisma.$disconnect();
   });
 
@@ -88,7 +93,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
     });
 
     it('returns 401 for token signed with the wrong secret', async () => {
-      const badToken = jwt.sign({ sub: DEV_USER_ID }, 'wrong-secret', { expiresIn: '1h' });
+      const badToken = jwt.sign({ sub: DEV_SUBJECT }, 'wrong-secret', { expiresIn: '1h' });
       const response = await request(app)
         .post('/reviews')
         .set('Authorization', `Bearer ${badToken}`)
@@ -248,7 +253,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
     it('returns 403 when authenticated user does not own the review', async () => {
       const created = await request(app)
         .post('/reviews')
-        .set('Authorization', `Bearer ${signToken({ sub: OTHER_USER_ID })}`)
+        .set('Authorization', `Bearer ${signToken({ sub: OTHER_SUBJECT })}`)
         .send({
           reviewContent: 'theirs',
           isMovie: true,
@@ -317,7 +322,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
     it('returns 403 when authenticated user does not own the review', async () => {
       const created = await request(app)
         .post('/reviews')
-        .set('Authorization', `Bearer ${signToken({ sub: OTHER_USER_ID })}`)
+        .set('Authorization', `Bearer ${signToken({ sub: OTHER_SUBJECT })}`)
         .send({
           reviewContent: 'to delete',
           isMovie: true,
@@ -355,7 +360,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
     it('allows admin to delete another user review', async () => {
       const created = await request(app)
         .post('/reviews')
-        .set('Authorization', `Bearer ${signToken({ sub: OTHER_USER_ID })}`)
+        .set('Authorization', `Bearer ${signToken({ sub: OTHER_SUBJECT })}`)
         .send({
           reviewContent: 'moderated',
           isMovie: true,
@@ -365,7 +370,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
 
       const response = await request(app)
         .delete(`/reviews/${created.body.reviewId as number}`)
-        .set('Authorization', `Bearer ${signToken({ sub: ADMIN_USER_ID, role: 'admin' })}`);
+        .set('Authorization', `Bearer ${signToken({ sub: ADMIN_SUBJECT, role: 'admin' })}`);
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({ message: 'Review deleted successfully' });

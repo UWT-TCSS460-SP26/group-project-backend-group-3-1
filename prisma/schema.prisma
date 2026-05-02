@@ -7,6 +7,13 @@ datasource db {
   provider = "postgresql"
 }
 
+enum IssueStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
 model User {
   id         Int      @id @default(autoincrement())
   email      String
