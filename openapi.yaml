@@ -954,6 +954,42 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
+    post:
+      tags: [Issues]
+      summary: Create a bug report
+      description: Creates a new issue entry used for bug reporting.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IssueCreateRequest'
+      responses:
+        '201':
+          description: Issue created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+        '400':
+          description: Invalid issue payload.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              examples:
+                invalidStatus:
+                  value:
+                    error: 'issueStatus must be one of: OPEN, IN_PROGRESS, RESOLVED, CLOSED'
+                missingDescription:
+                  value:
+                    error: issueDesc is required
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
 
   /details/{type}/{id}:
     get:
@@ -1062,42 +1098,6 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
         '502':
           description: Failed to reach TMDB service.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorMessage'
-    post:
-      tags: [Issues]
-      summary: Create a bug report
-      description: Creates a new issue entry used for bug reporting.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/IssueCreateRequest'
-      responses:
-        '201':
-          description: Issue created successfully.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Issue'
-        '400':
-          description: Invalid issue payload.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorMessage'
-              examples:
-                invalidStatus:
-                  value:
-                    error: 'issueStatus must be one of: OPEN, IN_PROGRESS, RESOLVED, CLOSED'
-                missingDescription:
-                  value:
-                    error: issueDesc is required
-        '500':
-          description: Server error
           content:
             application/json:
               schema:
