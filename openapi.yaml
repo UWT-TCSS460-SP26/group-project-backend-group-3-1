@@ -28,6 +28,8 @@ tags:
     description: Rating endpoints
   - name: Issues
     description: Bug reporting endpoints
+  - name: Details
+    description: Enriched TMDB detail endpoints
 
 paths:
   /heartbeat:
@@ -948,6 +950,118 @@ paths:
                   $ref: '#/components/schemas/Issue'
         '500':
           description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /details/{type}/{id}:
+    get:
+      tags: [Details]
+      summary: Get enriched movie/show details
+      description: Returns TMDB details plus local community rating/review data.
+      parameters:
+        - name: type
+          in: path
+          required: true
+          description: Content type.
+          schema:
+            type: string
+            enum: [movie, show]
+        - name: id
+          in: path
+          required: true
+          description: TMDB id.
+          schema:
+            type: integer
+            minimum: 1
+            example: 550
+      responses:
+        '200':
+          description: Enriched details response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [type, tmdbId, metadata, community]
+                properties:
+                  type:
+                    type: string
+                    enum: [movie, show]
+                  tmdbId:
+                    type: integer
+                  metadata:
+                    type: object
+                    additionalProperties: true
+                  community:
+                    type: object
+                    required: [averageRating, reviewCount, recentReviews]
+                    properties:
+                      averageRating:
+                        type: number
+                        nullable: true
+                        example: 4.2
+                      reviewCount:
+                        type: integer
+                        example: 3
+                      recentReviews:
+                        type: array
+                        items:
+                          type: object
+                          required:
+                            [reviewId, userId, username, reviewContent, dateOfReview]
+                          properties:
+                            reviewId:
+                              type: integer
+                              example: 1
+                            userId:
+                              type: string
+                              example: auth0|abc123
+                            username:
+                              type: string
+                              example: example
+                            reviewContent:
+                              type: string
+                              example: Great pacing and story.
+                            dateOfReview:
+                              type: string
+                              format: date-time
+                              example: '2026-05-01T00:00:00.000Z'
+        '400':
+          description: Invalid route parameter.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              examples:
+                invalidType:
+                  value:
+                    error: Parameter "type" must be "movie" or "show"
+                invalidId:
+                  value:
+                    error: Parameter "id" must be a positive integer
+        '404':
+          description: TMDB item not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, error]
+                properties:
+                  status:
+                    type: string
+                    example: Not Found - 404
+                  error:
+                    type: string
+                    example: TMDB API error
+        '500':
+          description: TMDB token missing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '502':
+          description: Failed to reach TMDB service.
           content:
             application/json:
               schema:
