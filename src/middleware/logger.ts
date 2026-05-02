@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 
-export const logger = (request: Request, _response: Response, next: NextFunction) => {
+export const logger = (req: Request, _res: Response, next: NextFunction) => {
   const timestamp = new Date().toISOString();
 
   // eslint-disable-next-line no-console
-  console.log(`[${timestamp}] ${request.method} ${request.path}`);
+  console.log(`[${timestamp}] ${req.method} ${req.path}`);
   next();
 };
