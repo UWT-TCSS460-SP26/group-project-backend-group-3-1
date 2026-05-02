@@ -50,3 +50,20 @@ model Review {
 
   user            User     @relation(fields: [userId], references: [subjectId])
 }
+
+model Issue {
+  issueID         Int   @default(autoincrement())
+  issueStatus     Status
+  issueDesc       String
+  issueReportDate   DateTime  @default(now())
+
+  @@id([issueID])
+  
+}
+
+enum Status {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}

@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 
 /** Matches a canonical UUID (version nibble 1–8, variant in 8, 9, a, or b). */
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+export const ISSUE_STATUSES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'] as const;
 
 /**
  * Validates that the named route parameter is a UUID (e.g. for `UserID`).
@@ -195,6 +196,37 @@ export const validateRatingCreateBody = (req: Request, res: Response, next: Next
 
   req.body.rating = n;
   req.body.tmdbIdentifier = tmdb;
+
+  next();
+};
+
+/**
+ * Validates JSON body for POST /issues — required `issueStatus` and `issueDesc`.
+ */
+export const validateIssueCreateBody = (
+  request: Request,
+  response: Response,
+  next: NextFunction
+) => {
+  const { issueStatus, issueDesc } = request.body as {
+    issueStatus?: unknown;
+    issueDesc?: unknown;
+  };
+
+  if (
+    typeof issueStatus !== 'string' ||
+    !ISSUE_STATUSES.includes(issueStatus as (typeof ISSUE_STATUSES)[number])
+  ) {
+    response.status(400).json({
+      error: `issueStatus must be one of: ${ISSUE_STATUSES.join(', ')}`,
+    });
+    return;
+  }
+
+  if (typeof issueDesc !== 'string' || issueDesc.trim() === '') {
+    response.status(400).json({ error: 'issueDesc is required' });
+    return;
+  }
 
   next();
 };
