@@ -26,6 +26,10 @@ tags:
     description: Review endpoints
   - name: Ratings
     description: Rating endpoints
+  - name: Issues
+    description: Bug reporting endpoints
+  - name: Details
+    description: Enriched TMDB detail endpoints
 
 paths:
   /heartbeat:
@@ -540,6 +544,8 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
                 error: Invalid or expired token
+        '502':
+          $ref: '#/components/responses/IdentityProviderError'
         '500':
           description: Server error
           content:
@@ -652,6 +658,8 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
                 error: Review not found
+        '502':
+          $ref: '#/components/responses/IdentityProviderError'
         '500':
           description: Server error
           content:
@@ -714,6 +722,8 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
                 error: Review not found
+        '502':
+          $ref: '#/components/responses/IdentityProviderError'
         '500':
           description: Server error
           content:
@@ -757,6 +767,8 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
                 error: Invalid or expired token
+        '502':
+          $ref: '#/components/responses/IdentityProviderError'
         '500':
           description: Server error
           content:
@@ -811,7 +823,6 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
                 error: Internal server error
-
     delete:
       tags: [Ratings]
       summary: Delete a rating
@@ -852,6 +863,8 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
                 error: Rating not found
+        '502':
+          $ref: '#/components/responses/IdentityProviderError'
 
         '500':
           description: Server error
@@ -861,7 +874,6 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
                 error: Internal server error
-
     patch:
       tags: [Ratings]
       summary: Update a rating
@@ -911,6 +923,8 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
                 error: Rating not found
+        '502':
+          $ref: '#/components/responses/IdentityProviderError'
         '500':
           description: Server error
           content:
@@ -920,13 +934,194 @@ paths:
               example:
                 error: Internal server error
 
+  /issues:
+    get:
+      tags: [Issues]
+      summary: List reported issues
+      description: Returns all bug reports sorted by latest report date first.
+      responses:
+        '200':
+          description: List of issues.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Issue'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+    post:
+      tags: [Issues]
+      summary: Create a bug report
+      description: Creates a new issue entry used for bug reporting.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IssueCreateRequest'
+      responses:
+        '201':
+          description: Issue created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+        '400':
+          description: Invalid issue payload.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              examples:
+                invalidStatus:
+                  value:
+                    error: 'issueStatus must be one of: OPEN, IN_PROGRESS, RESOLVED, CLOSED'
+                missingDescription:
+                  value:
+                    error: issueDesc is required
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /details/{type}/{id}:
+    get:
+      tags: [Details]
+      summary: Get enriched movie/show details
+      description: Returns TMDB details plus local community rating/review data.
+      parameters:
+        - name: type
+          in: path
+          required: true
+          description: Content type.
+          schema:
+            type: string
+            enum: [movie, show]
+        - name: id
+          in: path
+          required: true
+          description: TMDB id.
+          schema:
+            type: integer
+            minimum: 1
+            example: 550
+      responses:
+        '200':
+          description: Enriched details response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [type, tmdbId, metadata, community]
+                properties:
+                  type:
+                    type: string
+                    enum: [movie, show]
+                  tmdbId:
+                    type: integer
+                  metadata:
+                    type: object
+                    additionalProperties: true
+                  community:
+                    type: object
+                    required: [averageRating, reviewCount, recentReviews]
+                    properties:
+                      averageRating:
+                        type: number
+                        nullable: true
+                        example: 4.2
+                      reviewCount:
+                        type: integer
+                        example: 3
+                      recentReviews:
+                        type: array
+                        items:
+                          type: object
+                          required:
+                            [reviewId, userId, username, reviewContent, dateOfReview]
+                          properties:
+                            reviewId:
+                              type: integer
+                              example: 1
+                            userId:
+                              type: string
+                              example: auth0|abc123
+                            username:
+                              type: string
+                              example: example
+                            reviewContent:
+                              type: string
+                              example: Great pacing and story.
+                            dateOfReview:
+                              type: string
+                              format: date-time
+                              example: '2026-05-01T00:00:00.000Z'
+        '400':
+          description: Invalid route parameter.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              examples:
+                invalidType:
+                  value:
+                    error: Parameter "type" must be "movie" or "show"
+                invalidId:
+                  value:
+                    error: Parameter "id" must be a positive integer
+        '404':
+          description: TMDB item not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, error]
+                properties:
+                  status:
+                    type: string
+                    example: Not Found - 404
+                  error:
+                    type: string
+                    example: TMDB API error
+        '500':
+          description: TMDB token missing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '502':
+          description: Failed to reach TMDB service.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: Bearer token from sign-in
+      description: |
+        Bearer token from sign-in
+
+  responses:
+    IdentityProviderError:
+      description: |
+        User info could not be loaded when provisioning a new local user.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorMessage'
+          example:
+            error: Failed to load user profile from identity provider
 
   schemas:
     ErrorMessage:
@@ -1064,6 +1259,40 @@ components:
           type: integer
           description: TMDB id for the rated title
           example: 550
+
+    IssueCreateRequest:
+      type: object
+      required: [issueStatus, issueDesc]
+      properties:
+        issueStatus:
+          type: string
+          enum: [OPEN, IN_PROGRESS, RESOLVED, CLOSED]
+          description: Current bug lifecycle status.
+          example: OPEN
+        issueDesc:
+          type: string
+          description: Human-readable bug description.
+          example: Search endpoint throws 500 on empty query.
+
+    Issue:
+      type: object
+      required: [issueID, issueStatus, issueDesc, issueReportDate]
+      properties:
+        issueID:
+          type: integer
+          example: 1
+        issueStatus:
+          type: string
+          enum: [OPEN, IN_PROGRESS, RESOLVED, CLOSED]
+          example: OPEN
+        issueDesc:
+          type: string
+          example: Search endpoint throws 500 on empty query.
+        issueReportDate:
+          type: string
+          format: date-time
+          description: Issue creation timestamp in UTC (ISO-8601; `Z` suffix).
+          example: '2026-04-30T23:26:42.123Z'
 
     ShowSearchResult:
       type: object

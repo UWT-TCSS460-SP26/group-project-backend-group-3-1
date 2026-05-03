@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Issue" ALTER COLUMN "issueReportDate" SET DEFAULT CURRENT_TIMESTAMP;

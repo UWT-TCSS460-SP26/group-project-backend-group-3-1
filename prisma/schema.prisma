@@ -7,34 +7,63 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  email    String
-  username String   @db.VarChar(20)
-  id       String   @id @default(uuid())
-  role     String   @default("user")
-  ratings  Rating[]
-  reviews  Review[]
+enum IssueStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
 }
 
-model Rating {
-  ratingId       Int     @default(autoincrement())
-  userId         String
-  isMovie        Boolean
-  rating         Int
-  tmdbIdentifier Int
-  user           User    @relation(fields: [userId], references: [id])
+model User {
+  id         Int      @id @default(autoincrement())
+  email      String
+  username   String   @db.VarChar(20)
+  role       String   @default("User")
 
-  @@id([ratingId, userId])
+  subjectId  String   @unique  // 👈 auth identity (JWT sub)
+
+  firstName  String   @default("")
+  lastName   String   @default("")
+
+  ratings    Rating[]
+  reviews    Review[]
+}
+
+//Potentially remove composite keys
+model Rating {
+  ratingId        Int     @id @default(autoincrement())
+  userId          String  
+  isMovie         Boolean
+  rating          Int
+  tmdbIdentifier  Int
+
+  user            User    @relation(fields: [userId], references: [subjectId])
 }
 
 model Review {
-  reviewId       Int      @default(autoincrement())
-  userId         String
-  isMovie        Boolean
-  dateOfReview   DateTime
-  reviewContent  String
-  tmdbIdentifier Int
-  user           User     @relation(fields: [userId], references: [id])
+  reviewId        Int      @id @default(autoincrement())
+  userId          String
+  isMovie         Boolean
+  dateOfReview    DateTime
+  reviewContent   String
+  tmdbIdentifier  Int
 
-  @@id([reviewId, userId])
+  user            User     @relation(fields: [userId], references: [subjectId])
+}
+
+model Issue {
+  issueID         Int   @default(autoincrement())
+  issueStatus     Status
+  issueDesc       String
+  issueReportDate   DateTime  @default(now())
+
+  @@id([issueID])
+  
+}
+
+enum Status {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
 }

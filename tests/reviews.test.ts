@@ -18,6 +18,7 @@ jest.mock('../src/middleware/requireAuth', () => {
   };
 });
 
+//TESTS NEED TO BE UPDATED TO NEW MIDDLEWARE FOR AUTHENTICATION
 const DEV_USER_ID = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
 const OTHER_USER_ID = '6f1ed002-ab65-4c86-a994-7cfa0f55df0f';
 const ADMIN_USER_ID = 'a0000000-0000-4000-8000-000000000001';
@@ -41,30 +42,32 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
       throw new Error('DATABASE_URL must be set in .env to run reviews2 integration tests');
     }
 
-    await prisma.user.upsert({
-      where: { id: DEV_USER_ID },
+    const dev = await prisma.user.upsert({
+      where: { subjectId: DEV_SUBJECT },
       create: {
-        id: DEV_USER_ID,
+        subjectId: DEV_SUBJECT,
         username: 'review2-test-user',
         email: 'review2-dev@test.local',
       },
       update: {},
     });
+    devUserPk = dev.id;
 
-    await prisma.user.upsert({
-      where: { id: OTHER_USER_ID },
+    const other = await prisma.user.upsert({
+      where: { subjectId: OTHER_SUBJECT },
       create: {
-        id: OTHER_USER_ID,
+        subjectId: OTHER_SUBJECT,
         username: 'review2-other-user',
         email: 'review2-other@test.local',
       },
       update: {},
     });
+    otherUserPk = other.id;
 
     await prisma.user.upsert({
-      where: { id: ADMIN_USER_ID },
+      where: { subjectId: ADMIN_SUBJECT },
       create: {
-        id: ADMIN_USER_ID,
+        subjectId: ADMIN_SUBJECT,
         username: 'review2-admin',
         email: 'review2-admin@test.local',
         role: 'admin',
@@ -74,11 +77,11 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
   });
 
   beforeEach(async () => {
-    await prisma.review.deleteMany({ where: { userId: { in: [DEV_USER_ID, OTHER_USER_ID] } } });
+    await prisma.review.deleteMany({ where: { userId: { in: [devUserPk, otherUserPk] } } });
   });
 
   afterAll(async () => {
-    await prisma.review.deleteMany({ where: { userId: { in: [DEV_USER_ID, OTHER_USER_ID] } } });
+    await prisma.review.deleteMany({ where: { userId: { in: [devUserPk, otherUserPk] } } });
     await prisma.$disconnect();
   });
 
