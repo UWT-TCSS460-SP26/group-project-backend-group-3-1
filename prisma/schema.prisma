@@ -32,23 +32,25 @@ model User {
 //Potentially remove composite keys
 model Rating {
   ratingId        Int     @id @default(autoincrement())
-  userId          String  
+  /** Local user PK — join to `User.id`. Auth `sub` lives on `User.subjectId`. */
+  userId          Int
   isMovie         Boolean
   rating          Int
   tmdbIdentifier  Int
 
-  user            User    @relation(fields: [userId], references: [subjectId])
+  user            User    @relation(fields: [userId], references: [id])
 }
 
 model Review {
   reviewId        Int      @id @default(autoincrement())
-  userId          String
+  /** Local user PK — join to `User.id`. Auth `sub` lives on `User.subjectId`. */
+  userId          Int
   isMovie         Boolean
   dateOfReview    DateTime
   reviewContent   String
   tmdbIdentifier  Int
 
-  user            User     @relation(fields: [userId], references: [subjectId])
+  user            User     @relation(fields: [userId], references: [id])
 }
 
 model Issue {

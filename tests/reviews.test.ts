@@ -18,73 +18,57 @@ jest.mock('../src/middleware/requireAuth', () => {
   };
 });
 
-//TESTS NEED TO BE UPDATED TO NEW MIDDLEWARE FOR AUTHENTICATION
-const DEV_USER_ID = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
-const OTHER_USER_ID = '6f1ed002-ab65-4c86-a994-7cfa0f55df0f';
-const ADMIN_USER_ID = 'a0000000-0000-4000-8000-000000000001';
-const TMDB_ID = 550;
-
-const describeIfDb = describe;
-
 function authHeader(overrides: { sub?: string; role?: string } = {}): Record<string, string> {
   return {
     'x-test-user': JSON.stringify({
-      sub: overrides.sub ?? DEV_USER_ID,
+      sub: overrides.sub ?? 'test-sub-123',
       email: 'dev@test.local',
-      role: overrides.role ?? 'user',
+      role: overrides.role ?? 'User',
     }),
   };
 }
 
-describeIfDb('Reviews2 (integration, current behavior)', () => {
+const TMDB_ID = 550;
+
+describe('Reviews (integration)', () => {
   beforeAll(async () => {
-    if (!process.env.DATABASE_URL) {
-      throw new Error('DATABASE_URL must be set in .env to run reviews2 integration tests');
-    }
-
-    const dev = await prisma.user.upsert({
-      where: { subjectId: DEV_SUBJECT },
+    await prisma.user.upsert({
+      where: { subjectId: 'test-sub-123' },
       create: {
-        subjectId: DEV_SUBJECT,
-        username: 'review2-test-user',
-        email: 'review2-dev@test.local',
+        subjectId: 'test-sub-123',
+        username: 'review-test-user',
+        email: 'review-dev@test.local',
       },
       update: {},
     });
-    devUserPk = dev.id;
-
-    const other = await prisma.user.upsert({
-      where: { subjectId: OTHER_SUBJECT },
-      create: {
-        subjectId: OTHER_SUBJECT,
-        username: 'review2-other-user',
-        email: 'review2-other@test.local',
-      },
-      update: {},
-    });
-    otherUserPk = other.id;
 
     await prisma.user.upsert({
-      where: { subjectId: ADMIN_SUBJECT },
+      where: { subjectId: 'other-user-123' },
       create: {
-        subjectId: ADMIN_SUBJECT,
-        username: 'review2-admin',
-        email: 'review2-admin@test.local',
-        role: 'admin',
+        subjectId: 'other-user-123',
+        username: 'review-other-user',
+        email: 'review-other@test.local',
       },
-      update: { role: 'admin' },
+      update: {},
     });
-  });
 
-  beforeEach(async () => {
-    await prisma.review.deleteMany({ where: { userId: { in: [devUserPk, otherUserPk] } } });
+    await prisma.user.upsert({
+      where: { subjectId: 'admin-user-123' },
+      create: {
+        subjectId: 'admin-user-123',
+        username: 'review-admin',
+        email: 'review-admin@test.local',
+        role: 'Admin',
+      },
+      update: { role: 'Admin' },
+    });
   });
 
   afterAll(async () => {
-    await prisma.review.deleteMany({ where: { userId: { in: [devUserPk, otherUserPk] } } });
-    await prisma.$disconnect();
+    await prisma.review.deleteMany();
   });
 
+  // ... rest of the tests remain the same
   describe('POST /reviews', () => {
     it('returns 401 when Authorization is missing', async () => {
       const response = await request(app).post('/reviews').send({
@@ -162,7 +146,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
         tmdbIdentifier: TMDB_ID,
       });
 
-      const response = await request(app).get(`/reviews/${created.body.reviewId as number}`);
+      const response = await request(app).get(`/reviews/${created.body.reviewId}`);
       expect(response.status).toBe(200);
       expect(response.body.reviewContent).toBe('Public read');
     });
@@ -187,7 +171,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
         tmdbIdentifier: TMDB_ID,
       });
 
-      const response = await request(app).get(`/reviews/${created.body.reviewId as number}`);
+      const response = await request(app).get(`/reviews/${created.body.reviewId}`);
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
         reviewId: created.body.reviewId,
@@ -228,7 +212,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
       });
 
       const response = await request(app)
-        .patch(`/reviews/${created.body.reviewId as number}`)
+        .patch(`/reviews/${created.body.reviewId}`)
         .set(authHeader())
         .send({ reviewContent: '' });
 
@@ -239,7 +223,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
     it('returns 403 when authenticated user does not own the review', async () => {
       const created = await request(app)
         .post('/reviews')
-        .set(authHeader({ sub: OTHER_USER_ID }))
+        .set(authHeader({ sub: 'other-user-123' }))
         .send({
           reviewContent: 'theirs',
           isMovie: true,
@@ -248,7 +232,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
         });
 
       const response = await request(app)
-        .patch(`/reviews/${created.body.reviewId as number}`)
+        .patch(`/reviews/${created.body.reviewId}`)
         .set(authHeader())
         .send({ reviewContent: 'after', dateOfReview: '2026-02-02' });
 
@@ -265,7 +249,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
       });
 
       const response = await request(app)
-        .patch(`/reviews/${created.body.reviewId as number}`)
+        .patch(`/reviews/${created.body.reviewId}`)
         .set(authHeader())
         .send({ reviewContent: 'after', dateOfReview: '2026-06-20' });
 
@@ -301,7 +285,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
     it('returns 403 when authenticated user does not own the review', async () => {
       const created = await request(app)
         .post('/reviews')
-        .set(authHeader({ sub: OTHER_USER_ID }))
+        .set(authHeader({ sub: 'other-user-123' }))
         .send({
           reviewContent: 'to delete',
           isMovie: true,
@@ -310,7 +294,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
         });
 
       const response = await request(app)
-        .delete(`/reviews/${created.body.reviewId as number}`)
+        .delete(`/reviews/${created.body.reviewId}`)
         .set(authHeader());
 
       expect(response.status).toBe(403);
@@ -326,7 +310,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
       });
 
       const response = await request(app)
-        .delete(`/reviews/${created.body.reviewId as number}`)
+        .delete(`/reviews/${created.body.reviewId}`)
         .set(authHeader());
 
       expect(response.status).toBe(200);
@@ -336,7 +320,7 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
     it('allows admin to delete another user review', async () => {
       const created = await request(app)
         .post('/reviews')
-        .set(authHeader({ sub: OTHER_USER_ID }))
+        .set(authHeader({ sub: 'other-user-123' }))
         .send({
           reviewContent: 'moderated',
           isMovie: true,
@@ -345,8 +329,8 @@ describeIfDb('Reviews2 (integration, current behavior)', () => {
         });
 
       const response = await request(app)
-        .delete(`/reviews/${created.body.reviewId as number}`)
-        .set(authHeader({ sub: ADMIN_USER_ID, role: 'admin' }));
+        .delete(`/reviews/${created.body.reviewId}`)
+        .set(authHeader({ sub: 'admin-user-123', role: 'Admin' }));
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({ message: 'Review deleted successfully' });

@@ -1044,15 +1044,15 @@ paths:
                         type: array
                         items:
                           type: object
-                          required:
-                            [reviewId, userId, username, reviewContent, dateOfReview]
+                          required: [reviewId, userId, username, reviewContent, dateOfReview]
                           properties:
                             reviewId:
                               type: integer
                               example: 1
                             userId:
-                              type: string
-                              example: auth0|abc123
+                              type: integer
+                              description: Local user primary key (`User.id`). Auth subject is `User.subjectId`, not returned here.
+                              example: 1
                             username:
                               type: string
                               example: example
