@@ -1109,8 +1109,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: |
-        Bearer token from sign-in
+      description: Auth² issues JWT access tokens
 
   responses:
     IdentityProviderError:

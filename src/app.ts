@@ -9,7 +9,15 @@ import { logger } from './middleware/logger';
 const app = express();
 
 // Application-level middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.CORS_ORIGINS?.split(",") || [],
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+}));
+
+app.options("*", cors());
+
 app.use(express.json());
 app.use(logger);
 
