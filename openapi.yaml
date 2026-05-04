@@ -1050,8 +1050,9 @@ paths:
                               type: integer
                               example: 1
                             userId:
-                              type: string
-                              example: auth0|abc123
+                              type: integer
+                              description: Local user primary key (`User.id`). Auth subject is `User.subjectId`, not returned here.
+                              example: 1
                             username:
                               type: string
                               example: example

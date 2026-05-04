@@ -18,7 +18,7 @@ export const createReview = async (req: Request, res: Response) => {
     const localUser = await resolveLocalUser(req);
     const review = await prisma.review.create({
       data: {
-        userId: localUser.subjectId,
+        userId: localUser.id,
         isMovie,
         dateOfReview: new Date(dateOfReview),
         reviewContent,
@@ -47,13 +47,14 @@ export const deleteReview = async (req: Request, res: Response) => {
   const reviewId = Number(req.params.reviewId);
 
   try {
+    const localUser = await resolveLocalUser(req);
     const existing = await prisma.review.findFirst({ where: { reviewId } });
 
     if (!existing) {
       return res.status(404).json({ error: 'Review not found' });
     }
 
-    const isOwner = existing.userId === req.user!.sub;
+    const isOwner = existing.userId === localUser.id;
     const isAdmin = req.user!.role === 'Admin';
     if (!isOwner && !isAdmin) {
       return res.status(403).json({ error: 'You can only delete your own reviews' });
@@ -105,12 +106,13 @@ export const updateReview = async (req: Request, res: Response) => {
   const reviewId = Number(req.params.reviewId);
 
   try {
+    const localUser = await resolveLocalUser(req);
     const existing = await prisma.review.findFirst({ where: { reviewId } });
 
     if (!existing) {
       return res.status(404).json({ error: 'Review not found' });
     }
-    if (existing.userId !== req.user!.sub) {
+    if (existing.userId !== localUser.id) {
       return res.status(403).json({ error: 'You can only update your own reviews' });
     }
 

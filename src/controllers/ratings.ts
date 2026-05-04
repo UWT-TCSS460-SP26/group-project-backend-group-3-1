@@ -50,7 +50,7 @@ export const updateRating = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Rating not found' });
     }
 
-    if (existing.userId !== localUser.subjectId) {
+    if (existing.userId !== localUser.id) {
       return res.status(403).json({ error: 'You can only update your own ratings' });
     }
 
@@ -84,7 +84,7 @@ export const createRating = async (req: Request, res: Response) => {
 
   const ratingResult = await prisma.rating.create({
     data: {
-      userId: localUser.subjectId,
+      userId: localUser.id,
       isMovie,
       rating,
       tmdbIdentifier,
@@ -111,7 +111,7 @@ export const deleteRating = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Rating not found' });
     }
 
-    if (existing.userId !== localUser.subjectId) {
+    if (existing.userId !== localUser.id) {
       return res.status(404).json({ error: 'Rating not found' });
     }
 

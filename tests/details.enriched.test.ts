@@ -40,7 +40,7 @@ describe('Enriched Details Route (GET /details/:type/:id)', () => {
     (prisma.review.findMany as jest.Mock).mockResolvedValue([
       {
         reviewId: 10,
-        userId: 'user-1',
+        userId: 1,
         reviewContent: 'Great.',
         dateOfReview: new Date('2026-05-01T00:00:00.000Z'),
         user: { username: 'alice' },
@@ -60,7 +60,7 @@ describe('Enriched Details Route (GET /details/:type/:id)', () => {
         recentReviews: [
           {
             reviewId: 10,
-            userId: 'user-1',
+            userId: 1,
             username: 'alice',
             reviewContent: 'Great.',
             dateOfReview: '2026-05-01T00:00:00.000Z',
