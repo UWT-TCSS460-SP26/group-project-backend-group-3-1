@@ -21,7 +21,8 @@ npx prisma generate
 npm run dev
 ```
 
-##Audience Structure
+## Audience Structure
+
 group-N-api
 
 The server starts at [https://group-project-backend-group-3-1.onrender.com](https://group-project-backend-group-3-1.onrender.com).
