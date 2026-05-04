@@ -17,14 +17,14 @@ export const stubAuth = (req: Request, res: Response, next: NextFunction) => {
       const user = JSON.parse(testUser as string);
       req.user = {
         sub: user.sub || 'test-sub-123',
-        role: user.role || 'user',
+        role: user.role || 'User',
         email: user.email || 'test@example.com',
       };
     } catch {
       // If not JSON, treat as sub string
       req.user = {
         sub: testUser as string,
-        role: 'user',
+        role: 'User',
         email: 'test@example.com',
       };
     }

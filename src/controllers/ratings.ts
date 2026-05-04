@@ -112,7 +112,7 @@ export const deleteRating = async (req: Request, res: Response) => {
     }
 
     if (existing.userId !== localUser.subjectId) {
-      return res.status(403).json({ error: 'You can only delete your own ratings' });
+      return res.status(404).json({ error: 'Rating not found' });
     }
 
     await prisma.rating.delete({

@@ -1044,8 +1044,7 @@ paths:
                         type: array
                         items:
                           type: object
-                          required:
-                            [reviewId, userId, username, reviewContent, dateOfReview]
+                          required: [reviewId, userId, username, reviewContent, dateOfReview]
                           properties:
                             reviewId:
                               type: integer

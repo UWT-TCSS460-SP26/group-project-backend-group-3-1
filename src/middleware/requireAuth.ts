@@ -55,26 +55,6 @@ const attachUser = (request: JwtRequest, _response: Response, next: NextFunction
   next();
 };
 
-/**
- * Optional Auth - continues even if no token is present.
- */
-export const optionalAuth = [
-  expressjwt({
-    secret: jwksRsa.expressJwtSecret({
-      cache: true,
-      rateLimit: true,
-      jwksRequestsPerMinute: 5,
-      jwksUri:
-        process.env.AUTH0_JWKS_URI || `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`,
-    }) as GetVerificationKey,
-    audience: process.env.AUTH0_AUDIENCE,
-    issuer: process.env.AUTH0_ISSUER || `https://${process.env.AUTH0_DOMAIN}/`,
-    algorithms: ['RS256'],
-    credentialsRequired: false,
-  }),
-  attachUser,
-];
-
 // This is a custom error handler for the auth middleware.
 // It checks if the error is an UnauthorizedError and returns a 401 response.
 // If the error is not an UnauthorizedError, it calls the next middleware.
