@@ -18,7 +18,7 @@ app.use(
   })
 );
 
-app.options('*', cors());
+app.options('/{*path}', cors());
 
 app.use(express.json());
 app.use(logger);
