@@ -57,7 +57,7 @@ export const deleteReview = async (req: Request, res: Response) => {
     const isOwner = existing.userId === localUser.id;
     const isAdmin = req.user!.role === 'Admin';
     if (!isOwner && !isAdmin) {
-      return res.status(403).json({ error: 'You can only delete your own reviews' });
+      return res.status(403).json({ error: 'You can only delete your own reviews or be an Admin' });
     }
 
     await prisma.review.delete({
