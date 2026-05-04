@@ -30,16 +30,17 @@ API documentation is at [https://group-project-backend-group-3-1.onrender.com/ap
 
 ## Scripts
 
-| Command                | Description                       |
-| ---------------------- | --------------------------------- |
-| `npm run dev`          | Start dev server with auto-reload |
-| `npm run build`        | Compile TypeScript to `dist/`     |
-| `npm start`            | Run compiled output               |
-| `npm test`             | Run tests                         |
-| `npm run lint`         | Run ESLint                        |
-| `npm run format`       | Format code with Prettier         |
-| `npm run db:setup`     | Set up datebase                   |
-| `npm run prisma:seed`  | Seeds database with users         |
+| Command               | Description                       |
+| --------------------- | --------------------------------- |
+| `npm run dev`         | Start dev server with auto-reload |
+| `npm run build`       | Compile TypeScript to `dist/`     |
+| `npm start`           | Run compiled output               |
+| `npm test`            | Run tests                         |
+| `npm run lint`        | Run ESLint                        |
+| `npm run format`      | Format code with Prettier         |
+| `npm run db:setup`    | Set up datebase                   |
+| `npm run prisma:seed` | Seeds database with users         |
+
 ## Deployed URL
 
 [https://group-project-backend-group-3-1.onrender.com]
