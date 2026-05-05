@@ -23,7 +23,7 @@ npm run dev
 
 ## Audience Structure
 
-group-N-api
+AUTH_ISSUER = group-N-api
 
 The server starts at [https://group-project-backend-group-3-1.onrender.com](https://group-project-backend-group-3-1.onrender.com).
 
