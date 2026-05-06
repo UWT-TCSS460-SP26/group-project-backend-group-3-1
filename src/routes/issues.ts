@@ -5,7 +5,7 @@ import { requireAuth, requireRole } from '../middleware/requireAuth';
 
 const issueRouter = Router();
 
-issueRouter.get('/', listIssues);
+issueRouter.get('/', requireAuth, requireRole('Admin'), listIssues);
 issueRouter.post('/', validateIssueCreateBody, createIssue);
 
 export { issueRouter };
