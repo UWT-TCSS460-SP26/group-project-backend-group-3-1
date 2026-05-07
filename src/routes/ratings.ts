@@ -1,5 +1,11 @@
 import { Router } from 'express';
-import { createRating, deleteRating, getRating, updateRating } from '../controllers/ratings';
+import {
+  createRating,
+  deleteRating,
+  getRating,
+  updateRating,
+  getMyRatings,
+} from '../controllers/ratings';
 import { requireAuth } from '../middleware/requireAuth';
 import {
   validateRatingCreateBody,
@@ -9,6 +15,7 @@ import {
 
 const ratingRouter = Router();
 
+ratingRouter.get('/me', requireAuth, getMyRatings);
 ratingRouter.get('/:ratingId', validateRatingIdParam, getRating);
 ratingRouter.patch(
   '/:ratingId',

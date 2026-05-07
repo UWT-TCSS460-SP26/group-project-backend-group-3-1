@@ -143,3 +143,15 @@ export const updateReview = async (req: Request, res: Response) => {
     throw e;
   }
 };
+
+/**
+ * GET /reviews/me — lists all reviews for the authenticated user (raw DB rows; `dateOfReview` is full ISO datetime in JSON).
+ */
+export const getMyReviews = async (req: Request, res: Response) => {
+  const localUser = await resolveLocalUser(req);
+  const reviews = await prisma.review.findMany({
+    where: { userId: localUser.id },
+  });
+
+  return res.status(200).json(reviews);
+};

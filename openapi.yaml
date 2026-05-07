@@ -555,6 +555,44 @@ paths:
               example:
                 error: Internal server error
 
+  /reviews/me:
+    get:
+      tags: [Reviews]
+      summary: List my reviews
+      description: |
+        Returns every review owned by the authenticated user.
+
+        Requires authentication (Bearer token).
+
+        Returns an empty array if no reviews exist.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Array of review rows for the current user (may be empty).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReviewRecord'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Invalid or expired token
+        '502':
+          $ref: '#/components/responses/IdentityProviderError'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
   /reviews/{reviewId}:
     get:
       tags: [Reviews]
@@ -777,6 +815,44 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
                 error: Internal server error
+
+  /ratings/me:
+    get:
+      tags: [Ratings]
+      summary: List my ratings
+      description: |
+        Returns every rating owned by the authenticated user.
+
+        Requires authentication (Bearer token).
+
+        Returns an empty array if no ratings exist.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Array of rating rows for the current user (may be empty).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RatingRecord'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Invalid or expired token
+        '502':
+          $ref: '#/components/responses/IdentityProviderError'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
 
   /ratings/{ratingId}:
     get:
@@ -1382,6 +1458,80 @@ components:
         tmdbIdentifier:
           type: integer
           description: TMDB id for the rated title
+          example: 550
+
+    RatingRecord:
+      type: object
+      description: A user's rating for a movie or TV show.
+      required:
+        - ratingId
+        - userId
+        - isMovie
+        - rating
+        - tmdbIdentifier
+      properties:
+        ratingId:
+          type: integer
+          example: 1
+
+        userId:
+          type: integer
+          example: 1
+
+        isMovie:
+          type: boolean
+          description: Indicates whether the rating is for a movie or TV show.
+          example: true
+
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Rating score from 1 to 10.
+          example: 8
+
+        tmdbIdentifier:
+          type: integer
+          description: TMDB identifier for the title.
+          example: 550
+
+    ReviewRecord:
+      type: object
+      description: A user's review for a movie or TV show.
+      required:
+        - reviewId
+        - userId
+        - isMovie
+        - dateOfReview
+        - reviewContent
+        - tmdbIdentifier
+      properties:
+        reviewId:
+          type: integer
+          example: 1
+
+        userId:
+          type: integer
+          example: 1
+
+        isMovie:
+          type: boolean
+          description: Indicates whether the review is for a movie or TV show.
+          example: true
+
+        dateOfReview:
+          type: string
+          format: date-time
+          description: Date and time the review was created.
+          example: '2026-04-25T00:00:00.000Z'
+
+        reviewContent:
+          type: string
+          example: A thoughtful take on the film.
+
+        tmdbIdentifier:
+          type: integer
+          description: TMDB identifier for the title.
           example: 550
 
     IssueCreateRequest:

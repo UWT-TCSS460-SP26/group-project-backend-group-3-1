@@ -129,3 +129,15 @@ export const deleteRating = async (req: Request, res: Response) => {
     throw e;
   }
 };
+
+/**
+ * GET /ratings/me — lists all ratings for the authenticated user (raw DB rows; field `rating` is the score).
+ */
+export const getMyRatings = async (req: Request, res: Response) => {
+  const localUser = await resolveLocalUser(req);
+  const ratings = await prisma.rating.findMany({
+    where: { userId: localUser.id },
+  });
+
+  return res.status(200).json(ratings);
+};

@@ -51,6 +51,16 @@ describe('Ratings (integration)', () => {
       },
       update: {},
     });
+
+    await prisma.user.upsert({
+      where: { subjectId: 'ratings-me-user' },
+      create: {
+        subjectId: 'ratings-me-user',
+        username: 'ratings-me-user',
+        email: 'ratings-me@test.local',
+      },
+      update: {},
+    });
   });
 
   afterAll(async () => {
@@ -58,6 +68,83 @@ describe('Ratings (integration)', () => {
   });
 
   // ... rest of the tests remain the same
+  describe('GET /ratings/me', () => {
+    it('returns 401 when Authorization is missing', async () => {
+      const response = await request(app).get('/ratings/me');
+      expect(response.status).toBe(401);
+    });
+
+    it('returns 200 with an empty array when the user has no ratings', async () => {
+      const u = await prisma.user.findUnique({ where: { subjectId: 'ratings-me-user' } });
+      await prisma.rating.deleteMany({ where: { userId: u!.id } });
+
+      const response = await request(app)
+        .get('/ratings/me')
+        .set(authHeader({ sub: 'ratings-me-user' }));
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual([]);
+    });
+
+    it('returns 200 with all ratings for the authenticated user (raw rows)', async () => {
+      const u = await prisma.user.findUnique({ where: { subjectId: 'ratings-me-user' } });
+      await prisma.rating.deleteMany({ where: { userId: u!.id } });
+
+      await request(app)
+        .post('/ratings')
+        .set(authHeader({ sub: 'ratings-me-user' }))
+        .send({ isMovie: true, rating: 7, tmdbIdentifier: TMDB_ID });
+      await request(app)
+        .post('/ratings')
+        .set(authHeader({ sub: 'ratings-me-user' }))
+        .send({ isMovie: false, rating: 3, tmdbIdentifier: TMDB_ID + 1 });
+
+      const response = await request(app)
+        .get('/ratings/me')
+        .set(authHeader({ sub: 'ratings-me-user' }));
+
+      expect(response.status).toBe(200);
+      expect(Array.isArray(response.body)).toBe(true);
+      expect(response.body).toHaveLength(2);
+
+      const scores = response.body
+        .map((r: { rating: number }) => r.rating)
+        .sort((a: number, b: number) => a - b);
+      expect(scores).toEqual([3, 7]);
+
+      for (const row of response.body) {
+        expect(row).toMatchObject({
+          userId: u!.id,
+          isMovie: expect.any(Boolean),
+          rating: expect.any(Number),
+          tmdbIdentifier: expect.any(Number),
+        });
+        expect(row).toHaveProperty('ratingId');
+        expect(typeof row.ratingId).toBe('number');
+      }
+    });
+
+    it('does not include another user ratings', async () => {
+      const other = await prisma.user.findUnique({ where: { subjectId: 'other-user-123' } });
+      const mine = await prisma.user.findUnique({ where: { subjectId: 'test-sub-123' } });
+      expect(other).toBeTruthy();
+      expect(mine).toBeTruthy();
+
+      const createdOther = await request(app)
+        .post('/ratings')
+        .set(authHeader({ sub: 'other-user-123' }))
+        .send({ isMovie: true, rating: 9, tmdbIdentifier: TMDB_ID });
+      expect(createdOther.status).toBe(201);
+
+      const response = await request(app).get('/ratings/me').set(authHeader());
+
+      expect(response.status).toBe(200);
+      const ids = response.body.map((r: { ratingId: number }) => r.ratingId);
+      expect(ids).not.toContain(createdOther.body.ratingId);
+      expect(response.body.every((r: { userId: number }) => r.userId === mine!.id)).toBe(true);
+    });
+  });
+
   describe('GET /ratings/:ratingId', () => {
     it('returns 400 for invalid ratingId', async () => {
       const response = await request(app).get('/ratings/abc');

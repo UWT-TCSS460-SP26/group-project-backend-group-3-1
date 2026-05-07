@@ -62,6 +62,16 @@ describe('Reviews (integration)', () => {
       },
       update: { role: 'Admin' },
     });
+
+    await prisma.user.upsert({
+      where: { subjectId: 'reviews-me-user' },
+      create: {
+        subjectId: 'reviews-me-user',
+        username: 'reviews-me-user',
+        email: 'reviews-me@test.local',
+      },
+      update: {},
+    });
   });
 
   afterAll(async () => {
@@ -134,6 +144,98 @@ describe('Reviews (integration)', () => {
         isMovie: false,
         tmdbIdentifier: TMDB_ID,
       });
+    });
+  });
+
+  describe('GET /reviews/me', () => {
+    it('returns 401 when Authorization is missing', async () => {
+      const response = await request(app).get('/reviews/me');
+      expect(response.status).toBe(401);
+    });
+
+    it('returns 200 with an empty array when the user has no reviews', async () => {
+      const u = await prisma.user.findUnique({ where: { subjectId: 'reviews-me-user' } });
+      await prisma.review.deleteMany({ where: { userId: u!.id } });
+
+      const response = await request(app)
+        .get('/reviews/me')
+        .set(authHeader({ sub: 'reviews-me-user' }));
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual([]);
+    });
+
+    it('returns 200 with all reviews for the authenticated user (raw rows)', async () => {
+      const u = await prisma.user.findUnique({ where: { subjectId: 'reviews-me-user' } });
+      await prisma.review.deleteMany({ where: { userId: u!.id } });
+
+      await request(app)
+        .post('/reviews')
+        .set(authHeader({ sub: 'reviews-me-user' }))
+        .send({
+          reviewContent: 'me list one',
+          isMovie: true,
+          dateOfReview: '2026-04-20',
+          tmdbIdentifier: TMDB_ID,
+        });
+      await request(app)
+        .post('/reviews')
+        .set(authHeader({ sub: 'reviews-me-user' }))
+        .send({
+          reviewContent: 'me list two',
+          isMovie: false,
+          dateOfReview: '2026-04-21',
+          tmdbIdentifier: TMDB_ID + 1,
+        });
+
+      const response = await request(app)
+        .get('/reviews/me')
+        .set(authHeader({ sub: 'reviews-me-user' }));
+
+      expect(response.status).toBe(200);
+      expect(Array.isArray(response.body)).toBe(true);
+      expect(response.body).toHaveLength(2);
+
+      const contents = response.body.map((r: { reviewContent: string }) => r.reviewContent).sort();
+      expect(contents).toEqual(['me list one', 'me list two']);
+
+      for (const row of response.body) {
+        expect(row).toMatchObject({
+          userId: u!.id,
+          isMovie: expect.any(Boolean),
+          reviewContent: expect.any(String),
+          tmdbIdentifier: expect.any(Number),
+        });
+        expect(row).toHaveProperty('reviewId');
+        expect(row).toHaveProperty('dateOfReview');
+        expect(typeof row.reviewId).toBe('number');
+        expect(typeof row.dateOfReview).toBe('string');
+      }
+    });
+
+    it('does not include another user reviews', async () => {
+      const other = await prisma.user.findUnique({ where: { subjectId: 'other-user-123' } });
+      const mine = await prisma.user.findUnique({ where: { subjectId: 'test-sub-123' } });
+      expect(other).toBeTruthy();
+      expect(mine).toBeTruthy();
+
+      const createdOther = await request(app)
+        .post('/reviews')
+        .set(authHeader({ sub: 'other-user-123' }))
+        .send({
+          reviewContent: 'other user only',
+          isMovie: true,
+          dateOfReview: '2026-05-01',
+          tmdbIdentifier: TMDB_ID,
+        });
+      expect(createdOther.status).toBe(201);
+
+      const response = await request(app).get('/reviews/me').set(authHeader());
+
+      expect(response.status).toBe(200);
+      const ids = response.body.map((r: { reviewId: number }) => r.reviewId);
+      expect(ids).not.toContain(createdOther.body.reviewId);
+      expect(response.body.every((r: { userId: number }) => r.userId === mine!.id)).toBe(true);
     });
   });
 

@@ -1,5 +1,11 @@
 import { Router } from 'express';
-import { createReview, deleteReview, getReview, updateReview } from '../controllers/reviews';
+import {
+  createReview,
+  deleteReview,
+  getMyReviews,
+  getReview,
+  updateReview,
+} from '../controllers/reviews';
 import { requireAuth } from '../middleware/requireAuth';
 import {
   validateReviewBody,
@@ -10,6 +16,7 @@ import {
 const reviewRouter = Router();
 
 reviewRouter.post('/', requireAuth, validateReviewBody, createReview);
+reviewRouter.get('/me', requireAuth, getMyReviews);
 reviewRouter.get('/:reviewId', validateReviewIdParam, getReview);
 reviewRouter.patch(
   '/:reviewId',
