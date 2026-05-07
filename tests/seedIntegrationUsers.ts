@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- stderr for Jest globalSetup child process */
 import 'dotenv/config';
 import { prisma } from '../src/lib/prisma';
 
