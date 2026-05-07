@@ -24,7 +24,7 @@ export const createIssue = async (req: Request, res: Response) => {
     issueStatus: IssueStatus;
     issueDesc: string;
   };
-  
+
   const issue = await prisma.issue.create({
     data: {
       issueStatus,
@@ -40,14 +40,14 @@ export const createIssue = async (req: Request, res: Response) => {
  * PATCH /issues/:issueID — update issue status.
  */
 export const updateIssue = async (req: Request, res: Response) => {
-  const { issueStatus} = req.body;
+  const { issueStatus } = req.body;
   const issueID: number = Number.parseInt(req.params.issueID as string);
-  
-  try { 
-  const issue = await prisma.issue.update({
-    where: { issueID },
-    data: { issueStatus },
-  });
+
+  try {
+    const issue = await prisma.issue.update({
+      where: { issueID },
+      data: { issueStatus },
+    });
 
     return res.status(200).json(issue);
   } catch (error) {
@@ -60,12 +60,12 @@ export const updateIssue = async (req: Request, res: Response) => {
  */
 export const deleteIssue = async (req: Request, res: Response) => {
   const issueID: number = Number.parseInt(req.params.issueID as string);
-  
-  try { 
+
+  try {
     const issue = await prisma.issue.delete({
       where: { issueID },
     });
-    
+
     return res.status(200).json({ message: 'Issue deleted successfully' });
   } catch (error) {
     return res.status(404).json({ error: 'Issue not found' });
