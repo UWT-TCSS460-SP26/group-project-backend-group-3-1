@@ -83,4 +83,147 @@ describe('Issues (integration)', () => {
       expect(Array.isArray(response.body)).toBe(true);
     });
   });
+
+  describe('PATCH /issues/:issueID (User only)', () => {
+    it('returns 401 when no user', async () => {
+      const issue = await prisma.issue.create({
+        data: {
+          issueStatus: 'OPEN',
+          issueDesc: 'Issue to update',
+          issueReportDate: new Date(),
+        },
+      });
+
+      const response = await request(app).patch(`/issues/${issue.issueID}`).send({
+        issueStatus: 'IN_PROGRESS',
+      });
+
+      expect(response.status).toBe(401);
+    });
+
+    it('returns 403 for non-User role', async () => {
+      const issue = await prisma.issue.create({
+        data: {
+          issueStatus: 'OPEN',
+          issueDesc: 'Issue to update',
+          issueReportDate: new Date(),
+        },
+      });
+
+      const response = await request(app)
+        .patch(`/issues/${issue.issueID}`)
+        .set(authHeader({ role: 'Admin' }))
+        .send({ issueStatus: 'IN_PROGRESS' });
+
+      expect(response.status).toBe(403);
+    });
+
+    it('returns 400 when issueStatus is invalid', async () => {
+      const issue = await prisma.issue.create({
+        data: {
+          issueStatus: 'OPEN',
+          issueDesc: 'Issue to update',
+          issueReportDate: new Date(),
+        },
+      });
+
+      const response = await request(app)
+        .patch(`/issues/${issue.issueID}`)
+        .set(authHeader({ role: 'User' }))
+        .send({ issueStatus: 'NOT_A_STATUS' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toMatch(/issueStatus must be one of/);
+    });
+
+    it('returns 404 when issue does not exist', async () => {
+      const response = await request(app)
+        .patch('/issues/999999')
+        .set(authHeader({ role: 'User' }))
+        .send({ issueStatus: 'RESOLVED' });
+
+      expect(response.status).toBe(404);
+      expect(response.body.error).toBe('Issue not found');
+    });
+
+    it('updates issue status on happy path', async () => {
+      const issue = await prisma.issue.create({
+        data: {
+          issueStatus: 'OPEN',
+          issueDesc: 'Issue to update',
+          issueReportDate: new Date(),
+        },
+      });
+
+      const response = await request(app)
+        .patch(`/issues/${issue.issueID}`)
+        .set(authHeader({ role: 'User' }))
+        .send({ issueStatus: 'RESOLVED' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.issueID).toBe(issue.issueID);
+      expect(response.body.issueStatus).toBe('RESOLVED');
+    });
+  });
+
+  describe('DELETE /issues/:issueID (User only)', () => {
+    it('returns 401 when no user', async () => {
+      const issue = await prisma.issue.create({
+        data: {
+          issueStatus: 'OPEN',
+          issueDesc: 'Issue to delete',
+          issueReportDate: new Date(),
+        },
+      });
+
+      const response = await request(app).delete(`/issues/${issue.issueID}`);
+
+      expect(response.status).toBe(401);
+    });
+
+    it('returns 403 for non-User role', async () => {
+      const issue = await prisma.issue.create({
+        data: {
+          issueStatus: 'OPEN',
+          issueDesc: 'Issue to delete',
+          issueReportDate: new Date(),
+        },
+      });
+
+      const response = await request(app)
+        .delete(`/issues/${issue.issueID}`)
+        .set(authHeader({ role: 'Admin' }));
+
+      expect(response.status).toBe(403);
+    });
+
+    it('returns 404 when issue does not exist', async () => {
+      const response = await request(app)
+        .delete('/issues/999999')
+        .set(authHeader({ role: 'User' }));
+
+      expect(response.status).toBe(404);
+      expect(response.body.error).toBe('Issue not found');
+    });
+
+    it('deletes issue on happy path', async () => {
+      const issue = await prisma.issue.create({
+        data: {
+          issueStatus: 'OPEN',
+          issueDesc: 'Issue to delete',
+          issueReportDate: new Date(),
+        },
+      });
+
+      const response = await request(app)
+        .delete(`/issues/${issue.issueID}`)
+        .set(authHeader({ role: 'User' }));
+
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe('Issue deleted successfully');
+
+      const deleted = await prisma.issue.findUnique({ where: { issueID: issue.issueID } });
+      expect(deleted).toBeNull();
+    });
+  });
 });
