@@ -11,7 +11,7 @@ async function seedIntegrationUsers(): Promise<void> {
     where: { subjectId: 'test-sub-123' },
     create: {
       subjectId: 'test-sub-123',
-      username: 'integration-test-user',
+      username: 'test-sub-123',
       email: 'integration-dev@test.local',
     },
     update: {},
@@ -21,7 +21,7 @@ async function seedIntegrationUsers(): Promise<void> {
     where: { subjectId: 'other-user-123' },
     create: {
       subjectId: 'other-user-123',
-      username: 'integration-other-user',
+      username: 'other-user-123',
       email: 'integration-other@test.local',
     },
     update: {},
@@ -31,7 +31,7 @@ async function seedIntegrationUsers(): Promise<void> {
     where: { subjectId: 'admin-user-123' },
     create: {
       subjectId: 'admin-user-123',
-      username: 'integration-admin',
+      username: 'admin-user-123',
       email: 'integration-admin@test.local',
       role: 'Admin',
     },
