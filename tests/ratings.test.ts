@@ -31,38 +31,6 @@ function authHeader(overrides: { sub?: string; role?: string } = {}): Record<str
 const TMDB_ID = 550;
 
 describe('Ratings (integration)', () => {
-  beforeAll(async () => {
-    await prisma.user.upsert({
-      where: { subjectId: 'test-sub-123' },
-      create: {
-        subjectId: 'test-sub-123',
-        username: 'rating-test-user',
-        email: 'rating-dev@test.local',
-      },
-      update: {},
-    });
-
-    await prisma.user.upsert({
-      where: { subjectId: 'other-user-123' },
-      create: {
-        subjectId: 'other-user-123',
-        username: 'rating-other-user',
-        email: 'rating-other@test.local',
-      },
-      update: {},
-    });
-
-    await prisma.user.upsert({
-      where: { subjectId: 'ratings-me-user' },
-      create: {
-        subjectId: 'ratings-me-user',
-        username: 'ratings-me-user',
-        email: 'ratings-me@test.local',
-      },
-      update: {},
-    });
-  });
-
   afterAll(async () => {
     await prisma.rating.deleteMany();
   });

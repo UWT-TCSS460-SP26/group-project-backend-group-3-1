@@ -31,49 +31,6 @@ function authHeader(overrides: { sub?: string; role?: string } = {}): Record<str
 const TMDB_ID = 550;
 
 describe('Reviews (integration)', () => {
-  beforeAll(async () => {
-    await prisma.user.upsert({
-      where: { subjectId: 'test-sub-123' },
-      create: {
-        subjectId: 'test-sub-123',
-        username: 'review-test-user',
-        email: 'review-dev@test.local',
-      },
-      update: {},
-    });
-
-    await prisma.user.upsert({
-      where: { subjectId: 'other-user-123' },
-      create: {
-        subjectId: 'other-user-123',
-        username: 'review-other-user',
-        email: 'review-other@test.local',
-      },
-      update: {},
-    });
-
-    await prisma.user.upsert({
-      where: { subjectId: 'admin-user-123' },
-      create: {
-        subjectId: 'admin-user-123',
-        username: 'review-admin',
-        email: 'review-admin@test.local',
-        role: 'Admin',
-      },
-      update: { role: 'Admin' },
-    });
-
-    await prisma.user.upsert({
-      where: { subjectId: 'reviews-me-user' },
-      create: {
-        subjectId: 'reviews-me-user',
-        username: 'reviews-me-user',
-        email: 'reviews-me@test.local',
-      },
-      update: {},
-    });
-  });
-
   afterAll(async () => {
     await prisma.review.deleteMany();
   });

@@ -6,6 +6,8 @@ process.env.API_AUDIENCE ||= 'test-api-audience';
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+  /** Seeds shared integration-test users once (see tests/seedIntegrationUsers.ts). */
+  globalSetup: '<rootDir>/tests/globalSetup.cjs',
   // Runs before setupFilesAfterEnv and before tests so DATABASE_URL exists when `src/lib/prisma` loads.
   setupFiles: ['dotenv/config'],
   setupFilesAfterEnv: ['<rootDir>/tests/setupAfterEnv.ts'],
