@@ -1259,7 +1259,7 @@ paths:
                               example: 1
                             userId:
                               type: integer
-                              description: Local user primary key (`User.id`). Stable auth id is `author.subjectId`.
+                              description: Local user primary key (`User.id`). Stable auth id is `author.id`.
                               example: 1
                             reviewContent:
                               type: string
@@ -1344,12 +1344,12 @@ components:
       type: object
       description: |
         Auth-stable identity and display label for the user who wrote a review or rating.
-        `subjectId` matches the JWT `sub` claim and `User.subjectId` (no `/users/:id` lookup needed).
+        `id` matches the JWT `sub` claim and `User.subjectId` (no `/users/:id` lookup needed).
         `displayName` is chosen in order: non-empty trimmed `username`, else trimmed `firstName` + `lastName`,
         else the literal `Unknown user` (e.g. when userinfo enrichment did not populate profile fields).
-      required: [subjectId, displayName]
+      required: [id, displayName]
       properties:
-        subjectId:
+        id:
           type: string
           description: Stable Auth² subject identifier (JWT `sub`).
           example: auth-sub-abc123

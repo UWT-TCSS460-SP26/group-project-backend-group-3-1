@@ -18,14 +18,14 @@ export type UserAuthorPayload = {
 };
 
 export type AuthorDto = {
-  subjectId: string;
+  id: string;
   displayName: string;
 };
 
 export function toAuthor(user: UserAuthorPayload): AuthorDto {
   const username = user.username.trim();
   if (username.length > 0) {
-    return { subjectId: user.subjectId, displayName: username };
+    return { id: user.subjectId, displayName: username };
   }
   const fn = user.firstName.trim();
   const ln = user.lastName.trim();
@@ -34,7 +34,7 @@ export function toAuthor(user: UserAuthorPayload): AuthorDto {
     .join(' ')
     .trim();
   if (combined.length > 0) {
-    return { subjectId: user.subjectId, displayName: combined };
+    return { id: user.subjectId, displayName: combined };
   }
-  return { subjectId: user.subjectId, displayName: 'Unknown user' };
+  return { id: user.subjectId, displayName: 'Unknown user' };
 }

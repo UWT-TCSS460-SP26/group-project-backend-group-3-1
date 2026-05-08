@@ -247,7 +247,7 @@ Additional routes on `app` (`src/app.ts`): `GET /openapi.json` (parsed YAML spec
 - **Movie search vs show search** — movie forwards TMDB HTTP status on error; show search always returns `500` on TMDB error. Tests document this divergence.
 - **`GET /api-docs` in production** serves Scalar UI; tests only reflect the **mock** middleware behavior.
 - **Review/rating author identity** — review and rating response payloads now include:
-  - `author.subjectId` (stable Auth² identity / JWT `sub`)
+  - `author.id` (stable Auth² identity / JWT `sub`)
   - `author.displayName` (UI label)
   - Fallback order for `displayName`: trimmed `username` → trimmed `firstName` + `lastName` → `"Unknown user"`
 - **Added tests for new author behavior**

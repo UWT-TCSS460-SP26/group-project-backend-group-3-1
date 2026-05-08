@@ -9,7 +9,7 @@ describe('toAuthor', () => {
         firstName: 'A',
         lastName: 'B',
       })
-    ).toEqual({ subjectId: 'sub-1', displayName: 'alice' });
+    ).toEqual({ id: 'sub-1', displayName: 'alice' });
   });
 
   it('uses first and last name when username is empty', () => {
@@ -20,7 +20,7 @@ describe('toAuthor', () => {
         firstName: 'Ann',
         lastName: 'Lee',
       })
-    ).toEqual({ subjectId: 'sub-2', displayName: 'Ann Lee' });
+    ).toEqual({ id: 'sub-2', displayName: 'Ann Lee' });
   });
 
   it('falls back to Unknown user when nothing usable', () => {
@@ -31,6 +31,6 @@ describe('toAuthor', () => {
         firstName: '',
         lastName: '',
       })
-    ).toEqual({ subjectId: 'sub-3', displayName: 'Unknown user' });
+    ).toEqual({ id: 'sub-3', displayName: 'Unknown user' });
   });
 });
