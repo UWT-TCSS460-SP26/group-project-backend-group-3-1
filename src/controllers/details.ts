@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
+import { toAuthor, userAuthorSelect } from '../lib/author';
 
 const BASE_URL = 'https://api.themoviedb.org/3';
 const RECENT_REVIEW_LIMIT = 5;
@@ -63,9 +64,7 @@ export const getEnrichedDetails = async (req: Request, res: Response) => {
           reviewContent: true,
           dateOfReview: true,
           user: {
-            select: {
-              username: true,
-            },
+            select: userAuthorSelect,
           },
         },
       }),
@@ -81,9 +80,9 @@ export const getEnrichedDetails = async (req: Request, res: Response) => {
         recentReviews: recentReviews.map((review) => ({
           reviewId: review.reviewId,
           userId: review.userId,
-          username: review.user.username,
           reviewContent: review.reviewContent,
           dateOfReview: review.dateOfReview.toISOString(),
+          author: toAuthor(review.user),
         })),
       },
     });

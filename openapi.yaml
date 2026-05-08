@@ -564,6 +564,9 @@ paths:
 
         Requires authentication (Bearer token).
 
+        Each row includes the user's stable stable id and
+        author display name for rendering feed cards without a `/users/:id` lookup.
+
         Returns an empty array if no reviews exist.
       security:
         - bearerAuth: []
@@ -599,6 +602,7 @@ paths:
       summary: Get a single review
       description: |
         Get one review by review id (public endpoint).
+        Response includes author display name with stable id + display label.
       parameters:
         - name: reviewId
           in: path
@@ -825,6 +829,9 @@ paths:
 
         Requires authentication (Bearer token).
 
+        Each row includes user's stable id and
+        author display name for downstream rendering.
+
         Returns an empty array if no ratings exist.
       security:
         - bearerAuth: []
@@ -858,7 +865,7 @@ paths:
     get:
       tags: [Ratings]
       summary: Get a rating
-      description: Reads one rating by id.
+      description: Reads one rating by id. Response includes author display name.
       parameters:
         - name: ratingId
           in: path
@@ -1245,18 +1252,15 @@ paths:
                         type: array
                         items:
                           type: object
-                          required: [reviewId, userId, username, reviewContent, dateOfReview]
+                          required: [reviewId, userId, reviewContent, dateOfReview, author]
                           properties:
                             reviewId:
                               type: integer
                               example: 1
                             userId:
                               type: integer
-                              description: Local user primary key (`User.id`). Auth subject is `User.subjectId`, not returned here.
+                              description: Local user primary key (`User.id`). Stable auth id is `author.subjectId`.
                               example: 1
-                            username:
-                              type: string
-                              example: example
                             reviewContent:
                               type: string
                               example: Great pacing and story.
@@ -1264,6 +1268,8 @@ paths:
                               type: string
                               format: date-time
                               example: '2026-05-01T00:00:00.000Z'
+                            author:
+                              $ref: '#/components/schemas/Author'
         '400':
           description: Invalid route parameter.
           content:
@@ -1334,6 +1340,24 @@ components:
       example:
         error: Something went wrong
 
+    Author:
+      type: object
+      description: |
+        Auth-stable identity and display label for the user who wrote a review or rating.
+        `subjectId` matches the JWT `sub` claim and `User.subjectId` (no `/users/:id` lookup needed).
+        `displayName` is chosen in order: non-empty trimmed `username`, else trimmed `firstName` + `lastName`,
+        else the literal `Unknown user` (e.g. when userinfo enrichment did not populate profile fields).
+      required: [subjectId, displayName]
+      properties:
+        subjectId:
+          type: string
+          description: Stable Auth² subject identifier (JWT `sub`).
+          example: auth-sub-abc123
+        displayName:
+          type: string
+          description: Label for UI (e.g. "by @alice"); see schema description for fallback rules.
+          example: alice
+
     ReviewCreateRequest:
       type: object
       required: [reviewContent, isMovie, dateOfReview, tmdbIdentifier]
@@ -1372,7 +1396,7 @@ components:
 
     Review:
       type: object
-      required: [reviewId, reviewContent, isMovie, dateOfReview, tmdbIdentifier]
+      required: [reviewId, reviewContent, isMovie, dateOfReview, tmdbIdentifier, author]
       description: Review resource; `reviewContent` is the review text; `isMovie` is true for movie, false for show.
       properties:
         reviewId:
@@ -1392,6 +1416,8 @@ components:
           type: integer
           description: TMDB id for the movie or TV series
           example: 550
+        author:
+          $ref: '#/components/schemas/Author'
 
     ReviewDeleteSuccess:
       type: object
@@ -1442,7 +1468,8 @@ components:
 
     Rating:
       type: object
-      required: [ratingId, isMovie, rating, tmdbIdentifier]
+      required: [ratingId, isMovie, value, tmdbIdentifier, author]
+      description: Rating in API responses; `value` is the numeric score (1–10), stored in DB column `rating`.
       properties:
         ratingId:
           type: integer
@@ -1451,24 +1478,27 @@ components:
           type: boolean
           description: true = movie, false = show
           example: true
-        rating:
+        value:
           type: integer
-          description: Score (e.g. 1–10), maps from DB column `rating`
+          description: Score 1–10 (DB column `rating`).
           example: 8
         tmdbIdentifier:
           type: integer
           description: TMDB id for the rated title
           example: 550
+        author:
+          $ref: '#/components/schemas/Author'
 
     RatingRecord:
       type: object
-      description: A user's rating for a movie or TV show.
+      description: A user's rating for a movie or TV show (includes DB column `rating` as `rating` plus `author`).
       required:
         - ratingId
         - userId
         - isMovie
         - rating
         - tmdbIdentifier
+        - author
       properties:
         ratingId:
           type: integer
@@ -1495,6 +1525,9 @@ components:
           description: TMDB identifier for the title.
           example: 550
 
+        author:
+          $ref: '#/components/schemas/Author'
+
     ReviewRecord:
       type: object
       description: A user's review for a movie or TV show.
@@ -1505,6 +1538,7 @@ components:
         - dateOfReview
         - reviewContent
         - tmdbIdentifier
+        - author
       properties:
         reviewId:
           type: integer
@@ -1533,6 +1567,9 @@ components:
           type: integer
           description: TMDB identifier for the title.
           example: 550
+
+        author:
+          $ref: '#/components/schemas/Author'
 
     IssueCreateRequest:
       type: object

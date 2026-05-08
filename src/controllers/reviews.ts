@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { resolveLocalUser } from '../auth/resolveLocalUser';
 import { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
+import { toAuthor, userAuthorSelect } from '../lib/author';
 
 /**
  * POST /reviews — author is always req.user (set by requireAuth).
@@ -31,6 +32,7 @@ export const createReview = async (req: Request, res: Response) => {
       isMovie: review.isMovie,
       dateOfReview: review.dateOfReview.toISOString().slice(0, 10),
       tmdbIdentifier: review.tmdbIdentifier,
+      author: toAuthor(localUser),
     });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2003') {
@@ -80,17 +82,22 @@ export const deleteReview = async (req: Request, res: Response) => {
 export const getReview = async (req: Request, res: Response) => {
   const reviewId = Number(req.params.reviewId);
 
-  const review = await prisma.review.findFirst({ where: { reviewId } });
+  const review = await prisma.review.findFirst({
+    where: { reviewId },
+    include: { user: { select: userAuthorSelect } },
+  });
 
   if (!review) {
     return res.status(404).json({ error: 'Review not found' });
   }
+  const { user, ...rest } = review;
   return res.status(200).json({
-    reviewId: review.reviewId,
-    reviewContent: review.reviewContent,
-    isMovie: review.isMovie,
-    dateOfReview: review.dateOfReview.toISOString().slice(0, 10),
-    tmdbIdentifier: review.tmdbIdentifier,
+    reviewId: rest.reviewId,
+    reviewContent: rest.reviewContent,
+    isMovie: rest.isMovie,
+    dateOfReview: rest.dateOfReview.toISOString().slice(0, 10),
+    tmdbIdentifier: rest.tmdbIdentifier,
+    author: toAuthor(user),
   });
 };
 
@@ -124,14 +131,17 @@ export const updateReview = async (req: Request, res: Response) => {
       where: {
         reviewId,
       },
+      include: { user: { select: userAuthorSelect } },
     });
 
+    const { user, ...rest } = review;
     return res.status(200).json({
-      reviewId: review.reviewId,
+      reviewId: rest.reviewId,
       reviewContent,
-      isMovie: review.isMovie,
-      dateOfReview: review.dateOfReview.toISOString().slice(0, 10),
-      tmdbIdentifier: review.tmdbIdentifier,
+      isMovie: rest.isMovie,
+      dateOfReview: rest.dateOfReview.toISOString().slice(0, 10),
+      tmdbIdentifier: rest.tmdbIdentifier,
+      author: toAuthor(user),
     });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2025') {
@@ -151,7 +161,13 @@ export const getMyReviews = async (req: Request, res: Response) => {
   const localUser = await resolveLocalUser(req);
   const reviews = await prisma.review.findMany({
     where: { userId: localUser.id },
+    include: { user: { select: userAuthorSelect } },
   });
 
-  return res.status(200).json(reviews);
+  const body = reviews.map((r) => {
+    const { user, ...rest } = r;
+    return { ...rest, author: toAuthor(user) };
+  });
+
+  return res.status(200).json(body);
 };

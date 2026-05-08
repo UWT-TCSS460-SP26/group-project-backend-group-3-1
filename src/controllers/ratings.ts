@@ -2,17 +2,22 @@ import { Request, Response } from 'express';
 import { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 import { resolveLocalUser } from '../auth/resolveLocalUser';
+import { toAuthor, userAuthorSelect, type AuthorDto } from '../lib/author';
 
-const toRatingResponse = (rating: {
-  ratingId: number;
-  isMovie: boolean;
-  rating: number;
-  tmdbIdentifier: number;
-}) => ({
+const toRatingResponse = (
+  rating: {
+    ratingId: number;
+    isMovie: boolean;
+    rating: number;
+    tmdbIdentifier: number;
+  },
+  author: AuthorDto
+) => ({
   ratingId: rating.ratingId,
   isMovie: rating.isMovie,
   value: rating.rating,
   tmdbIdentifier: rating.tmdbIdentifier,
+  author,
 });
 
 /**
@@ -23,13 +28,15 @@ export const getRating = async (req: Request, res: Response) => {
 
   const rating = await prisma.rating.findFirst({
     where: { ratingId },
+    include: { user: { select: userAuthorSelect } },
   });
 
   if (!rating) {
     return res.status(404).json({ error: 'Rating not found' });
   }
 
-  return res.status(200).json(toRatingResponse(rating));
+  const { user, ...rest } = rating;
+  return res.status(200).json(toRatingResponse(rest, toAuthor(user)));
 };
 
 /**
@@ -59,9 +66,11 @@ export const updateRating = async (req: Request, res: Response) => {
         ratingId,
       },
       data: { rating: nextRating },
+      include: { user: { select: userAuthorSelect } },
     });
 
-    return res.status(200).json(toRatingResponse(rating));
+    const { user, ...rest } = rating;
+    return res.status(200).json(toRatingResponse(rest, toAuthor(user)));
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2025') {
       return res.status(404).json({ error: 'Rating not found' });
@@ -91,7 +100,7 @@ export const createRating = async (req: Request, res: Response) => {
     },
   });
 
-  return res.status(201).json(toRatingResponse(ratingResult));
+  return res.status(201).json(toRatingResponse(ratingResult, toAuthor(localUser)));
 };
 
 /**
@@ -137,7 +146,13 @@ export const getMyRatings = async (req: Request, res: Response) => {
   const localUser = await resolveLocalUser(req);
   const ratings = await prisma.rating.findMany({
     where: { userId: localUser.id },
+    include: { user: { select: userAuthorSelect } },
   });
 
-  return res.status(200).json(ratings);
+  const body = ratings.map((r) => {
+    const { user, ...rest } = r;
+    return { ...rest, author: toAuthor(user) };
+  });
+
+  return res.status(200).json(body);
 };

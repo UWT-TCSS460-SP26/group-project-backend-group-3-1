@@ -86,6 +86,7 @@ describe('Ratings (integration)', () => {
           isMovie: expect.any(Boolean),
           rating: expect.any(Number),
           tmdbIdentifier: expect.any(Number),
+          author: { subjectId: 'ratings-me-user', displayName: 'ratings-me-user' },
         });
         expect(row).toHaveProperty('ratingId');
         expect(typeof row.ratingId).toBe('number');
@@ -138,6 +139,7 @@ describe('Ratings (integration)', () => {
         isMovie: true,
         value: 6,
         tmdbIdentifier: TMDB_ID,
+        author: { subjectId: 'test-sub-123', displayName: 'test-sub-123' },
       });
     });
   });
@@ -201,6 +203,7 @@ describe('Ratings (integration)', () => {
         isMovie: false,
         value: 4,
         tmdbIdentifier: TMDB_ID,
+        author: { subjectId: 'test-sub-123', displayName: 'test-sub-123' },
       });
       expect(typeof response.body.ratingId).toBe('number');
     });
@@ -216,6 +219,7 @@ describe('Ratings (integration)', () => {
         isMovie: true,
         value: 7,
         tmdbIdentifier: TMDB_ID,
+        author: { subjectId: 'test-sub-123', displayName: 'test-sub-123' },
       });
     });
   });
@@ -277,6 +281,7 @@ describe('Ratings (integration)', () => {
         isMovie: true,
         value: 9,
         tmdbIdentifier: TMDB_ID,
+        author: { subjectId: 'other-user-123', displayName: 'other-user-123' },
       });
     });
   });

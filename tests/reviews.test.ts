@@ -83,6 +83,7 @@ describe('Reviews (integration)', () => {
         reviewContent: 'Great film',
         dateOfReview: '2026-01-10',
         tmdbIdentifier: TMDB_ID,
+        author: { subjectId: 'test-sub-123', displayName: 'test-sub-123' },
       });
       expect(typeof response.body.reviewId).toBe('number');
     });
@@ -100,6 +101,7 @@ describe('Reviews (integration)', () => {
         reviewContent: 'type two',
         isMovie: false,
         tmdbIdentifier: TMDB_ID,
+        author: { subjectId: 'test-sub-123', displayName: 'test-sub-123' },
       });
     });
   });
@@ -162,6 +164,7 @@ describe('Reviews (integration)', () => {
           isMovie: expect.any(Boolean),
           reviewContent: expect.any(String),
           tmdbIdentifier: expect.any(Number),
+          author: { subjectId: 'reviews-me-user', displayName: 'reviews-me-user' },
         });
         expect(row).toHaveProperty('reviewId');
         expect(row).toHaveProperty('dateOfReview');
@@ -238,6 +241,7 @@ describe('Reviews (integration)', () => {
         reviewContent: 'Read me',
         dateOfReview: '2026-03-15',
         tmdbIdentifier: TMDB_ID,
+        author: { subjectId: 'test-sub-123', displayName: 'test-sub-123' },
       });
     });
   });
@@ -317,6 +321,7 @@ describe('Reviews (integration)', () => {
         reviewContent: 'after',
         dateOfReview: '2026-06-20',
         tmdbIdentifier: TMDB_ID,
+        author: { subjectId: 'test-sub-123', displayName: 'test-sub-123' },
       });
     });
   });

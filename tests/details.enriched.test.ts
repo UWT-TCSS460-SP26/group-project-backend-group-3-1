@@ -43,7 +43,12 @@ describe('Enriched Details Route (GET /details/:type/:id)', () => {
         userId: 1,
         reviewContent: 'Great.',
         dateOfReview: new Date('2026-05-01T00:00:00.000Z'),
-        user: { username: 'alice' },
+        user: {
+          subjectId: 'alice-sub',
+          username: 'alice',
+          firstName: '',
+          lastName: '',
+        },
       },
     ]);
 
@@ -61,9 +66,9 @@ describe('Enriched Details Route (GET /details/:type/:id)', () => {
           {
             reviewId: 10,
             userId: 1,
-            username: 'alice',
             reviewContent: 'Great.',
             dateOfReview: '2026-05-01T00:00:00.000Z',
+            author: { subjectId: 'alice-sub', displayName: 'alice' },
           },
         ],
       },
