@@ -26,6 +26,10 @@ tags:
     description: Review endpoints
   - name: Ratings
     description: Rating endpoints
+  - name: Issues
+    description: Bug reporting endpoints
+  - name: Details
+    description: Enriched TMDB detail endpoints
 
 paths:
   /heartbeat:
@@ -551,6 +555,44 @@ paths:
               example:
                 error: Internal server error
 
+  /reviews/me:
+    get:
+      tags: [Reviews]
+      summary: List my reviews
+      description: |
+        Returns every review owned by the authenticated user.
+
+        Requires authentication (Bearer token).
+
+        Returns an empty array if no reviews exist.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Array of review rows for the current user (may be empty).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReviewRecord'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Invalid or expired token
+        '502':
+          $ref: '#/components/responses/IdentityProviderError'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
   /reviews/{reviewId}:
     get:
       tags: [Reviews]
@@ -774,6 +816,44 @@ paths:
               example:
                 error: Internal server error
 
+  /ratings/me:
+    get:
+      tags: [Ratings]
+      summary: List my ratings
+      description: |
+        Returns every rating owned by the authenticated user.
+
+        Requires authentication (Bearer token).
+
+        Returns an empty array if no ratings exist.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Array of rating rows for the current user (may be empty).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RatingRecord'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Invalid or expired token
+        '502':
+          $ref: '#/components/responses/IdentityProviderError'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
   /ratings/{ratingId}:
     get:
       tags: [Ratings]
@@ -819,7 +899,6 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
                 error: Internal server error
-
     delete:
       tags: [Ratings]
       summary: Delete a rating
@@ -871,7 +950,6 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
                 error: Internal server error
-
     patch:
       tags: [Ratings]
       summary: Update a rating
@@ -932,14 +1010,307 @@ paths:
               example:
                 error: Internal server error
 
+  /issues:
+    get:
+      tags: [Issues]
+      summary: List reported issues
+      description: Returns all bug reports sorted by latest report date first.
+      responses:
+        '200':
+          description: List of issues.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Issue'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+    post:
+      tags: [Issues]
+      summary: Create a bug report
+      description: Creates a new issue entry used for bug reporting.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IssueCreateRequest'
+      responses:
+        '201':
+          description: Issue created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+        '400':
+          description: Invalid issue payload.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              examples:
+                invalidStatus:
+                  value:
+                    error: 'issueStatus must be one of: OPEN, IN_PROGRESS, RESOLVED, CLOSED'
+                missingDescription:
+                  value:
+                    error: issueDesc is required
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /issues/{issueID}:
+    patch:
+      tags: [Issues]
+      summary: Update issue status
+      description: Updates the status of an existing issue. Requires Admin role.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: issueID
+          in: path
+          required: true
+          description: Issue id.
+          schema:
+            type: integer
+            minimum: 1
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IssueUpdateRequest'
+      responses:
+        '200':
+          description: Issue updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+        '400':
+          description: Invalid path parameter or payload.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              examples:
+                invalidIssueId:
+                  value:
+                    error: 'Parameter "issueID" must be a positive safe integer'
+                invalidStatus:
+                  value:
+                    error: 'issueStatus must be one of: OPEN, IN_PROGRESS, RESOLVED, CLOSED'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Forbidden (requires Admin role).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Issue not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Issue not found
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+    delete:
+      tags: [Issues]
+      summary: Delete an issue
+      description: Deletes an existing issue. Requires Admin role.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: issueID
+          in: path
+          required: true
+          description: Issue id.
+          schema:
+            type: integer
+            minimum: 1
+            example: 1
+      responses:
+        '200':
+          description: Issue deleted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueDeleteSuccess'
+        '400':
+          description: Invalid path parameter.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: 'Parameter "issueID" must be a positive safe integer'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Forbidden (requires Admin role).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Issue not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Issue not found
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /details/{type}/{id}:
+    get:
+      tags: [Details]
+      summary: Get enriched movie/show details
+      description: Returns TMDB details plus local community rating/review data.
+      parameters:
+        - name: type
+          in: path
+          required: true
+          description: Content type.
+          schema:
+            type: string
+            enum: [movie, show]
+        - name: id
+          in: path
+          required: true
+          description: TMDB id.
+          schema:
+            type: integer
+            minimum: 1
+            example: 550
+      responses:
+        '200':
+          description: Enriched details response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [type, tmdbId, metadata, community]
+                properties:
+                  type:
+                    type: string
+                    enum: [movie, show]
+                  tmdbId:
+                    type: integer
+                  metadata:
+                    type: object
+                    additionalProperties: true
+                  community:
+                    type: object
+                    required: [averageRating, reviewCount, recentReviews]
+                    properties:
+                      averageRating:
+                        type: number
+                        nullable: true
+                        example: 4.2
+                      reviewCount:
+                        type: integer
+                        example: 3
+                      recentReviews:
+                        type: array
+                        items:
+                          type: object
+                          required: [reviewId, userId, username, reviewContent, dateOfReview]
+                          properties:
+                            reviewId:
+                              type: integer
+                              example: 1
+                            userId:
+                              type: integer
+                              description: Local user primary key (`User.id`). Auth subject is `User.subjectId`, not returned here.
+                              example: 1
+                            username:
+                              type: string
+                              example: example
+                            reviewContent:
+                              type: string
+                              example: Great pacing and story.
+                            dateOfReview:
+                              type: string
+                              format: date-time
+                              example: '2026-05-01T00:00:00.000Z'
+        '400':
+          description: Invalid route parameter.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              examples:
+                invalidType:
+                  value:
+                    error: Parameter "type" must be "movie" or "show"
+                invalidId:
+                  value:
+                    error: Parameter "id" must be a positive integer
+        '404':
+          description: TMDB item not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, error]
+                properties:
+                  status:
+                    type: string
+                    example: Not Found - 404
+                  error:
+                    type: string
+                    example: TMDB API error
+        '500':
+          description: TMDB token missing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '502':
+          description: Failed to reach TMDB service.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: |
-        Bearer token from sign-in
+      description: Auth² issues JWT access tokens
 
   responses:
     IdentityProviderError:
@@ -1088,6 +1459,132 @@ components:
           type: integer
           description: TMDB id for the rated title
           example: 550
+
+    RatingRecord:
+      type: object
+      description: A user's rating for a movie or TV show.
+      required:
+        - ratingId
+        - userId
+        - isMovie
+        - rating
+        - tmdbIdentifier
+      properties:
+        ratingId:
+          type: integer
+          example: 1
+
+        userId:
+          type: integer
+          example: 1
+
+        isMovie:
+          type: boolean
+          description: Indicates whether the rating is for a movie or TV show.
+          example: true
+
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Rating score from 1 to 10.
+          example: 8
+
+        tmdbIdentifier:
+          type: integer
+          description: TMDB identifier for the title.
+          example: 550
+
+    ReviewRecord:
+      type: object
+      description: A user's review for a movie or TV show.
+      required:
+        - reviewId
+        - userId
+        - isMovie
+        - dateOfReview
+        - reviewContent
+        - tmdbIdentifier
+      properties:
+        reviewId:
+          type: integer
+          example: 1
+
+        userId:
+          type: integer
+          example: 1
+
+        isMovie:
+          type: boolean
+          description: Indicates whether the review is for a movie or TV show.
+          example: true
+
+        dateOfReview:
+          type: string
+          format: date-time
+          description: Date and time the review was created.
+          example: '2026-04-25T00:00:00.000Z'
+
+        reviewContent:
+          type: string
+          example: A thoughtful take on the film.
+
+        tmdbIdentifier:
+          type: integer
+          description: TMDB identifier for the title.
+          example: 550
+
+    IssueCreateRequest:
+      type: object
+      required: [issueStatus, issueDesc]
+      properties:
+        issueStatus:
+          type: string
+          enum: [OPEN, IN_PROGRESS, RESOLVED, CLOSED]
+          description: Current bug lifecycle status.
+          example: OPEN
+        issueDesc:
+          type: string
+          description: Human-readable bug description.
+          example: Search endpoint throws 500 on empty query.
+
+    IssueUpdateRequest:
+      type: object
+      required: [issueStatus]
+      properties:
+        issueStatus:
+          type: string
+          enum: [OPEN, IN_PROGRESS, RESOLVED, CLOSED]
+          description: New lifecycle status for the issue.
+          example: IN_PROGRESS
+
+    IssueDeleteSuccess:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+          example: Issue deleted successfully
+
+    Issue:
+      type: object
+      required: [issueID, issueStatus, issueDesc, issueReportDate]
+      properties:
+        issueID:
+          type: integer
+          example: 1
+        issueStatus:
+          type: string
+          enum: [OPEN, IN_PROGRESS, RESOLVED, CLOSED]
+          example: OPEN
+        issueDesc:
+          type: string
+          example: Search endpoint throws 500 on empty query.
+        issueReportDate:
+          type: string
+          format: date-time
+          description: Issue creation timestamp in UTC (ISO-8601; `Z` suffix).
+          example: '2026-04-30T23:26:42.123Z'
 
     ShowSearchResult:
       type: object

@@ -81,6 +81,20 @@ export default [
     },
   },
   {
+    files: ['tests/**/*.cjs'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: {
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        module: 'readonly',
+        require: 'readonly',
+        process: 'readonly',
+        exports: 'readonly',
+      },
+    },
+  },
+  {
     ignores: ['dist/', 'node_modules/', 'coverage/', 'jest.config.js'],
   },
   prettierConfig,

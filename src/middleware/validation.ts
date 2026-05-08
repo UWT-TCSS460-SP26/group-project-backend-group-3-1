@@ -2,6 +2,21 @@ import { Request, Response, NextFunction } from 'express';
 
 /** Matches a canonical UUID (version nibble 1–8, variant in 8, 9, a, or b). */
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+export const ISSUE_STATUSES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'] as const;
+const POSITIVE_INTEGER_REGEX = /^[1-9]\d*$/;
+
+const parsePositiveSafeIntegerParam = (rawValue: unknown): number | null => {
+  if (typeof rawValue !== 'string' || !POSITIVE_INTEGER_REGEX.test(rawValue)) {
+    return null;
+  }
+
+  const parsed = Number(rawValue);
+  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
+    return null;
+  }
+
+  return parsed;
+};
 
 /**
  * Validates that the named route parameter is a UUID (e.g. for `UserID`).
@@ -21,9 +36,11 @@ export const validateUuidParam = (paramName: string) => {
  * Validates that the ':reviewId' route parameter is a positive integer.
  */
 export const validateReviewIdParam = (req: Request, res: Response, next: NextFunction) => {
-  const id = Number(req.params.reviewId);
-  if (!Number.isInteger(id) || id <= 0) {
-    res.status(400).json({ error: 'Parameter "reviewId" must be a positive integer' });
+  const id = parsePositiveSafeIntegerParam(req.params.reviewId);
+  if (id === null) {
+    res.status(400).json({
+      error: 'Parameter "reviewId" must be a positive safe integer',
+    });
     return;
   }
   next();
@@ -33,9 +50,11 @@ export const validateReviewIdParam = (req: Request, res: Response, next: NextFun
  * Validates that the ':ratingId' route parameter is a positive integer.
  */
 export const validateRatingIdParam = (req: Request, res: Response, next: NextFunction) => {
-  const id = Number(req.params.ratingId);
-  if (!Number.isInteger(id) || id <= 0) {
-    res.status(400).json({ error: 'Parameter "ratingId" must be a positive integer' });
+  const id = parsePositiveSafeIntegerParam(req.params.ratingId);
+  if (id === null) {
+    res.status(400).json({
+      error: 'Parameter "ratingId" must be a positive safe integer',
+    });
     return;
   }
   next();
@@ -200,12 +219,54 @@ export const validateRatingCreateBody = (req: Request, res: Response, next: Next
 };
 
 /**
+ * Validates JSON body for POST /issues — required `issueStatus` and `issueDesc`.
+ */
+export const validateIssueCreateBody = (
+  request: Request,
+  response: Response,
+  next: NextFunction
+) => {
+  const { issueStatus, issueDesc } = request.body as {
+    issueStatus?: unknown;
+    issueDesc?: unknown;
+  };
+
+  if (
+    typeof issueStatus !== 'string' ||
+    !ISSUE_STATUSES.includes(issueStatus as (typeof ISSUE_STATUSES)[number])
+  ) {
+    response.status(400).json({
+      error: `issueStatus must be one of: ${ISSUE_STATUSES.join(', ')}`,
+    });
+    return;
+  }
+
+  if (typeof issueDesc !== 'string' || issueDesc.trim() === '') {
+    response.status(400).json({ error: 'issueDesc is required' });
+    return;
+  }
+
+  next();
+};
+
+/**
  * Validates that the ':id' route parameter is a positive integer.
  */
 export const validateNumericId = (req: Request, res: Response, next: NextFunction) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id) || id <= 0) {
-    res.status(400).json({ error: 'Parameter "id" must be a positive integer' });
+  const id = parsePositiveSafeIntegerParam(req.params.id);
+  if (id === null) {
+    res.status(400).json({ error: 'Parameter "id" must be a positive safe integer' });
+    return;
+  }
+  next();
+};
+
+export const validateIssueIdParam = (req: Request, res: Response, next: NextFunction) => {
+  const id = parsePositiveSafeIntegerParam(req.params.issueID);
+  if (id === null) {
+    res.status(400).json({
+      error: 'Parameter "issueID" must be a positive safe integer',
+    });
     return;
   }
   next();
@@ -223,4 +284,22 @@ export const requireEnvVar = (token: string) => {
     }
     next();
   };
+};
+
+export const validatePatchIssueBody = (req: Request, res: Response, next: NextFunction) => {
+  const { issueStatus } = req.body as { issueStatus?: unknown };
+  if (issueStatus === undefined || issueStatus === null) {
+    res.status(400).json({ error: 'Field "issueStatus" is required' });
+    return;
+  }
+  if (
+    typeof issueStatus !== 'string' ||
+    !ISSUE_STATUSES.includes(issueStatus as (typeof ISSUE_STATUSES)[number])
+  ) {
+    res.status(400).json({
+      error: `issueStatus must be one of: ${ISSUE_STATUSES.join(', ')}`,
+    });
+    return;
+  }
+  next();
 };

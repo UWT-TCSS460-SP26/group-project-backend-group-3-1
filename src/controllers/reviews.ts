@@ -4,13 +4,9 @@ import { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 
 /**
- * POST /reviews — author is `req.localUser` (set by requireAuth + ensureLocalUser).
+ * POST /reviews — author is always req.user (set by requireAuth).
  */
 export const createReview = async (req: Request, res: Response) => {
-  if (!req.localUser) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-
   const { reviewContent, isMovie, dateOfReview, tmdbIdentifier } = req.body as {
     reviewContent: string;
     isMovie: boolean;
@@ -22,7 +18,7 @@ export const createReview = async (req: Request, res: Response) => {
     const localUser = await resolveLocalUser(req);
     const review = await prisma.review.create({
       data: {
-        userId: localUser.subjectId,
+        userId: localUser.id,
         isMovie,
         dateOfReview: new Date(dateOfReview),
         reviewContent,
@@ -48,26 +44,20 @@ export const createReview = async (req: Request, res: Response) => {
  * DELETE /reviews/:reviewId — owner or admin (role === "admin"). Hard delete.
  */
 export const deleteReview = async (req: Request, res: Response) => {
-  if (!req.user || !req.localUser) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-
   const reviewId = Number(req.params.reviewId);
-  if (!Number.isInteger(reviewId) || reviewId <= 0) {
-    return res.status(400).json({ error: 'Parameter "reviewId" must be a positive integer' });
-  }
 
   try {
+    const localUser = await resolveLocalUser(req);
     const existing = await prisma.review.findFirst({ where: { reviewId } });
 
     if (!existing) {
       return res.status(404).json({ error: 'Review not found' });
     }
 
-    const isOwner = existing.userId === req.user.sub;
-    const isAdmin = req.user.role === 'Admin';
+    const isOwner = existing.userId === localUser.id;
+    const isAdmin = req.user!.role === 'Admin';
     if (!isOwner && !isAdmin) {
-      return res.status(403).json({ error: 'You can only delete your own reviews' });
+      return res.status(403).json({ error: 'You can only delete your own reviews or be an Admin' });
     }
 
     await prisma.review.delete({
@@ -108,10 +98,6 @@ export const getReview = async (req: Request, res: Response) => {
  * PATCH /reviews/:reviewId — only the author may update (not admin).
  */
 export const updateReview = async (req: Request, res: Response) => {
-  if (!req.localUser) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-
   const { reviewContent, dateOfReview } = req.body as {
     reviewContent: string;
     dateOfReview: string;
@@ -120,12 +106,13 @@ export const updateReview = async (req: Request, res: Response) => {
   const reviewId = Number(req.params.reviewId);
 
   try {
+    const localUser = await resolveLocalUser(req);
     const existing = await prisma.review.findFirst({ where: { reviewId } });
 
     if (!existing) {
       return res.status(404).json({ error: 'Review not found' });
     }
-    if (existing.userId !== req.localUser.id) {
+    if (existing.userId !== localUser.id) {
       return res.status(403).json({ error: 'You can only update your own reviews' });
     }
 
@@ -155,4 +142,16 @@ export const updateReview = async (req: Request, res: Response) => {
     }
     throw e;
   }
+};
+
+/**
+ * GET /reviews/me — lists all reviews for the authenticated user (raw DB rows; `dateOfReview` is full ISO datetime in JSON).
+ */
+export const getMyReviews = async (req: Request, res: Response) => {
+  const localUser = await resolveLocalUser(req);
+  const reviews = await prisma.review.findMany({
+    where: { userId: localUser.id },
+  });
+
+  return res.status(200).json(reviews);
 };

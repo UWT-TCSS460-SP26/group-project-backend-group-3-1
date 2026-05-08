@@ -39,13 +39,6 @@ export const updateRating = async (req: Request, res: Response) => {
   const ratingId = Number(req.params.ratingId);
   const nextRating = Number(req.body.rating);
 
-  const owned = await prisma.rating.findFirst({
-    where: { ratingId, userId: req.localUser.id },
-  });
-  if (!owned) {
-    return res.status(404).json({ error: 'Rating not found' });
-  }
-
   try {
     const localUser = await resolveLocalUser(req);
     const existing = await prisma.rating.findUnique({
@@ -57,7 +50,7 @@ export const updateRating = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Rating not found' });
     }
 
-    if (existing.userId !== localUser.subjectId) {
+    if (existing.userId !== localUser.id) {
       return res.status(403).json({ error: 'You can only update your own ratings' });
     }
 
@@ -91,7 +84,7 @@ export const createRating = async (req: Request, res: Response) => {
 
   const ratingResult = await prisma.rating.create({
     data: {
-      userId: localUser.subjectId,
+      userId: localUser.id,
       isMovie,
       rating,
       tmdbIdentifier,
@@ -107,13 +100,6 @@ export const createRating = async (req: Request, res: Response) => {
 export const deleteRating = async (req: Request, res: Response) => {
   const ratingId = Number(req.params.ratingId);
 
-  const owned = await prisma.rating.findFirst({
-    where: { ratingId, userId: req.localUser.id },
-  });
-  if (!owned) {
-    return res.status(404).json({ error: 'Rating not found' });
-  }
-
   try {
     const localUser = await resolveLocalUser(req);
     const existing = await prisma.rating.findUnique({
@@ -125,8 +111,8 @@ export const deleteRating = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Rating not found' });
     }
 
-    if (existing.userId !== localUser.subjectId) {
-      return res.status(403).json({ error: 'You can only delete your own ratings' });
+    if (existing.userId !== localUser.id) {
+      return res.status(404).json({ error: 'Rating not found' });
     }
 
     await prisma.rating.delete({
@@ -142,4 +128,16 @@ export const deleteRating = async (req: Request, res: Response) => {
     }
     throw e;
   }
+};
+
+/**
+ * GET /ratings/me — lists all ratings for the authenticated user (raw DB rows; field `rating` is the score).
+ */
+export const getMyRatings = async (req: Request, res: Response) => {
+  const localUser = await resolveLocalUser(req);
+  const ratings = await prisma.rating.findMany({
+    where: { userId: localUser.id },
+  });
+
+  return res.status(200).json(ratings);
 };

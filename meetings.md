@@ -98,7 +98,7 @@ Good introduction meeting getting to know each other and our schedules.
 
 ---
 
-Second Meeting
+2nd Meeting, Week 3
 
 - Discussing the structure of the endpoints. Created a schema.
 
@@ -108,7 +108,7 @@ Second Meeting
 
 ![The designed endpoints for movies and shows](./meeting_images/endpoints_design.png)
 
-Third Meeting, Week 4
+3rd Meeting, Week 4
 
 - Give everyone tasks for the week from the sprint
 
@@ -120,3 +120,11 @@ Third Meeting, Week 4
 
 ![Assigned tasks to each person](./meeting_images/task_spread.png)
 ![The designed endpoints for movies and shows](endpoints_design.png)
+
+4th Meeting, Week 5
+
+- Gave everyone tasks for the week from the sprint
+
+- Went over each task so gain an understanding of the MVP for the week
+
+![Assigned tasks to each person](./meeting_images/take_spread_Week5.png)
