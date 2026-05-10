@@ -3,6 +3,8 @@ import { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 import { resolveLocalUser } from '../auth/resolveLocalUser';
 
+const BASE_URL = 'https://api.themoviedb.org/3';
+
 const toRatingResponse = (rating: {
   ratingId: number;
   isMovie: boolean;
@@ -140,4 +142,82 @@ export const getMyRatings = async (req: Request, res: Response) => {
   });
 
   return res.status(200).json(ratings);
+};
+
+/**
+ * GET /ratings/me/enriched — lists current user's ratings with TMDB metadata.
+ */
+export const getMyEnrichedRatings = async (req: Request, res: Response) => {
+  const token = process.env.TMDB_BEARER_TOKEN;
+  if (!token) {
+    return res.status(500).json({ error: 'TMDB token is not configured' });
+  }
+
+  const localUser = await resolveLocalUser(req);
+  const ratings = await prisma.rating.findMany({
+    where: { userId: localUser.id },
+    orderBy: { ratingId: 'desc' },
+  });
+
+  const displayName =
+    localUser.username || `${localUser.firstName} ${localUser.lastName}`.trim() || 'Unknown User';
+
+  try {
+    const enriched = await Promise.all(
+      ratings.map(async (rating) => {
+        const tmdbPath = rating.isMovie ? 'movie' : 'tv';
+        const response = await fetch(
+          `${BASE_URL}/${tmdbPath}/${encodeURIComponent(String(rating.tmdbIdentifier))}?language=en-US`,
+          {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (!response.ok) {
+          if (response.status === 404) {
+            return {
+              ratingId: rating.ratingId,
+              isMovie: rating.isMovie,
+              value: rating.rating,
+              tmdbIdentifier: rating.tmdbIdentifier,
+              author: {
+                userId: localUser.id,
+                username: displayName,
+              },
+              missing: true,
+              metadata: null,
+            };
+          }
+
+          throw new Error('TMDB API error');
+        }
+
+        const metadata = (await response.json()) as Record<string, unknown>;
+
+        return {
+          ratingId: rating.ratingId,
+          isMovie: rating.isMovie,
+          value: rating.rating,
+          tmdbIdentifier: rating.tmdbIdentifier,
+          author: {
+            userId: localUser.id,
+            username: displayName,
+          },
+          missing: false,
+          metadata,
+        };
+      })
+    );
+
+    return res.status(200).json({
+      count: enriched.length,
+      results: enriched,
+    });
+  } catch {
+    return res.status(502).json({ error: 'Failed to reach TMDB service' });
+  }
 };
