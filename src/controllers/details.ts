@@ -4,16 +4,16 @@ import { prisma } from '../lib/prisma';
 const BASE_URL = 'https://api.themoviedb.org/3';
 const RECENT_REVIEW_LIMIT = 5;
 
-export const getEnrichedDetails = async (req: Request, res: Response) => {
+const getEnrichedDetailsByType = async (
+  req: Request,
+  res: Response,
+  options: { type: 'movie' | 'show'; tmdbPath: 'movie' | 'tv'; isMovie: boolean }
+) => {
   const token = process.env.TMDB_BEARER_TOKEN;
-  const { type, id } = req.params;
+  const { id } = req.params;
 
   if (!token) {
     return res.status(500).json({ error: 'TMDB token is not configured' });
-  }
-
-  if (type !== 'movie' && type !== 'show') {
-    return res.status(400).json({ error: 'Parameter "type" must be "movie" or "show"' });
   }
 
   const tmdbId = Number(id);
@@ -21,12 +21,9 @@ export const getEnrichedDetails = async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Parameter "id" must be a positive integer' });
   }
 
-  const tmdbPath = type === 'movie' ? 'movie' : 'tv';
-  const isMovie = type === 'movie';
-
   try {
     const result = await fetch(
-      `${BASE_URL}/${tmdbPath}/${encodeURIComponent(String(tmdbId))}?language=en-US`,
+      `${BASE_URL}/${options.tmdbPath}/${encodeURIComponent(String(tmdbId))}?language=en-US`,
       {
         method: 'GET',
         headers: {
@@ -47,14 +44,14 @@ export const getEnrichedDetails = async (req: Request, res: Response) => {
 
     const [ratingAggregate, reviewCount, recentReviews] = await Promise.all([
       prisma.rating.aggregate({
-        where: { isMovie, tmdbIdentifier: tmdbId },
+        where: { isMovie: options.isMovie, tmdbIdentifier: tmdbId },
         _avg: { rating: true },
       }),
       prisma.review.count({
-        where: { isMovie, tmdbIdentifier: tmdbId },
+        where: { isMovie: options.isMovie, tmdbIdentifier: tmdbId },
       }),
       prisma.review.findMany({
-        where: { isMovie, tmdbIdentifier: tmdbId },
+        where: { isMovie: options.isMovie, tmdbIdentifier: tmdbId },
         orderBy: { dateOfReview: 'desc' },
         take: RECENT_REVIEW_LIMIT,
         select: {
@@ -72,7 +69,7 @@ export const getEnrichedDetails = async (req: Request, res: Response) => {
     ]);
 
     return res.status(200).json({
-      type,
+      type: options.type,
       tmdbId,
       metadata,
       community: {
@@ -90,4 +87,20 @@ export const getEnrichedDetails = async (req: Request, res: Response) => {
   } catch {
     return res.status(502).json({ error: 'Failed to reach TMDB service' });
   }
+};
+
+export const getEnrichedMovieDetails = async (req: Request, res: Response) => {
+  return getEnrichedDetailsByType(req, res, {
+    type: 'movie',
+    tmdbPath: 'movie',
+    isMovie: true,
+  });
+};
+
+export const getEnrichedShowDetails = async (req: Request, res: Response) => {
+  return getEnrichedDetailsByType(req, res, {
+    type: 'show',
+    tmdbPath: 'tv',
+    isMovie: false,
+  });
 };

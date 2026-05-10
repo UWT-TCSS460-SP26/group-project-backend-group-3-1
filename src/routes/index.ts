@@ -5,7 +5,6 @@ import { showRouter } from './shows';
 import { reviewRouter } from './reviews';
 import { ratingRouter } from './ratings';
 import { issueRouter } from './issues';
-import { detailRouter } from './details';
 
 const routes = Router();
 
@@ -15,6 +14,5 @@ routes.use('/shows', showRouter);
 routes.use('/reviews', reviewRouter);
 routes.use('/ratings', ratingRouter);
 routes.use('/issues', issueRouter);
-routes.use('/details', detailRouter);
 
 export { routes };
