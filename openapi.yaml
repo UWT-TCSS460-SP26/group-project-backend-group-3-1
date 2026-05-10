@@ -544,6 +544,73 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
                 error: Invalid or expired token
+  /ratings/me/enriched:
+    get:
+      tags: [Ratings]
+      summary: List my ratings with TMDB metadata
+      description: |
+        Returns every rating owned by the authenticated user with TMDB metadata attached where available.
+
+        Requires authentication (Bearer token) and a configured `TMDB_BEARER_TOKEN` environment variable.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Enriched ratings list for the current user.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [count, results]
+                properties:
+                  count:
+                    type: integer
+                    example: 1
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      required: [ratingId, isMovie, value, tmdbIdentifier, author, missing]
+                      properties:
+                        ratingId:
+                          type: integer
+                        isMovie:
+                          type: boolean
+                        value:
+                          type: integer
+                        tmdbIdentifier:
+                          type: integer
+                        author:
+                          type: object
+                          properties:
+                            userId:
+                              type: integer
+                            username:
+                              type: string
+                        missing:
+                          type: boolean
+                        metadata:
+                          type: object
+                          nullable: true
+                          additionalProperties: true
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '502':
+          description: Upstream TMDB error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
         '502':
           $ref: '#/components/responses/IdentityProviderError'
         '500':
