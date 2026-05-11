@@ -26,6 +26,8 @@ tags:
     description: Review endpoints
   - name: Ratings
     description: Rating endpoints
+  - name: Community
+    description: Community endpoints
   - name: Issues
     description: Bug reporting endpoints
   - name: Details
@@ -1453,6 +1455,59 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
 
+  /community/discovery:
+    get:
+      tags: [Community]
+      summary: Discover new content
+      description: |
+        Returns a list of recommended content based on Group 3 DB's community data.'.'
+      parameters:
+        - name: type
+          in: query
+          required: true
+          description: Declare whether you want the movie or show
+          schema:
+            type: string
+            example: movie
+        - name: sort
+          in: query
+          required: true
+          description: Declare order of sort, either most-rated or most-reviewed
+          schema:
+            type: string
+            example: most-rated
+      responses:
+        '200':
+          description: List of recommended content.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CommunityResponse'
+        '400':
+          description: Invalid route parameter.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              examples:
+                invalidType:
+                  value:
+                    error: Parameter "type" must be "movie" or "show"
+        '500':
+          description: TMDB token missing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '502':
+          description: Failed to reach TMDB service.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -1836,3 +1891,40 @@ components:
           type: integer
           description: Number of seasons in the series.
           example: 2
+
+    CommunityResponse:
+      type: object
+      required: [type, sort, results]
+      properties:
+        type:
+          type: string
+          example: movie, show
+        sort:
+          type: string
+          example: most-reviewed, most-rated
+        results:
+          type: object
+          required: [tmdbId, averageRating, reviewCount, title, posterPath, overview, releaseDate]
+          properties:
+            tmdbId:
+              type: integer
+              example: 550
+            averageRating:
+              type: number
+              example: 6.7
+            reviewCount:
+              type: integer
+              example: 12
+            title:
+              type: string
+              example: Fight Club
+            posterPath:
+              type: string
+              example: https://image.tmdb.org/t/p/w500/jSziioSwPVrOy9Yow3XhWIBDjq1.jpg
+            overview:
+              type: string
+              example:
+                A ticking-time-bomb insomniac and a slippery soap salesman channel primal male
+                aggression into a shocking new form of therapy. Their concept catches on, with underground
+                \"fight clubs\" forming in every town, until an eccentric gets in the way and ignites an
+                out-of-control spiral toward oblivion
