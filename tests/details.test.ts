@@ -21,7 +21,7 @@ describe('Enriched Details (integration)', () => {
       json: async () => ({ id: 550, title: 'Fight Club' }),
     });
 
-    const response = await request(app).get('/reviews/movies/550/details');
+    const response = await request(app).get('/movies/details/550');
 
     expect(response.status).toBe(200);
     expect(response.body.tmdbId).toBe(550);
@@ -39,7 +39,7 @@ describe('Enriched Details (integration)', () => {
       json: async () => ({ status_message: 'The resource you requested could not be found.' }),
     });
 
-    const response = await request(app).get('/reviews/movies/99999999/details');
+    const response = await request(app).get('/movies/details/99999999');
 
     expect(response.status).toBe(404);
     expect(response.body.error).toBe('TMDB API error');
@@ -52,7 +52,7 @@ describe('Enriched Details (integration)', () => {
       json: async () => ({ id: 2004, name: 'Malcolm in the Middle' }),
     });
 
-    const response = await request(app).get('/reviews/shows/2004/details');
+    const response = await request(app).get('/shows/details/2004');
 
     expect(response.status).toBe(200);
     expect(response.body.tmdbId).toBe(2004);
@@ -62,8 +62,8 @@ describe('Enriched Details (integration)', () => {
   });
 
   it('returns 400 for invalid id', async () => {
-    const response = await request(app).get('/reviews/movies/abc/details');
+    const response = await request(app).get('/movies/details/abc');
     expect(response.status).toBe(400);
-    expect(response.body.error).toBe('Parameter "id" must be a positive safe integer');
+    expect(response.body.error).toBe('Parameter "id" must be a positive integer up to 2147483647');
   });
 });

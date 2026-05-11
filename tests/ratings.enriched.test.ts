@@ -30,9 +30,20 @@ function authHeader(overrides: { sub?: string; role?: string } = {}): Record<str
 
 const TMDB_ID = 550;
 
+/** Dedicated auth subject so this file does not share ratings with `ratings.test.ts` (same default `test-sub-123`). */
+const ENRICHED_ME_SUB = '99999999-9999-4999-a999-999999999999';
+
 describe('GET /ratings/me/enriched', () => {
+  beforeEach(async () => {
+    await prisma.rating.deleteMany({
+      where: { user: { subjectId: ENRICHED_ME_SUB } },
+    });
+  });
+
   afterAll(async () => {
-    await prisma.rating.deleteMany();
+    await prisma.rating.deleteMany({
+      where: { user: { subjectId: ENRICHED_ME_SUB } },
+    });
   });
 
   it('returns 401 when Authorization is missing', async () => {
@@ -47,7 +58,7 @@ describe('GET /ratings/me/enriched', () => {
     // create a rating for the test user
     const created = await request(app)
       .post('/ratings')
-      .set(authHeader())
+      .set(authHeader({ sub: ENRICHED_ME_SUB }))
       .send({ isMovie: true, rating: 8, tmdbIdentifier: TMDB_ID });
 
     expect(created.status).toBe(201);
@@ -55,16 +66,16 @@ describe('GET /ratings/me/enriched', () => {
     // mock global fetch to return TMDB metadata
     const fakeMetadata = { id: TMDB_ID, title: 'Test Movie', overview: 'desc' };
     const originalFetch = globalThis.fetch;
-    const mockFetch = jest.fn().mockResolvedValue({
+    globalThis.fetch = jest.fn().mockResolvedValue({
       ok: true,
       status: 200,
       json: async () => fakeMetadata,
-    }) as unknown as typeof fetch;
-    globalThis.fetch = mockFetch;
+    }) as unknown as typeof globalThis.fetch;
 
-    const res = await request(app).get('/ratings/me/enriched').set(authHeader());
+    const res = await request(app)
+      .get('/ratings/me/enriched')
+      .set(authHeader({ sub: ENRICHED_ME_SUB }));
 
-    // restore fetch
     globalThis.fetch = originalFetch;
 
     expect(res.status).toBe(200);

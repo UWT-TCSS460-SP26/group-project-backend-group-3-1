@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { sendEnrichedDetails } from '../lib/enrichedDetails';
 import { TMDBTVDetailsApi, TMDBTVSearchResponse } from '../types/tmdb';
 
 const BASE_URL = 'https://api.themoviedb.org/3';
@@ -151,4 +152,13 @@ export const getPopularShows = async (_req: Request, res: Response) => {
   } catch (_error) {
     return res.status(502).json({ error: 'Failed to reach TMDB service' });
   }
+};
+
+/** GET /shows/details/:id — TMDB TV payload plus local ratings/reviews. */
+export const getEnrichedShowDetails = async (req: Request, res: Response) => {
+  await sendEnrichedDetails(req, res, {
+    type: 'show',
+    tmdbPath: 'tv',
+    isMovie: false,
+  });
 };

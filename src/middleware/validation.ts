@@ -5,17 +5,51 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-
 export const ISSUE_STATUSES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'] as const;
 const POSITIVE_INTEGER_REGEX = /^[1-9]\d*$/;
 
-const parsePositiveSafeIntegerParam = (rawValue: unknown): number | null => {
-  if (typeof rawValue !== 'string' || !POSITIVE_INTEGER_REGEX.test(rawValue)) {
+/** Upper bound for Prisma `Int` / typical SQL `INTEGER` (signed 32-bit). */
+export const PG_INT32_MAX = 2_147_483_647;
+
+/** Shown in 400 responses — values above this cannot be stored as `Int`. */
+const PG_INTEGER_RANGE_MSG = `must be a positive integer up to ${PG_INT32_MAX}`;
+
+/**
+ * Parses a positive integer that fits stored `Int` fields: safe in JS and ≤ {@link PG_INT32_MAX}.
+ * Accepts JSON `string` or `number`; strings must be digits only with no leading zero (e.g. `"550"`, not `"0550"`).
+ */
+const parsePositiveSafeIntegerFromUnknown = (rawValue: unknown): number | null => {
+  let n: number;
+  if (typeof rawValue === 'number') {
+    if (!Number.isInteger(rawValue) || rawValue <= 0 || !Number.isSafeInteger(rawValue)) {
+      return null;
+    }
+    n = rawValue;
+  } else if (typeof rawValue === 'string') {
+    if (!POSITIVE_INTEGER_REGEX.test(rawValue)) {
+      return null;
+    }
+    const parsed = Number(rawValue);
+    if (!Number.isSafeInteger(parsed) || parsed <= 0) {
+      return null;
+    }
+    n = parsed;
+  } else {
     return null;
   }
-
-  const parsed = Number(rawValue);
-  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
+  if (n > PG_INT32_MAX) {
     return null;
   }
+  return n;
+};
 
-  return parsed;
+const parsePositiveSafeIntegerParam = (rawValue: unknown): number | null =>
+  parsePositiveSafeIntegerFromUnknown(rawValue);
+
+/** `rating` body field: integer 1–10, same digit rules as {@link parsePositiveSafeIntegerFromUnknown} for strings. */
+const parseTenPointRatingFromUnknown = (rawValue: unknown): number | null => {
+  const n = parsePositiveSafeIntegerFromUnknown(rawValue);
+  if (n === null || n > 10) {
+    return null;
+  }
+  return n;
 };
 
 /**
@@ -39,7 +73,7 @@ export const validateReviewIdParam = (req: Request, res: Response, next: NextFun
   const id = parsePositiveSafeIntegerParam(req.params.reviewId);
   if (id === null) {
     res.status(400).json({
-      error: 'Parameter "reviewId" must be a positive safe integer',
+      error: `Parameter "reviewId" ${PG_INTEGER_RANGE_MSG}`,
     });
     return;
   }
@@ -53,7 +87,7 @@ export const validateRatingIdParam = (req: Request, res: Response, next: NextFun
   const id = parsePositiveSafeIntegerParam(req.params.ratingId);
   if (id === null) {
     res.status(400).json({
-      error: 'Parameter "ratingId" must be a positive safe integer',
+      error: `Parameter "ratingId" ${PG_INTEGER_RANGE_MSG}`,
     });
     return;
   }
@@ -104,10 +138,9 @@ export const validateReviewBody = (req: Request, res: Response, next: NextFuncti
     res.status(400).json({ error: 'Field "tmdbIdentifier" is required' });
     return;
   }
-  const tmdb =
-    typeof tmdbIdentifier === 'string' ? Number.parseInt(tmdbIdentifier, 10) : tmdbIdentifier;
-  if (typeof tmdb !== 'number' || !Number.isInteger(tmdb) || tmdb < 1) {
-    res.status(400).json({ error: 'Field "tmdbIdentifier" must be a positive integer' });
+  const tmdb = parsePositiveSafeIntegerFromUnknown(tmdbIdentifier);
+  if (tmdb === null) {
+    res.status(400).json({ error: `Field "tmdbIdentifier" ${PG_INTEGER_RANGE_MSG}` });
     return;
   }
 
@@ -161,8 +194,8 @@ export const validateRatingPatchBody = (req: Request, res: Response, next: NextF
     res.status(400).json({ error: 'Field "rating" is required' });
     return;
   }
-  const n = typeof rating === 'string' ? Number.parseInt(rating, 10) : rating;
-  if (typeof n !== 'number' || !Number.isInteger(n) || n < 1 || n > 10) {
+  const n = parseTenPointRatingFromUnknown(rating);
+  if (n === null) {
     res.status(400).json({ error: 'Field "rating" must be an integer from 1 to 10' });
     return;
   }
@@ -195,8 +228,8 @@ export const validateRatingCreateBody = (req: Request, res: Response, next: Next
     res.status(400).json({ error: 'Field "rating" is required' });
     return;
   }
-  const n = typeof rating === 'string' ? Number.parseInt(rating, 10) : rating;
-  if (typeof n !== 'number' || !Number.isInteger(n) || n < 1 || n > 10) {
+  const n = parseTenPointRatingFromUnknown(rating);
+  if (n === null) {
     res.status(400).json({ error: 'Field "rating" must be an integer from 1 to 10' });
     return;
   }
@@ -205,10 +238,9 @@ export const validateRatingCreateBody = (req: Request, res: Response, next: Next
     res.status(400).json({ error: 'Field "tmdbIdentifier" is required' });
     return;
   }
-  const tmdb =
-    typeof tmdbIdentifier === 'string' ? Number.parseInt(tmdbIdentifier, 10) : tmdbIdentifier;
-  if (typeof tmdb !== 'number' || !Number.isInteger(tmdb) || tmdb < 1) {
-    res.status(400).json({ error: 'Field "tmdbIdentifier" must be a positive integer' });
+  const tmdb = parsePositiveSafeIntegerFromUnknown(tmdbIdentifier);
+  if (tmdb === null) {
+    res.status(400).json({ error: `Field "tmdbIdentifier" ${PG_INTEGER_RANGE_MSG}` });
     return;
   }
 
@@ -255,7 +287,7 @@ export const validateIssueCreateBody = (
 export const validateNumericId = (req: Request, res: Response, next: NextFunction) => {
   const id = parsePositiveSafeIntegerParam(req.params.id);
   if (id === null) {
-    res.status(400).json({ error: 'Parameter "id" must be a positive safe integer' });
+    res.status(400).json({ error: `Parameter "id" ${PG_INTEGER_RANGE_MSG}` });
     return;
   }
   next();
@@ -265,7 +297,7 @@ export const validateIssueIdParam = (req: Request, res: Response, next: NextFunc
   const id = parsePositiveSafeIntegerParam(req.params.issueID);
   if (id === null) {
     res.status(400).json({
-      error: 'Parameter "issueID" must be a positive safe integer',
+      error: `Parameter "issueID" ${PG_INTEGER_RANGE_MSG}`,
     });
     return;
   }
