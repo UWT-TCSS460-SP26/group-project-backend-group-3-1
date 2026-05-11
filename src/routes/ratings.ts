@@ -18,7 +18,12 @@ import {
 const ratingRouter = Router();
 
 ratingRouter.get('/me', requireAuth, getMyRatings);
-ratingRouter.get('/me/enriched', requireAuth, requireEnvVar('TMDB_BEARER_TOKEN'), getMyEnrichedRatings);
+ratingRouter.get(
+  '/me/enriched',
+  requireAuth,
+  requireEnvVar('TMDB_BEARER_TOKEN'),
+  getMyEnrichedRatings
+);
 ratingRouter.get('/:ratingId', validateRatingIdParam, getRating);
 ratingRouter.patch(
   '/:ratingId',

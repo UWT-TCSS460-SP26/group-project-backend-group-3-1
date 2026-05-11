@@ -11,10 +11,7 @@ export const listIssues = async (req: Request, res: Response) => {
   const { status } = req.query;
 
   if (status !== undefined) {
-    if (
-      typeof status !== 'string' ||
-      !ISSUE_STATUSES.includes(status as IssueStatus)
-    ) {
+    if (typeof status !== 'string' || !ISSUE_STATUSES.includes(status as IssueStatus)) {
       return res.status(400).json({
         error: `issueStatus must be one of: ${ISSUE_STATUSES.join(', ')}`,
       });
