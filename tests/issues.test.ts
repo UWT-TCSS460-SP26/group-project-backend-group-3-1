@@ -82,6 +82,42 @@ describe('Issues (integration)', () => {
       expect(response.status).toBe(200);
       expect(Array.isArray(response.body)).toBe(true);
     });
+
+    it('returns 400 when status filter is invalid', async () => {
+      const response = await request(app)
+        .get('/issues?status=NOT_A_STATUS')
+        .set(authHeader({ role: 'Admin' }));
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toMatch(/issueStatus must be one of/);
+    });
+
+    it('filters issues by status', async () => {
+      await prisma.issue.deleteMany();
+      await prisma.issue.createMany({
+        data: [
+          {
+            issueStatus: 'OPEN',
+            issueDesc: 'Open issue',
+            issueReportDate: new Date(),
+          },
+          {
+            issueStatus: 'RESOLVED',
+            issueDesc: 'Resolved issue',
+            issueReportDate: new Date(),
+          },
+        ],
+      });
+
+      const response = await request(app)
+        .get('/issues?status=RESOLVED')
+        .set(authHeader({ role: 'Admin' }));
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveLength(1);
+      expect(response.body[0].issueStatus).toBe('RESOLVED');
+      expect(response.body[0].issueDesc).toBe('Resolved issue');
+    });
   });
 
   describe('PATCH /issues/:issueID (Admin only)', () => {

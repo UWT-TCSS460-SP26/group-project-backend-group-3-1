@@ -1073,7 +1073,15 @@ paths:
     get:
       tags: [Issues]
       summary: List reported issues
-      description: Returns all bug reports sorted by latest report date first.
+      description: Returns bug reports sorted by latest report date first. Optionally filter by issue status.
+      parameters:
+        - name: status
+          in: query
+          required: false
+          description: Only return issues with this status.
+          schema:
+            type: string
+            enum: [OPEN, IN_PROGRESS, RESOLVED, CLOSED]
       responses:
         '200':
           description: List of issues.
@@ -1083,6 +1091,14 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Issue'
+        '400':
+          description: Invalid status filter.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: 'issueStatus must be one of: OPEN, IN_PROGRESS, RESOLVED, CLOSED'
         '500':
           description: Server error
           content:
