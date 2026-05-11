@@ -258,7 +258,7 @@ export const validateIssueCreateBody = (
   response: Response,
   next: NextFunction
 ) => {
-  const { issueStatus, issueDesc } = request.body as {
+  const { issueStatus, issueDesc } = (request.body ?? {}) as {
     issueStatus?: unknown;
     issueDesc?: unknown;
   };
@@ -319,7 +319,7 @@ export const requireEnvVar = (token: string) => {
 };
 
 export const validatePatchIssueBody = (req: Request, res: Response, next: NextFunction) => {
-  const { issueStatus } = req.body as { issueStatus?: unknown };
+  const { issueStatus } = (req.body ?? {}) as { issueStatus?: unknown };
   if (issueStatus === undefined || issueStatus === null) {
     res.status(400).json({ error: 'Field "issueStatus" is required' });
     return;

@@ -431,7 +431,7 @@ paths:
               examples:
                 missingId:
                   value:
-                    error: ID required
+                    error: 'Parameter "id" must be a positive integer up to 2147483647'
         '500':
           description: |
             Server or upstream failure: TMDB credentials missing, TMDB returned a non-success HTTP status, or the outbound request failed (network/timeout).
@@ -1071,7 +1071,9 @@ paths:
     get:
       tags: [Issues]
       summary: List reported issues
-      description: Returns bug reports sorted by latest report date first. Optionally filter by issue status.
+      description: Returns bug reports sorted by latest report date first. Requires Admin role. Optionally filter by issue status.
+      security:
+        - bearerAuth: []
       parameters:
         - name: status
           in: query
@@ -1097,6 +1099,22 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
                 error: 'issueStatus must be one of: OPEN, IN_PROGRESS, RESOLVED, CLOSED'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Invalid or missing token
+        '403':
+          description: Forbidden - Admin role required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Insufficient permissions
         '500':
           description: Server error
           content:
