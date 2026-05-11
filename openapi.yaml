@@ -967,6 +967,10 @@ paths:
           in: path
           required: true
           description: Rating id
+          schema:
+            type: integer
+            minimum: 1
+            example: 1
       responses:
         '200':
           description: OK Deleted Successfully
