@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { resolveLocalUser } from '../auth/resolveLocalUser';
 import { Prisma } from '../generated/prisma/client';
+import { toAuthor, userAuthorSelect } from '../lib/author';
 import { prisma } from '../lib/prisma';
 
 const BASE_URL = 'https://api.themoviedb.org/3';
@@ -34,6 +35,7 @@ export const createReview = async (req: Request, res: Response) => {
       isMovie: review.isMovie,
       dateOfReview: review.dateOfReview.toISOString().slice(0, 10),
       tmdbIdentifier: review.tmdbIdentifier,
+      author: toAuthor(localUser),
     });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2003') {
@@ -83,7 +85,10 @@ export const deleteReview = async (req: Request, res: Response) => {
 export const getReview = async (req: Request, res: Response) => {
   const reviewId = Number(req.params.reviewId);
 
-  const review = await prisma.review.findFirst({ where: { reviewId } });
+  const review = await prisma.review.findFirst({
+    where: { reviewId },
+    include: { user: { select: userAuthorSelect } },
+  });
 
   if (!review) {
     return res.status(404).json({ error: 'Review not found' });
@@ -94,6 +99,7 @@ export const getReview = async (req: Request, res: Response) => {
     isMovie: review.isMovie,
     dateOfReview: review.dateOfReview.toISOString().slice(0, 10),
     tmdbIdentifier: review.tmdbIdentifier,
+    author: toAuthor(review.user),
   });
 };
 
@@ -127,6 +133,7 @@ export const updateReview = async (req: Request, res: Response) => {
       where: {
         reviewId,
       },
+      include: { user: { select: userAuthorSelect } },
     });
 
     return res.status(200).json({
@@ -135,6 +142,7 @@ export const updateReview = async (req: Request, res: Response) => {
       isMovie: review.isMovie,
       dateOfReview: review.dateOfReview.toISOString().slice(0, 10),
       tmdbIdentifier: review.tmdbIdentifier,
+      author: toAuthor(review.user),
     });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2025') {

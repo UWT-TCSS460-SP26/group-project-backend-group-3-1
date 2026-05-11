@@ -601,12 +601,7 @@ paths:
                         tmdbIdentifier:
                           type: integer
                         author:
-                          type: object
-                          properties:
-                            userId:
-                              type: integer
-                            username:
-                              type: string
+                          $ref: '#/components/schemas/EnrichedRatingAuthor'
                         missing:
                           type: boolean
                         metadata:
@@ -1556,6 +1551,37 @@ components:
       example:
         error: Something went wrong
 
+    Author:
+      type: object
+      description: |
+        Auth identity and display label for the user who wrote the rating or review.
+        Display name prefers a non-empty username, else first and last name, else "Unknown user".
+      required: [subjectId, displayName]
+      properties:
+        subjectId:
+          type: string
+          description: Auth subject (`User.subjectId`) for the author.
+          example: 3
+        displayName:
+          type: string
+          description: Human-readable name shown for the author.
+          example: jane_doe
+
+    EnrichedRatingAuthor:
+      type: object
+      description: |
+        Compact author label on `GET /ratings/me/enriched` rows (local numeric id plus display string).
+      required: [userId, username]
+      properties:
+        userId:
+          type: integer
+          description: Local `User.id` for the rating owner.
+          example: 1
+        username:
+          type: string
+          description: Display name for the owner (same style as `Author.displayName`, stored under this key for history).
+          example: Jane Doe
+
     ReviewCreateRequest:
       type: object
       required: [reviewContent, isMovie, dateOfReview, tmdbIdentifier]
@@ -1594,7 +1620,7 @@ components:
 
     Review:
       type: object
-      required: [reviewId, reviewContent, isMovie, dateOfReview, tmdbIdentifier]
+      required: [reviewId, reviewContent, isMovie, dateOfReview, tmdbIdentifier, author]
       description: Review resource; `reviewContent` is the review text; `isMovie` is true for movie, false for show.
       properties:
         reviewId:
@@ -1614,6 +1640,8 @@ components:
           type: integer
           description: TMDB id for the movie or TV series
           example: 550
+        author:
+          $ref: '#/components/schemas/Author'
 
     ReviewDeleteSuccess:
       type: object
@@ -1664,7 +1692,7 @@ components:
 
     Rating:
       type: object
-      required: [ratingId, isMovie, rating, tmdbIdentifier]
+      required: [ratingId, isMovie, value, tmdbIdentifier, author]
       properties:
         ratingId:
           type: integer
@@ -1681,6 +1709,8 @@ components:
           type: integer
           description: TMDB id for the rated title
           example: 550
+        author:
+          $ref: '#/components/schemas/Author'
 
     RatingRecord:
       type: object
@@ -1691,6 +1721,7 @@ components:
         - isMovie
         - rating
         - tmdbIdentifier
+        - author
       properties:
         ratingId:
           type: integer
@@ -1716,6 +1747,9 @@ components:
           type: integer
           description: TMDB identifier for the title.
           example: 550
+
+        author:
+          $ref: '#/components/schemas/Author'
 
     ReviewRecord:
       type: object
