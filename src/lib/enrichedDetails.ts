@@ -1,24 +1,33 @@
 import { Request, Response } from 'express';
-import { prisma } from '../lib/prisma';
+import { prisma } from './prisma';
 
 const BASE_URL = 'https://api.themoviedb.org/3';
 const RECENT_REVIEW_LIMIT = 5;
 
-const getEnrichedDetailsByType = async (
+export type EnrichedDetailsKind = {
+  type: 'movie' | 'show';
+  tmdbPath: 'movie' | 'tv';
+  isMovie: boolean;
+};
+
+/** TMDB metadata plus local ratings/reviews for a movie or TV title (route param `id`; pair with `validateNumericId`). */
+export const sendEnrichedDetails = async (
   req: Request,
   res: Response,
-  options: { type: 'movie' | 'show'; tmdbPath: 'movie' | 'tv'; isMovie: boolean }
-) => {
+  options: EnrichedDetailsKind
+): Promise<void> => {
   const token = process.env.TMDB_BEARER_TOKEN;
   const { id } = req.params;
 
   if (!token) {
-    return res.status(500).json({ error: 'TMDB token is not configured' });
+    res.status(500).json({ error: 'TMDB token is not configured' });
+    return;
   }
 
   const tmdbId = Number(id);
   if (!Number.isInteger(tmdbId) || tmdbId <= 0) {
-    return res.status(400).json({ error: 'Parameter "id" must be a positive integer' });
+    res.status(400).json({ error: 'Parameter "id" must be a positive integer' });
+    return;
   }
 
   try {
@@ -34,10 +43,11 @@ const getEnrichedDetailsByType = async (
     );
 
     if (!result.ok) {
-      return res.status(result.status).json({
+      res.status(result.status).json({
         status: `${result.statusText} - ${result.status}`,
         error: 'TMDB API error',
       });
+      return;
     }
 
     const metadata = (await result.json()) as Record<string, unknown>;
@@ -68,7 +78,7 @@ const getEnrichedDetailsByType = async (
       }),
     ]);
 
-    return res.status(200).json({
+    res.status(200).json({
       type: options.type,
       tmdbId,
       metadata,
@@ -85,22 +95,6 @@ const getEnrichedDetailsByType = async (
       },
     });
   } catch {
-    return res.status(502).json({ error: 'Failed to reach TMDB service' });
+    res.status(502).json({ error: 'Failed to reach TMDB service' });
   }
-};
-
-export const getEnrichedMovieDetails = async (req: Request, res: Response) => {
-  return getEnrichedDetailsByType(req, res, {
-    type: 'movie',
-    tmdbPath: 'movie',
-    isMovie: true,
-  });
-};
-
-export const getEnrichedShowDetails = async (req: Request, res: Response) => {
-  return getEnrichedDetailsByType(req, res, {
-    type: 'show',
-    tmdbPath: 'tv',
-    isMovie: false,
-  });
 };

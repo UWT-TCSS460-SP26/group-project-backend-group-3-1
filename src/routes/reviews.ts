@@ -6,11 +6,8 @@ import {
   getReview,
   updateReview,
 } from '../controllers/reviews';
-import { getEnrichedMovieDetails, getEnrichedShowDetails } from '../controllers/details';
 import { requireAuth } from '../middleware/requireAuth';
 import {
-  requireEnvVar,
-  validateNumericId,
   validateReviewBody,
   validateReviewIdParam,
   validateReviewUpdateBody,
@@ -20,18 +17,6 @@ const reviewRouter = Router();
 
 reviewRouter.post('/', requireAuth, validateReviewBody, createReview);
 reviewRouter.get('/me', requireAuth, getMyReviews);
-reviewRouter.get(
-  '/movies/:id/details',
-  requireEnvVar('TMDB_BEARER_TOKEN'),
-  validateNumericId,
-  getEnrichedMovieDetails
-);
-reviewRouter.get(
-  '/shows/:id/details',
-  requireEnvVar('TMDB_BEARER_TOKEN'),
-  validateNumericId,
-  getEnrichedShowDetails
-);
 reviewRouter.get('/:reviewId', validateReviewIdParam, getReview);
 reviewRouter.patch(
   '/:reviewId',

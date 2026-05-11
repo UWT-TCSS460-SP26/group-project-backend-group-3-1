@@ -14,7 +14,7 @@ jest.mock('../src/lib/prisma', () => ({
   },
 }));
 
-describe('Enriched Details Route (GET /reviews/movies/:id/details, GET /reviews/shows/:id/details)', () => {
+describe('Enriched Details Route (GET /movies/details/:id, GET /shows/details/:id)', () => {
   const originalToken = process.env.TMDB_BEARER_TOKEN;
   const originalFetch = globalThis.fetch;
 
@@ -47,7 +47,7 @@ describe('Enriched Details Route (GET /reviews/movies/:id/details, GET /reviews/
       },
     ]);
 
-    const response = await request(app).get('/reviews/movies/550/details');
+    const response = await request(app).get('/movies/details/550');
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
@@ -78,7 +78,7 @@ describe('Enriched Details Route (GET /reviews/movies/:id/details, GET /reviews/
       json: async () => ({}),
     } as never) as typeof globalThis.fetch;
 
-    const response = await request(app).get('/reviews/shows/999999/details');
+    const response = await request(app).get('/shows/details/999999');
 
     expect(response.status).toBe(404);
     expect(response.body).toEqual({
@@ -97,7 +97,7 @@ describe('Enriched Details Route (GET /reviews/movies/:id/details, GET /reviews/
     (prisma.review.count as jest.Mock).mockResolvedValue(0);
     (prisma.review.findMany as jest.Mock).mockResolvedValue([]);
 
-    const response = await request(app).get('/reviews/shows/777/details');
+    const response = await request(app).get('/shows/details/777');
 
     expect(response.status).toBe(200);
     expect(response.body.community).toEqual({

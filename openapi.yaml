@@ -30,8 +30,6 @@ tags:
     description: Community endpoints
   - name: Issues
     description: Bug reporting endpoints
-  - name: Details
-    description: Enriched TMDB detail endpoints
 
 paths:
   /heartbeat:
@@ -1164,7 +1162,7 @@ paths:
               examples:
                 invalidIssueId:
                   value:
-                    error: 'Parameter "issueID" must be a positive safe integer'
+                    error: 'Parameter "issueID" must be a positive integer up to 2147483647'
                 invalidStatus:
                   value:
                     error: 'issueStatus must be one of: OPEN, IN_PROGRESS, RESOLVED, CLOSED'
@@ -1223,7 +1221,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
-                error: 'Parameter "issueID" must be a positive safe integer'
+                error: 'Parameter "issueID" must be a positive integer up to 2147483647'
         '401':
           description: Unauthorized
           content:
@@ -1251,10 +1249,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
 
-  /reviews/movies/{id}/details:
+  /movies/details/{id}:
     get:
-      tags: [Details]
-      summary: Get enriched movie details
+      tags: [Movies]
+      summary: Get reviews and ratings for a movie
       description: Returns movie TMDB details plus local community rating/review data.
       parameters:
         - name: id
@@ -1325,7 +1323,7 @@ paths:
               examples:
                 invalidId:
                   value:
-                    error: Parameter "id" must be a positive safe integer
+                    error: Parameter "id" must be a positive integer up to 2147483647
         '404':
           description: TMDB item not found.
           content:
@@ -1353,10 +1351,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
 
-  /reviews/shows/{id}/details:
+  /shows/details/{id}:
     get:
-      tags: [Details]
-      summary: Get enriched TV show details
+      tags: [Shows]
+      summary: Get reviews and ratings for a TV show
       description: Returns TV show TMDB details plus local community rating/review data.
       parameters:
         - name: id
@@ -1427,7 +1425,7 @@ paths:
               examples:
                 invalidId:
                   value:
-                    error: Parameter "id" must be a positive safe integer
+                    error: Parameter "id" must be a positive integer up to 2147483647
         '404':
           description: TMDB item not found.
           content:
@@ -1458,33 +1456,33 @@ paths:
   /community/discovery:
     get:
       tags: [Community]
-      summary: Discover new content
+      summary: Get top-rated or most-reviewed movies or shows
       description: |
-        Returns a list of recommended content based on Group 3 DB's community data.'.'
+        Returns a list of top-rated or most-reviewed movies or shows.
       parameters:
         - name: type
           in: query
           required: true
-          description: Declare whether you want the movie or show
+          description: Whether to list movies or TV shows.
           schema:
             type: string
-            example: movie
+            enum: [movie, show]
+            default: movie
         - name: sort
           in: query
           required: true
-          description: Declare order of sort, either most-rated or most-reviewed
+          description: Order results by average rating or by number of reviews.
           schema:
             type: string
-            example: most-rated
+            enum: [top-rated, most-reviewed]
+            default: top-rated
       responses:
         '200':
-          description: List of recommended content.
+          description: List of top-rated or most-reviewed movies or shows.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CommunityResponse'
+                $ref: '#/components/schemas/CommunityDiscoveryResponse'
         '400':
           description: Invalid route parameter.
           content:
@@ -1892,39 +1890,48 @@ components:
           description: Number of seasons in the series.
           example: 2
 
-    CommunityResponse:
+    CommunityDiscoveryResponse:
       type: object
       required: [type, sort, results]
       properties:
         type:
           type: string
-          example: movie, show
+          enum: [movie, show]
+          example: movie
         sort:
           type: string
-          example: most-reviewed, most-rated
+          enum: [top-rated, most-reviewed]
+          example: top-rated
         results:
-          type: object
-          required: [tmdbId, averageRating, reviewCount, title, posterPath, overview, releaseDate]
-          properties:
-            tmdbId:
-              type: integer
-              example: 550
-            averageRating:
-              type: number
-              example: 6.7
-            reviewCount:
-              type: integer
-              example: 12
-            title:
-              type: string
-              example: Fight Club
-            posterPath:
-              type: string
-              example: https://image.tmdb.org/t/p/w500/jSziioSwPVrOy9Yow3XhWIBDjq1.jpg
-            overview:
-              type: string
-              example:
-                A ticking-time-bomb insomniac and a slippery soap salesman channel primal male
-                aggression into a shocking new form of therapy. Their concept catches on, with underground
-                \"fight clubs\" forming in every town, until an eccentric gets in the way and ignites an
-                out-of-control spiral toward oblivion
+          type: array # ← was "object", must be "array"
+          maxItems: 10
+          items: # ← describes each element in the array
+            type: object
+            required: [tmdbId, averageRating, reviewCount, title, posterPath, overview, releaseDate]
+            properties:
+              tmdbId:
+                type: integer
+                example: 550
+              averageRating:
+                type: number
+                format: float
+                example: 6.7
+              reviewCount:
+                type: integer
+                example: 12
+              title:
+                type: string
+                nullable: true # ← null when TMDB fetch fails
+                example: Fight Club
+              posterPath:
+                type: string
+                nullable: true # ← null when TMDB fetch fails
+                example: https://image.tmdb.org/t/p/w500/jSziioSwPVrOy9Yow3XhWIBDjq1.jpg
+              overview:
+                type: string
+                nullable: true # ← null when TMDB fetch fails
+                example: A ticking-time-bomb insomniac and a slippery soap salesman...
+              releaseDate:
+                type: string
+                nullable: true # ← null when TMDB fetch fails
+                example: '1999-10-15'

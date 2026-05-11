@@ -55,7 +55,9 @@ describe('GET /ratings/me/enriched', () => {
     // mock global fetch to return TMDB metadata
     const fakeMetadata = { id: TMDB_ID, title: 'Test Movie', overview: 'desc' };
     const originalFetch = (global as any).fetch;
-    (global as any).fetch = jest.fn().mockResolvedValue({ ok: true, status: 200, json: async () => fakeMetadata });
+    (global as any).fetch = jest
+      .fn()
+      .mockResolvedValue({ ok: true, status: 200, json: async () => fakeMetadata });
 
     const res = await request(app).get('/ratings/me/enriched').set(authHeader());
 
