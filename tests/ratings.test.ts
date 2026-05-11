@@ -190,6 +190,17 @@ describe('Ratings (integration)', () => {
       expect(response.body.error).toMatch(/tmdbIdentifier/i);
     });
 
+    it('returns 400 when tmdbIdentifier is above the maximum stored integer', async () => {
+      const response = await request(app)
+        .post('/ratings')
+        .set(authHeader())
+        .send({ isMovie: true, rating: 5, tmdbIdentifier: 5_502_354_264 });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toMatch(/tmdbIdentifier/i);
+      expect(response.body.error).toMatch(/2147483647/);
+    });
+
     it('creates a rating from isMovie + rating body', async () => {
       const response = await request(app)
         .post('/ratings')
@@ -205,11 +216,21 @@ describe('Ratings (integration)', () => {
       expect(typeof response.body.ratingId).toBe('number');
     });
 
-    it('accepts parseable rating strings because middleware/controller use parseInt', async () => {
+    it('returns 400 when rating string is not a strict positive integer', async () => {
       const response = await request(app)
         .post('/ratings')
         .set(authHeader())
         .send({ isMovie: true, rating: '7abc', tmdbIdentifier: TMDB_ID });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toMatch(/rating/i);
+    });
+
+    it('accepts rating as a decimal-string-free integer string', async () => {
+      const response = await request(app)
+        .post('/ratings')
+        .set(authHeader())
+        .send({ isMovie: true, rating: '7', tmdbIdentifier: TMDB_ID });
 
       expect(response.status).toBe(201);
       expect(response.body).toMatchObject({
