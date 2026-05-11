@@ -5,6 +5,7 @@ import { prisma } from '../src/lib/prisma';
 import { stubRequireAuth, stubOptionalAuth } from './auth';
 import { Request, Response, NextFunction } from 'express';
 
+// Test
 jest.mock('../src/middleware/requireAuth', () => {
   const actual = jest.requireActual('../src/middleware/requireAuth');
   return {
