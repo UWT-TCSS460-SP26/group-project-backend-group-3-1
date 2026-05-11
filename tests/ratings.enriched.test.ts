@@ -54,13 +54,18 @@ describe('GET /ratings/me/enriched', () => {
 
     // mock global fetch to return TMDB metadata
     const fakeMetadata = { id: TMDB_ID, title: 'Test Movie', overview: 'desc' };
-    const originalFetch = (global as any).fetch;
-    (global as any).fetch = jest.fn().mockResolvedValue({ ok: true, status: 200, json: async () => fakeMetadata });
+    const originalFetch = globalThis.fetch;
+    const mockFetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => fakeMetadata,
+    }) as unknown as typeof fetch;
+    globalThis.fetch = mockFetch;
 
     const res = await request(app).get('/ratings/me/enriched').set(authHeader());
 
     // restore fetch
-    (global as any).fetch = originalFetch;
+    globalThis.fetch = originalFetch;
 
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty('count', 1);
