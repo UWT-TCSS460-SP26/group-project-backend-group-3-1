@@ -5,10 +5,21 @@ import { ISSUE_STATUSES } from '../middleware/validation';
 type IssueStatus = (typeof ISSUE_STATUSES)[number];
 
 /**
- * GET /issues — all issues, latest report date first.
+ * GET /issues — all issues, optionally filtered by status, latest report date first.
  */
-export const listIssues = async (_req: Request, res: Response) => {
+export const listIssues = async (req: Request, res: Response) => {
+  const { status } = req.query;
+
+  if (status !== undefined) {
+    if (typeof status !== 'string' || !ISSUE_STATUSES.includes(status as IssueStatus)) {
+      return res.status(400).json({
+        error: `issueStatus must be one of: ${ISSUE_STATUSES.join(', ')}`,
+      });
+    }
+  }
+
   const issues = await prisma.issue.findMany({
+    where: status ? { issueStatus: status as IssueStatus } : undefined,
     orderBy: { issueReportDate: 'desc' },
   });
 
