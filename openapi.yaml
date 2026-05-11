@@ -552,6 +552,26 @@ paths:
         Returns every rating owned by the authenticated user with TMDB metadata attached where available.
 
         Requires authentication (Bearer token) and a configured `TMDB_BEARER_TOKEN` environment variable.
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of items to return. Defaults to 20. Values above 200 are capped at 200.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 20
+            example: 20
+        - name: offset
+          in: query
+          required: false
+          description: Number of items to skip before collecting results. Defaults to 0.
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+            example: 20
       security:
         - bearerAuth: []
       responses:
