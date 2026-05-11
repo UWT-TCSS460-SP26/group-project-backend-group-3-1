@@ -154,9 +154,17 @@ export const getMyEnrichedRatings = async (req: Request, res: Response) => {
   }
 
   const localUser = await resolveLocalUser(req);
+  const limitRaw = parseInt(String(req.query.limit ?? '20'), 10);
+  const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 200) : 20;
+
+  const offRaw = parseInt(String(req.query.offset ?? '0'), 10);
+  const offset = Number.isFinite(offRaw) && offRaw >= 0 ? offRaw : 0;
+
   const ratings = await prisma.rating.findMany({
     where: { userId: localUser.id },
     orderBy: { ratingId: 'desc' },
+    take: limit,
+    skip: offset,
   });
 
   const displayName =
