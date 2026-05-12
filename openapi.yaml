@@ -30,8 +30,6 @@ tags:
     description: Community endpoints
   - name: Issues
     description: Bug reporting endpoints
-  - name: Details
-    description: Enriched TMDB detail endpoints
 
 paths:
   /heartbeat:
@@ -433,7 +431,7 @@ paths:
               examples:
                 missingId:
                   value:
-                    error: ID required
+                    error: 'Parameter "id" must be a positive integer up to 2147483647'
         '500':
           description: |
             Server or upstream failure: TMDB credentials missing, TMDB returned a non-success HTTP status, or the outbound request failed (network/timeout).
@@ -546,16 +544,88 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
                 error: Invalid or expired token
-        '502':
-          $ref: '#/components/responses/IdentityProviderError'
+  /ratings/me/enriched:
+    get:
+      tags: [Ratings]
+      summary: List my ratings with TMDB metadata
+      description: |
+        Returns every rating owned by the authenticated user with TMDB metadata attached where available.
+
+        Requires authentication (Bearer token) and a configured `TMDB_BEARER_TOKEN` environment variable.
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of items to return. Defaults to 20. Values above 200 are capped at 200.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 20
+            example: 20
+        - name: offset
+          in: query
+          required: false
+          description: Number of items to skip before collecting results. Defaults to 0.
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+            example: 20
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Enriched ratings list for the current user.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [count, results]
+                properties:
+                  count:
+                    type: integer
+                    example: 1
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      required: [ratingId, isMovie, value, tmdbIdentifier, author, missing]
+                      properties:
+                        ratingId:
+                          type: integer
+                        isMovie:
+                          type: boolean
+                        value:
+                          type: integer
+                        tmdbIdentifier:
+                          type: integer
+                        author:
+                          $ref: '#/components/schemas/EnrichedRatingAuthor'
+                        missing:
+                          type: boolean
+                        metadata:
+                          type: object
+                          nullable: true
+                          additionalProperties: true
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
         '500':
           description: Server error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
-              example:
-                error: Internal server error
+        '502':
+          description: Upstream TMDB error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
 
   /reviews/me:
     get:
@@ -912,6 +982,10 @@ paths:
           in: path
           required: true
           description: Rating id
+          schema:
+            type: integer
+            minimum: 1
+            example: 1
       responses:
         '200':
           description: OK Deleted Successfully
@@ -1016,7 +1090,17 @@ paths:
     get:
       tags: [Issues]
       summary: List reported issues
-      description: Returns all bug reports sorted by latest report date first.
+      description: Returns bug reports sorted by latest report date first. Requires Admin role. Optionally filter by issue status.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          required: false
+          description: Only return issues with this status.
+          schema:
+            type: string
+            enum: [OPEN, IN_PROGRESS, RESOLVED, CLOSED]
       responses:
         '200':
           description: List of issues.
@@ -1026,6 +1110,30 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Issue'
+        '400':
+          description: Invalid status filter.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: 'issueStatus must be one of: OPEN, IN_PROGRESS, RESOLVED, CLOSED'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Invalid or missing token
+        '403':
+          description: Forbidden - Admin role required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: Insufficient permissions
         '500':
           description: Server error
           content:
@@ -1107,7 +1215,7 @@ paths:
               examples:
                 invalidIssueId:
                   value:
-                    error: 'Parameter "issueID" must be a positive safe integer'
+                    error: 'Parameter "issueID" must be a positive integer up to 2147483647'
                 invalidStatus:
                   value:
                     error: 'issueStatus must be one of: OPEN, IN_PROGRESS, RESOLVED, CLOSED'
@@ -1166,7 +1274,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
-                error: 'Parameter "issueID" must be a positive safe integer'
+                error: 'Parameter "issueID" must be a positive integer up to 2147483647'
         '401':
           description: Unauthorized
           content:
@@ -1194,23 +1302,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
 
-  /details/{type}/{id}:
+  /movies/details/{id}:
     get:
-      tags: [Details]
-      summary: Get enriched movie/show details
-      description: Returns TMDB details plus local community rating/review data.
+      tags: [Movies]
+      summary: Get reviews and ratings for a movie
+      description: Returns movie TMDB details plus local community rating/review data.
       parameters:
-        - name: type
-          in: path
-          required: true
-          description: Content type.
-          schema:
-            type: string
-            enum: [movie, show]
         - name: id
           in: path
           required: true
-          description: TMDB id.
+          description: Movie TMDB id.
           schema:
             type: integer
             minimum: 1
@@ -1226,7 +1327,7 @@ paths:
                 properties:
                   type:
                     type: string
-                    enum: [movie, show]
+                    enum: [movie]
                   tmdbId:
                     type: integer
                   metadata:
@@ -1273,12 +1374,111 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
               examples:
-                invalidType:
-                  value:
-                    error: Parameter "type" must be "movie" or "show"
                 invalidId:
                   value:
-                    error: Parameter "id" must be a positive integer
+                    error: Parameter "id" must be a positive integer up to 2147483647
+        '404':
+          description: TMDB item not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, error]
+                properties:
+                  status:
+                    type: string
+                    example: Not Found - 404
+                  error:
+                    type: string
+                    example: TMDB API error
+        '500':
+          description: TMDB token missing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '502':
+          description: Failed to reach TMDB service.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /shows/details/{id}:
+    get:
+      tags: [Shows]
+      summary: Get reviews and ratings for a TV show
+      description: Returns TV show TMDB details plus local community rating/review data.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: TV show TMDB id.
+          schema:
+            type: integer
+            minimum: 1
+            example: 2004
+      responses:
+        '200':
+          description: Enriched details response.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [type, tmdbId, metadata, community]
+                properties:
+                  type:
+                    type: string
+                    enum: [show]
+                  tmdbId:
+                    type: integer
+                  metadata:
+                    type: object
+                    additionalProperties: true
+                  community:
+                    type: object
+                    required: [averageRating, reviewCount, recentReviews]
+                    properties:
+                      averageRating:
+                        type: number
+                        nullable: true
+                        example: 4.2
+                      reviewCount:
+                        type: integer
+                        example: 3
+                      recentReviews:
+                        type: array
+                        items:
+                          type: object
+                          required: [reviewId, userId, username, reviewContent, dateOfReview]
+                          properties:
+                            reviewId:
+                              type: integer
+                              example: 1
+                            userId:
+                              type: integer
+                              description: Local user primary key (`User.id`). Auth subject is `User.subjectId`, not returned here.
+                              example: 1
+                            username:
+                              type: string
+                              example: example
+                            reviewContent:
+                              type: string
+                              example: Great pacing and story.
+                            dateOfReview:
+                              type: string
+                              format: date-time
+                              example: '2026-05-01T00:00:00.000Z'
+        '400':
+          description: Invalid route parameter.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              examples:
+                invalidId:
+                  value:
+                    error: Parameter "id" must be a positive integer up to 2147483647
         '404':
           description: TMDB item not found.
           content:
@@ -1309,33 +1509,33 @@ paths:
   /community/discovery:
     get:
       tags: [Community]
-      summary: Discover new content
+      summary: Get top-rated or most-reviewed movies or shows
       description: |
-        Returns a list of recommended content based on Group 3 DB's community data.'.'
+        Returns a list of top-rated or most-reviewed movies or shows.
       parameters:
         - name: type
           in: query
           required: true
-          description: Declare whether you want the movie or show
+          description: Whether to list movies or TV shows.
           schema:
             type: string
-            example: movie
+            enum: [movie, show]
+            default: movie
         - name: sort
           in: query
           required: true
-          description: Declare order of sort, either most-rated or most-reviewed
+          description: Order results by average rating or by number of reviews.
           schema:
             type: string
-            example: most-rated
+            enum: [top-rated, most-reviewed]
+            default: top-rated
       responses:
         '200':
-          description: List of recommended content.
+          description: List of top-rated or most-reviewed movies or shows.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CommunityResponse'
+                $ref: '#/components/schemas/CommunityDiscoveryResponse'
         '400':
           description: Invalid route parameter.
           content:
@@ -1389,6 +1589,37 @@ components:
       example:
         error: Something went wrong
 
+    Author:
+      type: object
+      description: |
+        Auth identity and display label for the user who wrote the rating or review.
+        Display name prefers a non-empty username, else first and last name, else "Unknown user".
+      required: [subjectId, displayName]
+      properties:
+        subjectId:
+          type: string
+          description: Auth subject (`User.subjectId`) for the author.
+          example: 3
+        displayName:
+          type: string
+          description: Human-readable name shown for the author.
+          example: jane_doe
+
+    EnrichedRatingAuthor:
+      type: object
+      description: |
+        Compact author label on `GET /ratings/me/enriched` rows (local numeric id plus display string).
+      required: [userId, username]
+      properties:
+        userId:
+          type: integer
+          description: Local `User.id` for the rating owner.
+          example: 1
+        username:
+          type: string
+          description: Display name for the owner (same style as `Author.displayName`, stored under this key for history).
+          example: Jane Doe
+
     ReviewCreateRequest:
       type: object
       required: [reviewContent, isMovie, dateOfReview, tmdbIdentifier]
@@ -1427,7 +1658,7 @@ components:
 
     Review:
       type: object
-      required: [reviewId, reviewContent, isMovie, dateOfReview, tmdbIdentifier]
+      required: [reviewId, reviewContent, isMovie, dateOfReview, tmdbIdentifier, author]
       description: Review resource; `reviewContent` is the review text; `isMovie` is true for movie, false for show.
       properties:
         reviewId:
@@ -1447,6 +1678,8 @@ components:
           type: integer
           description: TMDB id for the movie or TV series
           example: 550
+        author:
+          $ref: '#/components/schemas/Author'
 
     ReviewDeleteSuccess:
       type: object
@@ -1497,7 +1730,7 @@ components:
 
     Rating:
       type: object
-      required: [ratingId, isMovie, rating, tmdbIdentifier]
+      required: [ratingId, isMovie, value, tmdbIdentifier, author]
       properties:
         ratingId:
           type: integer
@@ -1514,6 +1747,8 @@ components:
           type: integer
           description: TMDB id for the rated title
           example: 550
+        author:
+          $ref: '#/components/schemas/Author'
 
     RatingRecord:
       type: object
@@ -1524,6 +1759,7 @@ components:
         - isMovie
         - rating
         - tmdbIdentifier
+        - author
       properties:
         ratingId:
           type: integer
@@ -1549,6 +1785,9 @@ components:
           type: integer
           description: TMDB identifier for the title.
           example: 550
+
+        author:
+          $ref: '#/components/schemas/Author'
 
     ReviewRecord:
       type: object
@@ -1743,39 +1982,48 @@ components:
           description: Number of seasons in the series.
           example: 2
 
-    CommunityResponse:
+    CommunityDiscoveryResponse:
       type: object
       required: [type, sort, results]
       properties:
         type:
           type: string
-          example: movie, show
+          enum: [movie, show]
+          example: movie
         sort:
           type: string
-          example: most-reviewed, most-rated
+          enum: [top-rated, most-reviewed]
+          example: top-rated
         results:
-          type: object
-          required: [tmdbId, averageRating, reviewCount, title, posterPath, overview, releaseDate]
-          properties:
-            tmdbId:
-              type: integer
-              example: 550
-            averageRating:
-              type: number
-              example: 6.7
-            reviewCount:
-              type: integer
-              example: 12
-            title:
-              type: string
-              example: Fight Club
-            posterPath:
-              type: string
-              example: https://image.tmdb.org/t/p/w500/jSziioSwPVrOy9Yow3XhWIBDjq1.jpg
-            overview:
-              type: string
-              example:
-                A ticking-time-bomb insomniac and a slippery soap salesman channel primal male
-                aggression into a shocking new form of therapy. Their concept catches on, with underground
-                \"fight clubs\" forming in every town, until an eccentric gets in the way and ignites an
-                out-of-control spiral toward oblivion
+          type: array # ← was "object", must be "array"
+          maxItems: 10
+          items: # ← describes each element in the array
+            type: object
+            required: [tmdbId, averageRating, reviewCount, title, posterPath, overview, releaseDate]
+            properties:
+              tmdbId:
+                type: integer
+                example: 550
+              averageRating:
+                type: number
+                format: float
+                example: 6.7
+              reviewCount:
+                type: integer
+                example: 12
+              title:
+                type: string
+                nullable: true # ← null when TMDB fetch fails
+                example: Fight Club
+              posterPath:
+                type: string
+                nullable: true # ← null when TMDB fetch fails
+                example: https://image.tmdb.org/t/p/w500/jSziioSwPVrOy9Yow3XhWIBDjq1.jpg
+              overview:
+                type: string
+                nullable: true # ← null when TMDB fetch fails
+                example: A ticking-time-bomb insomniac and a slippery soap salesman...
+              releaseDate:
+                type: string
+                nullable: true # ← null when TMDB fetch fails
+                example: '1999-10-15'

@@ -34,6 +34,13 @@ describe('Issues (integration)', () => {
   });
 
   describe('POST /issues', () => {
+    it('returns 400 when JSON body is missing', async () => {
+      const response = await request(app).post('/issues');
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toMatch(/issueStatus must be one of/);
+    });
+
     it('returns 400 when issueStatus is invalid', async () => {
       const response = await request(app).post('/issues').send({
         issueStatus: 'INVALID',
@@ -82,9 +89,55 @@ describe('Issues (integration)', () => {
       expect(response.status).toBe(200);
       expect(Array.isArray(response.body)).toBe(true);
     });
+
+    it('returns 400 when status filter is invalid', async () => {
+      const response = await request(app)
+        .get('/issues?status=NOT_A_STATUS')
+        .set(authHeader({ role: 'Admin' }));
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toMatch(/issueStatus must be one of/);
+    });
+
+    it('filters issues by status', async () => {
+      await prisma.issue.deleteMany();
+      await prisma.issue.createMany({
+        data: [
+          {
+            issueStatus: 'OPEN',
+            issueDesc: 'Open issue',
+            issueReportDate: new Date(),
+          },
+          {
+            issueStatus: 'RESOLVED',
+            issueDesc: 'Resolved issue',
+            issueReportDate: new Date(),
+          },
+        ],
+      });
+
+      const response = await request(app)
+        .get('/issues?status=RESOLVED')
+        .set(authHeader({ role: 'Admin' }));
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveLength(1);
+      expect(response.body[0].issueStatus).toBe('RESOLVED');
+      expect(response.body[0].issueDesc).toBe('Resolved issue');
+    });
   });
 
   describe('PATCH /issues/:issueID (Admin only)', () => {
+    it('returns 400 when issueID is invalid', async () => {
+      const response = await request(app)
+        .patch('/issues/not-a-number')
+        .set(authHeader({ role: 'Admin' }))
+        .send({ issueStatus: 'RESOLVED' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toMatch(/issueID/);
+    });
+
     it('returns 401 when no user', async () => {
       const issue = await prisma.issue.create({
         data: {
@@ -116,6 +169,23 @@ describe('Issues (integration)', () => {
         .send({ issueStatus: 'IN_PROGRESS' });
 
       expect(response.status).toBe(403);
+    });
+
+    it('returns 400 when JSON body is missing', async () => {
+      const issue = await prisma.issue.create({
+        data: {
+          issueStatus: 'OPEN',
+          issueDesc: 'Issue to update',
+          issueReportDate: new Date(),
+        },
+      });
+
+      const response = await request(app)
+        .patch(`/issues/${issue.issueID}`)
+        .set(authHeader({ role: 'Admin' }));
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe('Field "issueStatus" is required');
     });
 
     it('returns 400 when issueStatus is invalid', async () => {
@@ -167,6 +237,15 @@ describe('Issues (integration)', () => {
   });
 
   describe('DELETE /issues/:issueID (Admin only)', () => {
+    it('returns 400 when issueID is invalid', async () => {
+      const response = await request(app)
+        .delete('/issues/not-a-number')
+        .set(authHeader({ role: 'Admin' }));
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toMatch(/issueID/);
+    });
+
     it('returns 401 when no user', async () => {
       const issue = await prisma.issue.create({
         data: {

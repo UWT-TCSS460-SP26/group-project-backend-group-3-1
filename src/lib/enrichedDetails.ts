@@ -1,32 +1,38 @@
 import { Request, Response } from 'express';
-import { prisma } from '../lib/prisma';
+import { prisma } from './prisma';
 
 const BASE_URL = 'https://api.themoviedb.org/3';
 const RECENT_REVIEW_LIMIT = 5;
 
-export const getEnrichedDetails = async (req: Request, res: Response) => {
+export type EnrichedDetailsKind = {
+  type: 'movie' | 'show';
+  tmdbPath: 'movie' | 'tv';
+  isMovie: boolean;
+};
+
+/** TMDB metadata plus local ratings/reviews for a movie or TV title (route param `id`; pair with `validateNumericId`). */
+export const sendEnrichedDetails = async (
+  req: Request,
+  res: Response,
+  options: EnrichedDetailsKind
+): Promise<void> => {
   const token = process.env.TMDB_BEARER_TOKEN;
-  const { type, id } = req.params;
+  const { id } = req.params;
 
   if (!token) {
-    return res.status(500).json({ error: 'TMDB token is not configured' });
-  }
-
-  if (type !== 'movie' && type !== 'show') {
-    return res.status(400).json({ error: 'Parameter "type" must be "movie" or "show"' });
+    res.status(500).json({ error: 'TMDB token is not configured' });
+    return;
   }
 
   const tmdbId = Number(id);
   if (!Number.isInteger(tmdbId) || tmdbId <= 0) {
-    return res.status(400).json({ error: 'Parameter "id" must be a positive integer' });
+    res.status(400).json({ error: 'Parameter "id" must be a positive integer' });
+    return;
   }
-
-  const tmdbPath = type === 'movie' ? 'movie' : 'tv';
-  const isMovie = type === 'movie';
 
   try {
     const result = await fetch(
-      `${BASE_URL}/${tmdbPath}/${encodeURIComponent(String(tmdbId))}?language=en-US`,
+      `${BASE_URL}/${options.tmdbPath}/${encodeURIComponent(String(tmdbId))}?language=en-US`,
       {
         method: 'GET',
         headers: {
@@ -37,24 +43,25 @@ export const getEnrichedDetails = async (req: Request, res: Response) => {
     );
 
     if (!result.ok) {
-      return res.status(result.status).json({
+      res.status(result.status).json({
         status: `${result.statusText} - ${result.status}`,
         error: 'TMDB API error',
       });
+      return;
     }
 
     const metadata = (await result.json()) as Record<string, unknown>;
 
     const [ratingAggregate, reviewCount, recentReviews] = await Promise.all([
       prisma.rating.aggregate({
-        where: { isMovie, tmdbIdentifier: tmdbId },
+        where: { isMovie: options.isMovie, tmdbIdentifier: tmdbId },
         _avg: { rating: true },
       }),
       prisma.review.count({
-        where: { isMovie, tmdbIdentifier: tmdbId },
+        where: { isMovie: options.isMovie, tmdbIdentifier: tmdbId },
       }),
       prisma.review.findMany({
-        where: { isMovie, tmdbIdentifier: tmdbId },
+        where: { isMovie: options.isMovie, tmdbIdentifier: tmdbId },
         orderBy: { dateOfReview: 'desc' },
         take: RECENT_REVIEW_LIMIT,
         select: {
@@ -71,8 +78,8 @@ export const getEnrichedDetails = async (req: Request, res: Response) => {
       }),
     ]);
 
-    return res.status(200).json({
-      type,
+    res.status(200).json({
+      type: options.type,
       tmdbId,
       metadata,
       community: {
@@ -88,6 +95,6 @@ export const getEnrichedDetails = async (req: Request, res: Response) => {
       },
     });
   } catch {
-    return res.status(502).json({ error: 'Failed to reach TMDB service' });
+    res.status(502).json({ error: 'Failed to reach TMDB service' });
   }
 };
