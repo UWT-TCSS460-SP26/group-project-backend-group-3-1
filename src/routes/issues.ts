@@ -9,12 +9,12 @@ import { requireAuth, requireRole } from '../middleware/requireAuth';
 
 const issueRouter = Router();
 
-issueRouter.get('/', requireAuth, listIssues);
+issueRouter.get('/', requireAuth, requireRole('Admin'), listIssues);
 issueRouter.post('/', validateIssueCreateBody, createIssue);
 issueRouter.patch(
   '/:issueID',
   requireAuth,
-  
+  requireRole('Admin'),
   validatePatchIssueBody,
   validateIssueIdParam,
   updateIssue
@@ -22,7 +22,7 @@ issueRouter.patch(
 issueRouter.delete(
   '/:issueID',
   requireAuth,
-  
+  requireRole('Admin'),
   validateIssueIdParam,
   deleteIssue
 );
