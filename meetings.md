@@ -129,7 +129,15 @@ Good introduction meeting getting to know each other and our schedules.
 
 ![Assigned tasks to each person](./meeting_images/take_spread_Week5.png)
 
-5th Meeting, Week 7
+5th Meeting, Week 6
+
+- Gave everyone tasks for the week from the sprint
+
+- Went over each task so gain an understanding of the MVP for the week
+
+![Assigned tasks to each person](./meeting_images/task_spread_week6.png)
+
+6th Meeting, Week 7
 
 Discussed about UberEATS and how much Khalid uses it.
 Went through stories for sprint 5
@@ -142,3 +150,5 @@ Talked about instructure paying the ransom fee.
 Went into more detail about the stories.
 Who does what story.
 Talked about dates to finish by.
+
+![Assigned tasks to each person](./meeting_images/task_spread_week7.png)
