@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction, RequestHandler, ErrorRequestHandler } from 'express';
 import { expressjwt, type Request as JwtRequest } from 'express-jwt';
 import jwksRsa from 'jwks-rsa';
-import { prisma } from '../lib/prisma';
+import { resolveLocalUser } from '../auth/resolveLocalUser';
 
 export const ROLE_HIERARCHY = ['User', 'Moderator', 'Admin', 'SuperAdmin', 'Owner'] as const;
 export type Role = (typeof ROLE_HIERARCHY)[number];
@@ -141,6 +141,7 @@ export const hasRoleAtLeast = (role: Role | undefined, minRole: Role): boolean =
 
 /**
  * Minimum-role gate using the local database User.role (not the JWT role).
+ * Ensures a local User row exists (via resolveLocalUser) before checking role.
  * Use after requireAuth on app admin routes.
  */
 export const requireDbRoleAtLeast = (minRole: Role): RequestHandler => {
@@ -153,21 +154,10 @@ export const requireDbRoleAtLeast = (minRole: Role): RequestHandler => {
         return;
       }
 
-      const localUser = await prisma.user.findUnique({
-        where: {
-          subjectId: request.user.sub,
-        },
-      });
-
-      if (!localUser) {
-        response.status(403).json({ error: 'User does not exist locally' });
-        return;
-      }
-
+      const localUser = await resolveLocalUser(request);
       const dbRole = normalizeRole(localUser.role);
-      const userIdx = dbRole ? ROLE_HIERARCHY.indexOf(dbRole) : -1;
 
-      if (!dbRole || userIdx < minIdx) {
+      if (!dbRole || ROLE_HIERARCHY.indexOf(dbRole) < minIdx) {
         response.status(403).json({ error: 'Insufficient permissions' });
         return;
       }
