@@ -23,9 +23,14 @@ function authHeader(overrides: { sub?: string; role?: string } = {}): Record<str
     'x-test-user': JSON.stringify({
       sub: overrides.sub ?? 'test-sub-123',
       email: 'admin@test.local',
-      role: overrides.role ?? 'Admin',
+      role: overrides.role ?? 'User',
     }),
   };
+}
+
+/** DB user `admin-user-123` is seeded with role Admin; JWT role defaults to User. */
+function adminAuthHeader(overrides: { role?: string } = {}): Record<string, string> {
+  return authHeader({ sub: 'admin-user-123', role: overrides.role ?? 'User' });
 }
 
 describe('Issues (integration)', () => {
@@ -82,18 +87,14 @@ describe('Issues (integration)', () => {
       expect(response.status).toBe(403);
     });
 
-    it('returns 200 for Admin user', async () => {
-      const response = await request(app)
-        .get('/issues')
-        .set(authHeader({ role: 'Admin' }));
+    it('returns 200 for Admin user (database role, not JWT role)', async () => {
+      const response = await request(app).get('/issues').set(adminAuthHeader());
       expect(response.status).toBe(200);
       expect(Array.isArray(response.body)).toBe(true);
     });
 
     it('returns 400 when status filter is invalid', async () => {
-      const response = await request(app)
-        .get('/issues?status=NOT_A_STATUS')
-        .set(authHeader({ role: 'Admin' }));
+      const response = await request(app).get('/issues?status=NOT_A_STATUS').set(adminAuthHeader());
 
       expect(response.status).toBe(400);
       expect(response.body.error).toMatch(/issueStatus must be one of/);
@@ -116,9 +117,7 @@ describe('Issues (integration)', () => {
         ],
       });
 
-      const response = await request(app)
-        .get('/issues?status=RESOLVED')
-        .set(authHeader({ role: 'Admin' }));
+      const response = await request(app).get('/issues?status=RESOLVED').set(adminAuthHeader());
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveLength(1);
@@ -131,7 +130,7 @@ describe('Issues (integration)', () => {
     it('returns 400 when issueID is invalid', async () => {
       const response = await request(app)
         .patch('/issues/not-a-number')
-        .set(authHeader({ role: 'Admin' }))
+        .set(adminAuthHeader())
         .send({ issueStatus: 'RESOLVED' });
 
       expect(response.status).toBe(400);
@@ -180,9 +179,7 @@ describe('Issues (integration)', () => {
         },
       });
 
-      const response = await request(app)
-        .patch(`/issues/${issue.issueID}`)
-        .set(authHeader({ role: 'Admin' }));
+      const response = await request(app).patch(`/issues/${issue.issueID}`).set(adminAuthHeader());
 
       expect(response.status).toBe(400);
       expect(response.body.error).toBe('Field "issueStatus" is required');
@@ -199,7 +196,7 @@ describe('Issues (integration)', () => {
 
       const response = await request(app)
         .patch(`/issues/${issue.issueID}`)
-        .set(authHeader({ role: 'Admin' }))
+        .set(adminAuthHeader())
         .send({ issueStatus: 'NOT_A_STATUS' });
 
       expect(response.status).toBe(400);
@@ -209,7 +206,7 @@ describe('Issues (integration)', () => {
     it('returns 404 when issue does not exist', async () => {
       const response = await request(app)
         .patch('/issues/999999')
-        .set(authHeader({ role: 'Admin' }))
+        .set(adminAuthHeader())
         .send({ issueStatus: 'RESOLVED' });
 
       expect(response.status).toBe(404);
@@ -227,7 +224,7 @@ describe('Issues (integration)', () => {
 
       const response = await request(app)
         .patch(`/issues/${issue.issueID}`)
-        .set(authHeader({ role: 'Admin' }))
+        .set(adminAuthHeader())
         .send({ issueStatus: 'RESOLVED' });
 
       expect(response.status).toBe(200);
@@ -238,9 +235,7 @@ describe('Issues (integration)', () => {
 
   describe('DELETE /issues/:issueID (Admin only)', () => {
     it('returns 400 when issueID is invalid', async () => {
-      const response = await request(app)
-        .delete('/issues/not-a-number')
-        .set(authHeader({ role: 'Admin' }));
+      const response = await request(app).delete('/issues/not-a-number').set(adminAuthHeader());
 
       expect(response.status).toBe(400);
       expect(response.body.error).toMatch(/issueID/);
@@ -277,9 +272,7 @@ describe('Issues (integration)', () => {
     });
 
     it('returns 404 when issue does not exist', async () => {
-      const response = await request(app)
-        .delete('/issues/999999')
-        .set(authHeader({ role: 'Admin' }));
+      const response = await request(app).delete('/issues/999999').set(adminAuthHeader());
 
       expect(response.status).toBe(404);
       expect(response.body.error).toBe('Issue not found');
@@ -294,9 +287,7 @@ describe('Issues (integration)', () => {
         },
       });
 
-      const response = await request(app)
-        .delete(`/issues/${issue.issueID}`)
-        .set(authHeader({ role: 'Admin' }));
+      const response = await request(app).delete(`/issues/${issue.issueID}`).set(adminAuthHeader());
 
       expect(response.status).toBe(200);
       expect(response.body.message).toBe('Issue deleted successfully');

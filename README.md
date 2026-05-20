@@ -29,6 +29,8 @@ The server starts at [https://group-project-backend-group-3-1.onrender.com](http
 
 API documentation is at [https://group-project-backend-group-3-1.onrender.com/api-docs](https://group-project-backend-group-3-1.onrender.com/api-docs).
 
+Bug Tracker starts at [https://group-project-bug-tracker-front-end-group-3-9dhrg5gp7.vercel.app](https://group-project-bug-tracker-front-end-group-3-9dhrg5gp7.vercel.app/).
+
 ## Scripts
 
 | Command               | Description                       |
