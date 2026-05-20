@@ -1,9 +1,16 @@
 import { Request, Response, NextFunction, RequestHandler, ErrorRequestHandler } from 'express';
 import { expressjwt, type Request as JwtRequest } from 'express-jwt';
 import jwksRsa from 'jwks-rsa';
+import { prisma } from '../lib/prisma';
 
 export const ROLE_HIERARCHY = ['User', 'Moderator', 'Admin', 'SuperAdmin', 'Owner'] as const;
 export type Role = (typeof ROLE_HIERARCHY)[number];
+
+/** Maps DB/JWT role strings (any casing) to canonical hierarchy names. */
+export const normalizeRole = (raw: string | undefined): Role | undefined => {
+  if (!raw) return undefined;
+  return ROLE_HIERARCHY.find((role) => role.toLowerCase() === raw.toLowerCase());
+};
 
 export interface AuthenticatedUser {
   sub: string;
@@ -130,4 +137,46 @@ export const hasRoleAtLeast = (role: Role | undefined, minRole: Role): boolean =
   const userIdx = ROLE_HIERARCHY.indexOf(role);
   const minIdx = ROLE_HIERARCHY.indexOf(minRole);
   return userIdx >= 0 && userIdx >= minIdx;
+};
+
+/**
+ * Minimum-role gate using the local database User.role (not the JWT role).
+ * Use after requireAuth on app admin routes.
+ */
+export const requireDbRoleAtLeast = (minRole: Role): RequestHandler => {
+  const minIdx = ROLE_HIERARCHY.indexOf(minRole);
+
+  return async (request: Request, response: Response, next: NextFunction): Promise<void> => {
+    try {
+      if (!request.user?.sub) {
+        response.status(401).json({ error: 'Not authenticated' });
+        return;
+      }
+
+      const localUser = await prisma.user.findUnique({
+        where: {
+          subjectId: request.user.sub,
+        },
+      });
+
+      if (!localUser) {
+        response.status(403).json({ error: 'User does not exist locally' });
+        return;
+      }
+
+      const dbRole = normalizeRole(localUser.role);
+      const userIdx = dbRole ? ROLE_HIERARCHY.indexOf(dbRole) : -1;
+
+      if (!dbRole || userIdx < minIdx) {
+        response.status(403).json({ error: 'Insufficient permissions' });
+        return;
+      }
+
+      request.user.role = dbRole;
+
+      next();
+    } catch {
+      response.status(500).json({ error: 'Failed to verify user permissions' });
+    }
+  };
 };

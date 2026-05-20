@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { resolveLocalUser } from '../auth/resolveLocalUser';
+import { hasRoleAtLeast, normalizeRole, type Role } from '../middleware/requireAuth';
 import { Prisma } from '../generated/prisma/client';
 import { toAuthor, userAuthorSelect } from '../lib/author';
 import { prisma } from '../lib/prisma';
@@ -60,7 +61,7 @@ export const deleteReview = async (req: Request, res: Response) => {
     }
 
     const isOwner = existing.userId === localUser.id;
-    const isAdmin = req.user!.role === 'Admin';
+    const isAdmin = hasRoleAtLeast(normalizeRole(localUser.role), 'Admin');
     if (!isOwner && !isAdmin) {
       return res.status(403).json({ error: 'You can only delete your own reviews or be an Admin' });
     }
