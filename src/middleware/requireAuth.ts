@@ -22,16 +22,6 @@ export interface AuthenticatedUser {
   aud?: string | string[];
 }
 
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace -- Express type augmentation
-  namespace Express {
-    interface Request {
-      auth?: AuthenticatedUser;
-      user?: AuthenticatedUser;
-    }
-  }
-}
-
 const issuer = process.env.AUTH_ISSUER;
 const audience = process.env.API_AUDIENCE;
 

@@ -1,3 +1,4 @@
+/// <reference path="../src/types/express.d.ts" />
 import { Request, Response, NextFunction } from 'express';
 
 /**
