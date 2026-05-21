@@ -119,18 +119,6 @@ Public routes (no token): e.g. **GET** `/heartbeat`, **POST** `/issues` (create 
 
 ---
 
-## Project layout (high level)
-
-| Path | Purpose |
-| ---- | ------- |
-| `src/routes/` | Express routers |
-| `src/middleware/requireAuth.ts` | JWT verification + DB role gates |
-| `src/auth/resolveLocalUser.ts` | Upsert local `User` from JWT `sub` |
-| `openapi.yaml` | API contract (also served at `/openapi.json`) |
-| `prisma/` | Schema and migrations |
-
----
-
 ## Team
 
 **Group 3** — TCSS 460 group project backend.
