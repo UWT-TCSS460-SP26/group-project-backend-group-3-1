@@ -62,24 +62,6 @@ Create a `.env` file in the project root:
 
 ---
 
-## Authentication
-
-### How it works
-
-1. **Auth²** mints JWT access tokens (this API does **not** issue tokens).
-2. **`requireAuth`** verifies the token (RS256, issuer JWKS) and sets `request.user` from claims (`sub`, `role`, etc.).
-3. **App permissions** (e.g. Admin) come from the **local database** `User.role`, keyed by JWT `sub` → `User.subjectId` — not from the JWT `role` claim alone.
-
-First authenticated request may create a local user via `resolveLocalUser` (default role `User`). Promote admins in the database:
-
-```sql
-UPDATE "User" SET role = 'Admin' WHERE "subjectId" = '<jwt-sub>';
-```
-
-Admin-gated routes (e.g. issue list/update/delete) use `requireDbRoleAtLeast('Admin')` after `requireAuth`.
-
----
-
 ## Getting a token
 
 Mint an access token at the course **Token Playground** using **this group’s audience**.
