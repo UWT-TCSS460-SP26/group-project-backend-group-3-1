@@ -62,24 +62,6 @@ Create a `.env` file in the project root:
 
 ---
 
-## Authentication
-
-### How it works
-
-1. **Auth²** mints JWT access tokens (this API does **not** issue tokens).
-2. **`requireAuth`** verifies the token (RS256, issuer JWKS) and sets `request.user` from claims (`sub`, `role`, etc.).
-3. **App permissions** (e.g. Admin) come from the **local database** `User.role`, keyed by JWT `sub` → `User.subjectId` — not from the JWT `role` claim alone.
-
-First authenticated request may create a local user via `resolveLocalUser` (default role `User`). Promote admins in the database:
-
-```sql
-UPDATE "User" SET role = 'Admin' WHERE "subjectId" = '<jwt-sub>';
-```
-
-Admin-gated routes (e.g. issue list/update/delete) use `requireDbRoleAtLeast('Admin')` after `requireAuth`.
-
----
-
 ## Getting a token
 
 Mint an access token at the course **Token Playground** using **this group’s audience**.
@@ -134,18 +116,6 @@ Public routes (no token): e.g. **GET** `/heartbeat`, **POST** `/issues` (create 
 | `npm run format`      | Prettier write                              |
 | `npm run db:setup`    | Docker Postgres + migrate + generate + seed |
 | `npm run prisma:seed` | Seed database                               |
-
----
-
-## Project layout (high level)
-
-| Path                            | Purpose                                       |
-| ------------------------------- | --------------------------------------------- |
-| `src/routes/`                   | Express routers                               |
-| `src/middleware/requireAuth.ts` | JWT verification + DB role gates              |
-| `src/auth/resolveLocalUser.ts`  | Upsert local `User` from JWT `sub`            |
-| `openapi.yaml`                  | API contract (also served at `/openapi.json`) |
-| `prisma/`                       | Schema and migrations                         |
 
 ---
 
