@@ -160,10 +160,10 @@ Fixed issues from the last sprint (permissions issues, ui, and missing workflow.
 Went over sprint 6 specifications.
 Tasked Jorge to break down the first story.
 Went over how the collab group will access the bug tracker and back end.
-Fixed environment variables. 
+Fixed environment variables.
 Team trying to figure out what the stories are asking:
+
 - Working with what group (N-1)
 - Giving/asking the instructor for what info.
-Continued looking through the rest of the stories.
-Shared postresql.
-
+  Continued looking through the rest of the stories.
+  Shared postresql.
