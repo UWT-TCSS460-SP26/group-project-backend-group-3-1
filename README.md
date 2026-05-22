@@ -50,15 +50,25 @@ npm run db:setup
 
 Create a `.env` file in the project root:
 
-| Variable       | Description                             | Example                                        |
-| -------------- | --------------------------------------- | ---------------------------------------------- |
-| `DATABASE_URL` | PostgreSQL connection string            | `postgresql://user:pass@localhost:5432/group3` |
-| `AUTH_ISSUER`  | Auth² issuer (JWT `iss`)                | `https://tcss-460-iam.onrender.com`            |
-| `API_AUDIENCE` | Expected JWT `aud` claim                | `group-3-api`                                  |
-| `CORS_ORIGINS` | Comma-separated allowed browser origins | `http://localhost:3000`                        |
-| `PORT`         | HTTP port (optional)                    | `3000`                                         |
+| Variable       | Description                                         | Example                                        |
+| -------------- | --------------------------------------------------- | ---------------------------------------------- |
+| `DATABASE_URL` | PostgreSQL connection string                        | `postgresql://user:pass@localhost:5432/group3` |
+| `AUTH_ISSUER`  | Auth² issuer (JWT `iss`)                            | `https://tcss-460-iam.onrender.com`            |
+| `API_AUDIENCE` | Expected JWT `aud` claim                            | `group-3-api`                                  |
+| `CORS_ORIGINS` | Comma-separated allowed browser origins (see below) | `http://localhost:3000` |
+| `PORT`         | HTTP port (optional)                                | `3000`                  |
 
-**CORS:** For local frontends, set `CORS_ORIGINS=http://localhost:3000`. The API accepts `Authorization` and `Content-Type` headers and supports credentials. Add production front-end URLs to the same list when deploying.
+---
+
+## CORS allowlist
+
+Browser clients may only call this API from origins listed in `CORS_ORIGINS`. The backend reads that variable at startup and applies it via Express CORS middleware.
+
+**Local development:** Run your frontend on **`http://localhost:3000`** so it can access this backend. Set `CORS_ORIGINS=http://localhost:3000` in `.env` for local work.
+
+**Need another origin allowlisted?** Submit a [bug report](#filing-bug-reports) with the URL you need. We will add it to `CORS_ORIGINS` on deploy.
+
+The API allows `Authorization` and `Content-Type` in CORS preflight and supports credentials, so authenticated browser calls from allowlisted origins work without extra client changes.
 
 ---
 
@@ -97,10 +107,16 @@ This API never mints tokens — token issuance is owned entirely by Auth².
 1. Read the contract: **GET** `/openapi.json` or browse `/api-docs`.
 2. Obtain a token from the playground with audience **`group-3-api`**.
 3. Call the API with `Authorization: Bearer <token>`.
-4. For browser apps, ensure your origin is listed in `CORS_ORIGINS` (e.g. `http://localhost:3000` for local dev).
+4. For browser apps during local dev, run the frontend on **`http://localhost:3000`** (see [CORS allowlist](#cors-allowlist)). Request other origins via a bug report.
 5. **401** — missing/invalid/expired token. **403** — authenticated but insufficient app role (check local `User.role` for that `sub`).
 
 Public routes (no token): e.g. **GET** `/heartbeat`, **POST** `/issues` (create bug report). Most ratings/reviews routes require auth; see OpenAPI for each operation.
+
+### Filing bug reports
+
+- **UI:** [Bug tracker frontend](https://group-project-bug-tracker-front-end-group-3-9dhrg5gp7.vercel.app)
+- **API:** **POST** `/issues` with JSON body (`issueStatus`, `issueDesc`) — no auth required to submit
+- **Admin triage:** **GET** / **PATCH** / **DELETE** `/issues` require a token and database role `Admin` (see OpenAPI)
 
 ---
 
