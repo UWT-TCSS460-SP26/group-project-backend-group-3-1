@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { resolveLocalUser } from '../auth/resolveLocalUser';
-import { hasRoleAtLeast, normalizeRole, type Role } from '../middleware/requireAuth';
+import { hasRoleAtLeast, normalizeRole } from '../middleware/requireAuth';
 import { Prisma } from '../generated/prisma/client';
 import { toAuthor, userAuthorSelect } from '../lib/author';
 import { prisma } from '../lib/prisma';
