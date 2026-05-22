@@ -55,8 +55,8 @@ Create a `.env` file in the project root:
 | `DATABASE_URL` | PostgreSQL connection string                        | `postgresql://user:pass@localhost:5432/group3` |
 | `AUTH_ISSUER`  | Auth² issuer (JWT `iss`)                            | `https://tcss-460-iam.onrender.com`            |
 | `API_AUDIENCE` | Expected JWT `aud` claim                            | `group-3-api`                                  |
-| `CORS_ORIGINS` | Comma-separated allowed browser origins (see below) | `http://localhost:3000` |
-| `PORT`         | HTTP port (optional)                                | `3000`                  |
+| `CORS_ORIGINS` | Comma-separated allowed browser origins (see below) | `http://localhost:3000`                        |
+| `PORT`         | HTTP port (optional)                                | `3000`                                         |
 
 ---
 
