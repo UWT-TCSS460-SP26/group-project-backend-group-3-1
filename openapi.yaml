@@ -512,9 +512,9 @@ paths:
       tags: [Reviews]
       summary: Create a review
       description: |
-        Adds a review for the current user.
+        Adds a review for the current user. Requires authentication (Bearer token).
 
-        Requires authentication (Bearer token).
+        Each user may have at most one review per title To change a review, use PATCH `/reviews/{reviewId}` instead of creating again.
       security:
         - bearerAuth: []
       requestBody:
@@ -544,6 +544,14 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
                 error: Invalid or expired token
+        '409':
+          description: User already reviewed this title (same `tmdbIdentifier` and `isMovie`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: You have already reviewed this title. Use PATCH /reviews/:reviewId to update it.
   /ratings/me/enriched:
     get:
       tags: [Ratings]
@@ -850,8 +858,7 @@ paths:
       description: |
         Adds a rating for the current user. Requires a Bearer token.
 
-        Each user may have at most one rating per title (`tmdbIdentifier` + `isMovie`).
-        To change a score, use PATCH `/ratings/{ratingId}` instead of creating again.
+        Each user may have at most one rating per title. To change a score, use PATCH `/ratings/{ratingId}` instead of creating again.
       security:
         - bearerAuth: []
       requestBody:

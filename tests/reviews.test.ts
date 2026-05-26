@@ -30,12 +30,34 @@ function authHeader(overrides: { sub?: string; role?: string } = {}): Record<str
 
 const TMDB_ID = 550;
 
+const TEST_SUBJECT_IDS = [
+  'test-sub-123',
+  'other-user-123',
+  'reviews-me-user',
+  'admin-user-123',
+] as const;
+
+async function clearReviewsForSubjects(subjects: readonly string[]): Promise<void> {
+  const users = await prisma.user.findMany({
+    where: { subjectId: { in: [...subjects] } },
+    select: { id: true },
+  });
+  if (users.length > 0) {
+    await prisma.review.deleteMany({
+      where: { userId: { in: users.map((u) => u.id) } },
+    });
+  }
+}
+
 describe('Reviews (integration)', () => {
+  beforeEach(async () => {
+    await clearReviewsForSubjects(TEST_SUBJECT_IDS);
+  });
+
   afterAll(async () => {
     await prisma.review.deleteMany();
   });
 
-  // ... rest of the tests remain the same
   describe('POST /reviews', () => {
     it('returns 401 when Authorization is missing', async () => {
       const response = await request(app).post('/reviews').send({
@@ -101,6 +123,27 @@ describe('Reviews (integration)', () => {
         isMovie: false,
         tmdbIdentifier: TMDB_ID,
       });
+    });
+
+    it('returns 409 when the user already reviewed the same movie or show', async () => {
+      const duplicateTmdbId = 42_425;
+      const first = await request(app).post('/reviews').set(authHeader()).send({
+        reviewContent: 'First take',
+        isMovie: true,
+        dateOfReview: '2026-01-10',
+        tmdbIdentifier: duplicateTmdbId,
+      });
+      expect(first.status).toBe(201);
+
+      const second = await request(app).post('/reviews').set(authHeader()).send({
+        reviewContent: 'Second take',
+        isMovie: true,
+        dateOfReview: '2026-01-11',
+        tmdbIdentifier: duplicateTmdbId,
+      });
+
+      expect(second.status).toBe(409);
+      expect(second.body.error).toMatch(/already reviewed/i);
     });
   });
 

@@ -21,6 +21,21 @@ export const createReview = async (req: Request, res: Response) => {
 
   try {
     const localUser = await resolveLocalUser(req);
+
+    const existing = await prisma.review.findFirst({
+      where: {
+        userId: localUser.id,
+        isMovie,
+        tmdbIdentifier,
+      },
+    });
+
+    if (existing) {
+      return res.status(409).json({
+        error: 'You have already reviewed this title. Use PATCH /reviews/:reviewId to update it.',
+      });
+    }
+
     const review = await prisma.review.create({
       data: {
         userId: localUser.id,
