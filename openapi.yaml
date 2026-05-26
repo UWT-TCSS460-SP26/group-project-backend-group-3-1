@@ -847,7 +847,11 @@ paths:
     post:
       tags: [Ratings]
       summary: Create a rating
-      description: Adds a rating for the current user. Requires a Bearer token.
+      description: |
+        Adds a rating for the current user. Requires a Bearer token.
+
+        Each user may have at most one rating per title (`tmdbIdentifier` + `isMovie`).
+        To change a score, use PATCH `/ratings/{ratingId}` instead of creating again.
       security:
         - bearerAuth: []
       requestBody:
@@ -877,6 +881,14 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
               example:
                 error: Invalid or expired token
+        '409':
+          description: User already rated this title (same `tmdbIdentifier` and `isMovie`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: You have already rated this title. Use PATCH /ratings/:ratingId to update it.
         '502':
           $ref: '#/components/responses/IdentityProviderError'
         '500':
@@ -1007,6 +1019,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Authenticated user does not own this rating
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                error: You can only delete your own ratings
         '404':
           description: Rating not found
           content:

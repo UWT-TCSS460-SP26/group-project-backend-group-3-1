@@ -30,12 +30,29 @@ function authHeader(overrides: { sub?: string; role?: string } = {}): Record<str
 
 const TMDB_ID = 550;
 
+const TEST_SUBJECT_IDS = ['test-sub-123', 'other-user-123', 'ratings-me-user'] as const;
+
+async function clearRatingsForSubjects(subjects: readonly string[]): Promise<void> {
+  const users = await prisma.user.findMany({
+    where: { subjectId: { in: [...subjects] } },
+    select: { id: true },
+  });
+  if (users.length > 0) {
+    await prisma.rating.deleteMany({
+      where: { userId: { in: users.map((u) => u.id) } },
+    });
+  }
+}
+
 describe('Ratings (integration)', () => {
+  beforeEach(async () => {
+    await clearRatingsForSubjects(TEST_SUBJECT_IDS);
+  });
+
   afterAll(async () => {
     await prisma.rating.deleteMany();
   });
 
-  // ... rest of the tests remain the same
   describe('GET /ratings/me', () => {
     it('returns 401 when Authorization is missing', async () => {
       const response = await request(app).get('/ratings/me');
@@ -216,6 +233,23 @@ describe('Ratings (integration)', () => {
       expect(typeof response.body.ratingId).toBe('number');
     });
 
+    it('returns 409 when the user already rated the same movie or show', async () => {
+      const duplicateTmdbId = 42_424;
+      const first = await request(app)
+        .post('/ratings')
+        .set(authHeader())
+        .send({ isMovie: true, rating: 6, tmdbIdentifier: duplicateTmdbId });
+      expect(first.status).toBe(201);
+
+      const second = await request(app)
+        .post('/ratings')
+        .set(authHeader())
+        .send({ isMovie: true, rating: 8, tmdbIdentifier: duplicateTmdbId });
+
+      expect(second.status).toBe(409);
+      expect(second.body.error).toMatch(/already rated/i);
+    });
+
     it('returns 400 when rating string is not a strict positive integer', async () => {
       const response = await request(app)
         .post('/ratings')
@@ -286,7 +320,7 @@ describe('Ratings (integration)', () => {
       const created = await request(app)
         .post('/ratings')
         .set(authHeader({ sub: 'other-user-123' }))
-        .send({ isMovie: true, rating: 3, tmdbIdentifier: TMDB_ID });
+        .send({ isMovie: true, rating: 3, tmdbIdentifier: TMDB_ID + 10 });
 
       const response = await request(app)
         .patch(`/ratings/${created.body.ratingId}`)
@@ -297,7 +331,7 @@ describe('Ratings (integration)', () => {
       expect(response.body).toMatchObject({
         isMovie: true,
         value: 9,
-        tmdbIdentifier: TMDB_ID,
+        tmdbIdentifier: TMDB_ID + 10,
       });
     });
   });
@@ -315,18 +349,18 @@ describe('Ratings (integration)', () => {
       expect(response.body.error).toMatch(/ratingId/);
     });
 
-    it('returns 404 when authenticated user does not own the row', async () => {
+    it('returns 403 when authenticated user does not own the row', async () => {
       const created = await request(app)
         .post('/ratings')
         .set(authHeader({ sub: 'other-user-123' }))
-        .send({ isMovie: true, rating: 5, tmdbIdentifier: TMDB_ID });
+        .send({ isMovie: true, rating: 5, tmdbIdentifier: TMDB_ID + 11 });
 
       const response = await request(app)
         .delete(`/ratings/${created.body.ratingId}`)
         .set(authHeader());
 
-      expect(response.status).toBe(404);
-      expect(response.body.error).toBe('Rating not found');
+      expect(response.status).toBe(403);
+      expect(response.body.error).toBe('You can only delete your own ratings');
     });
 
     it('returns 200 and deletes the authenticated users row', async () => {
