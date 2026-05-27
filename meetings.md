@@ -167,3 +167,19 @@ Team trying to figure out what the stories are asking:
 - Giving/asking the instructor for what info.
   Continued looking through the rest of the stories.
   Shared postresql.
+
+
+
+8th Meeting, Week 9
+
+Sprint 7 Meeting (5/26)
+- Chatted about job hours and inventory etc..
+- Summarized and broke down each story.
+- Clarified some stories.
+- Discussed where a user should be able to update/delete their review.
+- Khalid joins call and notifies the group that he updated the colors.
+- Kevin & Jorge call dibs on their stories.
+- Khalid calls his dibs.
+- Christian & Sungmin are quality checkers since they weren't assigned a specific story.
+- Split stories into two.
+- Recap and end of meeting.
