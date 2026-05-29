@@ -168,11 +168,10 @@ Team trying to figure out what the stories are asking:
   Continued looking through the rest of the stories.
   Shared postresql.
 
-
-
 8th Meeting, Week 9
 
 Sprint 7 Meeting (5/26)
+
 - Chatted about job hours and inventory etc..
 - Summarized and broke down each story.
 - Clarified some stories.

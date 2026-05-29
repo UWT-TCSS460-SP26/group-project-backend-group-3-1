@@ -267,9 +267,7 @@ describe('Reviews (integration)', () => {
 
   describe('PATCH /reviews/:reviewId', () => {
     it('returns 401 when Authorization is missing', async () => {
-      const response = await request(app)
-        .patch('/reviews/1')
-        .send({ reviewContent: 'x' });
+      const response = await request(app).patch('/reviews/1').send({ reviewContent: 'x' });
 
       expect(response.status).toBe(401);
       expect(response.body.error).toBe('Missing or malformed Authorization header');
