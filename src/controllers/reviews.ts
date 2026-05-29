@@ -12,10 +12,9 @@ const RECENT_REVIEW_LIMIT = 5;
  * POST /reviews — author is always req.user (set by requireAuth).
  */
 export const createReview = async (req: Request, res: Response) => {
-  const { reviewContent, isMovie, dateOfReview, tmdbIdentifier } = req.body as {
+  const { reviewContent, isMovie, tmdbIdentifier } = req.body as {
     reviewContent: string;
     isMovie: boolean;
-    dateOfReview: string;
     tmdbIdentifier: number;
   };
 
@@ -40,7 +39,6 @@ export const createReview = async (req: Request, res: Response) => {
       data: {
         userId: localUser.id,
         isMovie,
-        dateOfReview: new Date(dateOfReview),
         reviewContent,
         tmdbIdentifier: tmdbIdentifier,
       },
@@ -123,9 +121,8 @@ export const getReview = async (req: Request, res: Response) => {
  * PATCH /reviews/:reviewId — only the author may update (not admin).
  */
 export const updateReview = async (req: Request, res: Response) => {
-  const { reviewContent, dateOfReview } = req.body as {
+  const { reviewContent } = req.body as {
     reviewContent: string;
-    dateOfReview: string;
   };
 
   const reviewId = Number(req.params.reviewId);
@@ -144,7 +141,6 @@ export const updateReview = async (req: Request, res: Response) => {
     const review = await prisma.review.update({
       data: {
         reviewContent,
-        dateOfReview: new Date(dateOfReview),
       },
       where: {
         reviewId,

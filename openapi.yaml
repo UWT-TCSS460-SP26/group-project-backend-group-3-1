@@ -1649,7 +1649,7 @@ components:
 
     ReviewCreateRequest:
       type: object
-      required: [reviewContent, isMovie, dateOfReview, tmdbIdentifier]
+      required: [reviewContent, isMovie, tmdbIdentifier]
       properties:
         reviewContent:
           type: string
@@ -1659,10 +1659,6 @@ components:
           type: boolean
           description: true = movie, false = show
           example: true
-        dateOfReview:
-          type: string
-          format: date
-          example: '2026-04-25'
         tmdbIdentifier:
           type: integer
           minimum: 1
@@ -1671,17 +1667,13 @@ components:
 
     ReviewUpdateRequest:
       type: object
-      description: Updates review text and date of review.
-      required: [reviewContent, dateOfReview]
+      description: Updates review text.
+      required: [reviewContent]
       properties:
         reviewContent:
           type: string
           description: Review body
           example: An updated take.
-        dateOfReview:
-          type: string
-          format: date
-          example: '2026-04-25'
 
     Review:
       type: object
