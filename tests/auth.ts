@@ -1,4 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
+import type { AuthenticatedUser } from '../src/middleware/requireAuth';
+
+type AuthedRequest = Request & { user?: AuthenticatedUser };
 
 /**
  * Stubbed auth middleware for tests.
@@ -8,7 +11,7 @@ import { Request, Response, NextFunction } from 'express';
  * Example:
  * .set('x-test-user', JSON.stringify({ sub: '123', role: 'Admin', email: 'test@example.com' }))
  */
-export const stubAuth = (req: Request, res: Response, next: NextFunction) => {
+export const stubAuth = (req: AuthedRequest, res: Response, next: NextFunction) => {
   const testUser = req.headers['x-test-user'];
 
   if (testUser) {
@@ -32,7 +35,7 @@ export const stubAuth = (req: Request, res: Response, next: NextFunction) => {
   next();
 };
 
-export const stubRequireAuth = (req: Request, res: Response, next: NextFunction) => {
+export const stubRequireAuth = (req: AuthedRequest, res: Response, next: NextFunction) => {
   stubAuth(req, res, () => {
     if (!req.user) {
       return res.status(401).json({ error: 'Missing or malformed Authorization header' });
@@ -41,6 +44,6 @@ export const stubRequireAuth = (req: Request, res: Response, next: NextFunction)
   });
 };
 
-export const stubOptionalAuth = (req: Request, res: Response, next: NextFunction) => {
+export const stubOptionalAuth = (req: AuthedRequest, res: Response, next: NextFunction) => {
   stubAuth(req, res, next);
 };

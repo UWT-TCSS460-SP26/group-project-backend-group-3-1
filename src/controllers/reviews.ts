@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { resolveLocalUser } from '../auth/resolveLocalUser';
-import { hasRoleAtLeast, normalizeRole, type Role } from '../middleware/requireAuth';
+import { hasRoleAtLeast, normalizeRole } from '../middleware/requireAuth';
 import { Prisma } from '../generated/prisma/client';
 import { toAuthor, userAuthorSelect } from '../lib/author';
 import { prisma } from '../lib/prisma';
@@ -21,6 +21,21 @@ export const createReview = async (req: Request, res: Response) => {
 
   try {
     const localUser = await resolveLocalUser(req);
+
+    const existing = await prisma.review.findFirst({
+      where: {
+        userId: localUser.id,
+        isMovie,
+        tmdbIdentifier,
+      },
+    });
+
+    if (existing) {
+      return res.status(409).json({
+        error: 'You have already reviewed this title. Use PATCH /reviews/:reviewId to update it.',
+      });
+    }
+
     const review = await prisma.review.create({
       data: {
         userId: localUser.id,

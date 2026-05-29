@@ -152,3 +152,34 @@ Who does what story.
 Talked about dates to finish by.
 
 ![Assigned tasks to each person](./meeting_images/task_spread_week7.png)
+
+7th Meeting, Week 8
+
+Sprint 6 Meeting (5/19)
+Fixed issues from the last sprint (permissions issues, ui, and missing workflow.md files)
+Went over sprint 6 specifications.
+Tasked Jorge to break down the first story.
+Went over how the collab group will access the bug tracker and back end.
+Fixed environment variables.
+Team trying to figure out what the stories are asking:
+
+- Working with what group (N-1)
+- Giving/asking the instructor for what info.
+  Continued looking through the rest of the stories.
+  Shared postresql.
+
+
+
+8th Meeting, Week 9
+
+Sprint 7 Meeting (5/26)
+- Chatted about job hours and inventory etc..
+- Summarized and broke down each story.
+- Clarified some stories.
+- Discussed where a user should be able to update/delete their review.
+- Khalid joins call and notifies the group that he updated the colors.
+- Kevin & Jorge call dibs on their stories.
+- Khalid calls his dibs.
+- Christian & Sungmin are quality checkers since they weren't assigned a specific story.
+- Split stories into two.
+- Recap and end of meeting.

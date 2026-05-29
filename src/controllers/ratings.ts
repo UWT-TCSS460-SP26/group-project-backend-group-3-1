@@ -93,6 +93,20 @@ export const createRating = async (req: Request, res: Response) => {
 
   const localUser = await resolveLocalUser(req);
 
+  const existing = await prisma.rating.findFirst({
+    where: {
+      userId: localUser.id,
+      isMovie,
+      tmdbIdentifier,
+    },
+  });
+
+  if (existing) {
+    return res.status(409).json({
+      error: 'You have already rated this title. Use PATCH /ratings/:ratingId to update it.',
+    });
+  }
+
   const ratingResult = await prisma.rating.create({
     data: {
       userId: localUser.id,
@@ -123,7 +137,7 @@ export const deleteRating = async (req: Request, res: Response) => {
     }
 
     if (existing.userId !== localUser.id) {
-      return res.status(404).json({ error: 'Rating not found' });
+      return res.status(403).json({ error: 'You can only delete your own ratings' });
     }
 
     await prisma.rating.delete({
