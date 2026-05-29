@@ -96,13 +96,12 @@ export const validateRatingIdParam = (req: Request, res: Response, next: NextFun
 
 /**
  * Validates JSON body for POST /reviews:
- *   reviewContent, isMovie (boolean), dateOfReview, tmdbIdentifier.
+ *   reviewContent, isMovie (boolean), tmdbIdentifier.
  */
 export const validateReviewBody = (req: Request, res: Response, next: NextFunction) => {
-  const { reviewContent, isMovie, dateOfReview, tmdbIdentifier } = req.body as {
+  const { reviewContent, isMovie, tmdbIdentifier } = req.body as {
     reviewContent?: unknown;
     isMovie?: unknown;
-    dateOfReview?: unknown;
     tmdbIdentifier?: unknown;
   };
   if (
@@ -115,19 +114,6 @@ export const validateReviewBody = (req: Request, res: Response, next: NextFuncti
   }
   if (typeof reviewContent !== 'string') {
     res.status(400).json({ error: 'Field "reviewContent" must be a string' });
-    return;
-  }
-  if (dateOfReview === undefined || dateOfReview === null || dateOfReview === '') {
-    res.status(400).json({ error: 'Field "dateOfReview" is required' });
-    return;
-  }
-  if (typeof dateOfReview !== 'string') {
-    res.status(400).json({ error: 'Field "dateOfReview" must be a date string' });
-    return;
-  }
-  const parsed = new Date(dateOfReview);
-  if (Number.isNaN(parsed.getTime())) {
-    res.status(400).json({ error: 'Field "dateOfReview" must be a valid date' });
     return;
   }
   if (typeof isMovie !== 'boolean') {
@@ -150,12 +136,11 @@ export const validateReviewBody = (req: Request, res: Response, next: NextFuncti
 };
 
 /**
- * Validates JSON body for PATCH /reviews/:reviewId — only `reviewContent` and `dateOfReview` (does not change movie vs show).
+ * Validates JSON body for PATCH /reviews/:reviewId — only `reviewContent` (does not change movie vs show).
  */
 export const validateReviewUpdateBody = (req: Request, res: Response, next: NextFunction) => {
-  const { reviewContent, dateOfReview } = req.body as {
+  const { reviewContent } = req.body as {
     reviewContent?: unknown;
-    dateOfReview?: unknown;
   };
   if (
     reviewContent === undefined ||
@@ -167,19 +152,6 @@ export const validateReviewUpdateBody = (req: Request, res: Response, next: Next
   }
   if (typeof reviewContent !== 'string') {
     res.status(400).json({ error: 'Field "reviewContent" must be a string' });
-    return;
-  }
-  if (dateOfReview === undefined || dateOfReview === null || dateOfReview === '') {
-    res.status(400).json({ error: 'Field "dateOfReview" is required' });
-    return;
-  }
-  if (typeof dateOfReview !== 'string') {
-    res.status(400).json({ error: 'Field "dateOfReview" must be a date string' });
-    return;
-  }
-  const parsed = new Date(dateOfReview);
-  if (Number.isNaN(parsed.getTime())) {
-    res.status(400).json({ error: 'Field "dateOfReview" must be a valid date' });
     return;
   }
   next();

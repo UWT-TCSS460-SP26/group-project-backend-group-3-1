@@ -8,52 +8,43 @@ datasource db {
 }
 
 model User {
-  id         Int      @id @default(autoincrement())
-  email      String
-  username   String   @db.VarChar(20)
-  role       String   @default("User")
-
-  subjectId  String   @unique  // 👈 auth identity (JWT sub)
-
-  firstName  String   @default("")
-  lastName   String   @default("")
-
-  ratings    Rating[]
-  reviews    Review[]
+  email     String
+  username  String   @db.VarChar(20)
+  role      String   @default("User")
+  firstName String   @default("")
+  lastName  String   @default("")
+  subjectId String   @unique
+  id        Int      @id @default(autoincrement())
+  ratings   Rating[]
+  reviews   Review[]
 }
 
-//Potentially remove composite keys
 model Rating {
-  ratingId        Int     @id @default(autoincrement())
-  /** Local user PK — join to `User.id`. Auth `sub` lives on `User.subjectId`. */
-  userId          Int
-  isMovie         Boolean
-  rating          Int
-  tmdbIdentifier  Int
-
-  user            User    @relation(fields: [userId], references: [id])
+  ratingId       Int     @id @default(autoincrement())
+  isMovie        Boolean
+  rating         Int
+  tmdbIdentifier Int
+  /// * Local user PK — join to `User.id`. Auth `sub` lives on `User.subjectId`.
+  userId         Int
+  user           User    @relation(fields: [userId], references: [id])
 }
 
 model Review {
-  reviewId        Int      @id @default(autoincrement())
-  /** Local user PK — join to `User.id`. Auth `sub` lives on `User.subjectId`. */
-  userId          Int
-  isMovie         Boolean
-  dateOfReview    DateTime
-  reviewContent   String
-  tmdbIdentifier  Int
-
-  user            User     @relation(fields: [userId], references: [id])
+  reviewId       Int      @id @default(autoincrement())
+  isMovie        Boolean
+  dateOfReview   DateTime @default(now())
+  reviewContent  String
+  tmdbIdentifier Int
+  /// * Local user PK — join to `User.id`. Auth `sub` lives on `User.subjectId`.
+  userId         Int
+  user           User     @relation(fields: [userId], references: [id])
 }
 
 model Issue {
-  issueID         Int   @default(autoincrement())
+  issueID         Int      @id @default(autoincrement())
   issueStatus     Status
   issueDesc       String
-  issueReportDate   DateTime  @default(now())
-
-  @@id([issueID])
-  
+  issueReportDate DateTime @default(now())
 }
 
 enum Status {

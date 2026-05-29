@@ -64,7 +64,6 @@ describe('Reviews (integration)', () => {
       const response = await request(app).post('/reviews').send({
         reviewContent: 'hello',
         isMovie: true,
-        dateOfReview: '2026-01-10',
         tmdbIdentifier: TMDB_ID,
       });
 
@@ -75,28 +74,16 @@ describe('Reviews (integration)', () => {
       const response = await request(app).post('/reviews').set('x-test-user', '').send({
         reviewContent: 'hello',
         isMovie: true,
-        dateOfReview: '2026-01-10',
         tmdbIdentifier: TMDB_ID,
       });
 
       expect(response.status).toBe(401);
     });
 
-    it('returns 400 when dateOfReview is missing', async () => {
-      const response = await request(app)
-        .post('/reviews')
-        .set(authHeader())
-        .send({ reviewContent: 'hello', isMovie: true });
-
-      expect(response.status).toBe(400);
-      expect(response.body.error).toBe('Field "dateOfReview" is required');
-    });
-
-    it('creates a review and returns persisted content/date', async () => {
+    it('creates a review and returns persisted content', async () => {
       const response = await request(app).post('/reviews').set(authHeader()).send({
         reviewContent: 'Great film',
         isMovie: true,
-        dateOfReview: '2026-01-10',
         tmdbIdentifier: TMDB_ID,
       });
 
@@ -104,17 +91,16 @@ describe('Reviews (integration)', () => {
       expect(response.body).toMatchObject({
         isMovie: true,
         reviewContent: 'Great film',
-        dateOfReview: '2026-01-10',
         tmdbIdentifier: TMDB_ID,
       });
       expect(typeof response.body.reviewId).toBe('number');
+      expect(typeof response.body.dateOfReview).toBe('string');
     });
 
     it('accepts isMovie=false for TV show reviews', async () => {
       const response = await request(app).post('/reviews').set(authHeader()).send({
         reviewContent: 'type two',
         isMovie: false,
-        dateOfReview: '2026-03-01',
         tmdbIdentifier: TMDB_ID,
       });
 
@@ -131,7 +117,6 @@ describe('Reviews (integration)', () => {
       const first = await request(app).post('/reviews').set(authHeader()).send({
         reviewContent: 'First take',
         isMovie: true,
-        dateOfReview: '2026-01-10',
         tmdbIdentifier: duplicateTmdbId,
       });
       expect(first.status).toBe(201);
@@ -139,7 +124,6 @@ describe('Reviews (integration)', () => {
       const second = await request(app).post('/reviews').set(authHeader()).send({
         reviewContent: 'Second take',
         isMovie: true,
-        dateOfReview: '2026-01-11',
         tmdbIdentifier: duplicateTmdbId,
       });
 
@@ -176,7 +160,6 @@ describe('Reviews (integration)', () => {
         .send({
           reviewContent: 'me list one',
           isMovie: true,
-          dateOfReview: '2026-04-20',
           tmdbIdentifier: TMDB_ID,
         });
       await request(app)
@@ -185,7 +168,6 @@ describe('Reviews (integration)', () => {
         .send({
           reviewContent: 'me list two',
           isMovie: false,
-          dateOfReview: '2026-04-21',
           tmdbIdentifier: TMDB_ID + 1,
         });
 
@@ -226,7 +208,6 @@ describe('Reviews (integration)', () => {
         .send({
           reviewContent: 'other user only',
           isMovie: true,
-          dateOfReview: '2026-05-01',
           tmdbIdentifier: TMDB_ID,
         });
       expect(createdOther.status).toBe(201);
@@ -245,7 +226,6 @@ describe('Reviews (integration)', () => {
       const created = await request(app).post('/reviews').set(authHeader()).send({
         reviewContent: 'Public read',
         isMovie: true,
-        dateOfReview: '2026-03-15',
         tmdbIdentifier: TMDB_ID,
       });
 
@@ -270,7 +250,6 @@ describe('Reviews (integration)', () => {
       const created = await request(app).post('/reviews').set(authHeader()).send({
         reviewContent: 'Read me',
         isMovie: true,
-        dateOfReview: '2026-03-15',
         tmdbIdentifier: TMDB_ID,
       });
 
@@ -280,9 +259,9 @@ describe('Reviews (integration)', () => {
         reviewId: created.body.reviewId,
         isMovie: true,
         reviewContent: 'Read me',
-        dateOfReview: '2026-03-15',
         tmdbIdentifier: TMDB_ID,
       });
+      expect(typeof response.body.dateOfReview).toBe('string');
     });
   });
 
@@ -290,7 +269,7 @@ describe('Reviews (integration)', () => {
     it('returns 401 when Authorization is missing', async () => {
       const response = await request(app)
         .patch('/reviews/1')
-        .send({ reviewContent: 'x', dateOfReview: '2026-01-01' });
+        .send({ reviewContent: 'x' });
 
       expect(response.status).toBe(401);
       expect(response.body.error).toBe('Missing or malformed Authorization header');
@@ -300,7 +279,7 @@ describe('Reviews (integration)', () => {
       const response = await request(app)
         .patch('/reviews/abc')
         .set(authHeader())
-        .send({ reviewContent: 'x', dateOfReview: '2026-01-01' });
+        .send({ reviewContent: 'x' });
 
       expect(response.status).toBe(400);
       expect(response.body.error).toMatch(/reviewId/);
@@ -310,7 +289,6 @@ describe('Reviews (integration)', () => {
       const created = await request(app).post('/reviews').set(authHeader()).send({
         reviewContent: 'before',
         isMovie: false,
-        dateOfReview: '2026-01-01',
         tmdbIdentifier: TMDB_ID,
       });
 
@@ -320,7 +298,7 @@ describe('Reviews (integration)', () => {
         .send({ reviewContent: '' });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toMatch(/reviewContent|dateOfReview/);
+      expect(response.body.error).toMatch(/reviewContent/);
     });
 
     it('returns 403 when authenticated user does not own the review', async () => {
@@ -330,14 +308,13 @@ describe('Reviews (integration)', () => {
         .send({
           reviewContent: 'theirs',
           isMovie: true,
-          dateOfReview: '2026-02-01',
           tmdbIdentifier: TMDB_ID,
         });
 
       const response = await request(app)
         .patch(`/reviews/${created.body.reviewId}`)
         .set(authHeader())
-        .send({ reviewContent: 'after', dateOfReview: '2026-02-02' });
+        .send({ reviewContent: 'after' });
 
       expect(response.status).toBe(403);
       expect(response.body.error).toMatch(/own reviews/i);
@@ -347,21 +324,20 @@ describe('Reviews (integration)', () => {
       const created = await request(app).post('/reviews').set(authHeader()).send({
         reviewContent: 'before',
         isMovie: false,
-        dateOfReview: '2026-01-01',
         tmdbIdentifier: TMDB_ID,
       });
 
       const response = await request(app)
         .patch(`/reviews/${created.body.reviewId}`)
         .set(authHeader())
-        .send({ reviewContent: 'after', dateOfReview: '2026-06-20' });
+        .send({ reviewContent: 'after' });
 
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
         reviewContent: 'after',
-        dateOfReview: '2026-06-20',
         tmdbIdentifier: TMDB_ID,
       });
+      expect(typeof response.body.dateOfReview).toBe('string');
     });
   });
 
@@ -392,7 +368,6 @@ describe('Reviews (integration)', () => {
         .send({
           reviewContent: 'to delete',
           isMovie: true,
-          dateOfReview: '2026-08-01',
           tmdbIdentifier: TMDB_ID,
         });
 
@@ -408,7 +383,6 @@ describe('Reviews (integration)', () => {
       const created = await request(app).post('/reviews').set(authHeader()).send({
         reviewContent: 'remove me',
         isMovie: false,
-        dateOfReview: '2026-02-20',
         tmdbIdentifier: TMDB_ID,
       });
 
@@ -427,7 +401,6 @@ describe('Reviews (integration)', () => {
         .send({
           reviewContent: 'moderated',
           isMovie: true,
-          dateOfReview: '2026-09-01',
           tmdbIdentifier: TMDB_ID,
         });
 
