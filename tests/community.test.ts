@@ -7,6 +7,9 @@ jest.mock('../src/lib/prisma', () => ({
     rating: {
       groupBy: jest.fn(),
     },
+    review: {
+      count: jest.fn(),
+    },
   },
 }));
 
@@ -58,6 +61,7 @@ describe('GET /community/discovery', () => {
         _count: { rating: 4 },
       },
     ]);
+    (prisma.review.count as jest.Mock).mockResolvedValue(4);
 
     globalThis.fetch = jest.fn().mockResolvedValue({
       ok: true,
@@ -118,6 +122,7 @@ describe('GET /community/discovery', () => {
     (prisma.rating.groupBy as jest.Mock).mockResolvedValue([
       { tmdbIdentifier: 1396, _avg: { rating: 9 }, _count: { rating: 5 } },
     ]);
+    (prisma.review.count as jest.Mock).mockResolvedValue(5);
 
     globalThis.fetch = jest.fn().mockResolvedValue({
       ok: true,
@@ -163,6 +168,7 @@ describe('GET /community/discovery', () => {
     (prisma.rating.groupBy as jest.Mock).mockResolvedValue([
       { tmdbIdentifier: 999, _avg: { rating: 7 }, _count: { rating: 3 } },
     ]);
+    (prisma.review.count as jest.Mock).mockResolvedValue(3);
 
     globalThis.fetch = jest.fn().mockResolvedValue({
       ok: false,
