@@ -109,20 +109,34 @@ export const getCommunityDiscovery = async (req: Request, res: Response) => {
               ? await fetchMovieMetadata(item.tmdbIdentifier, token)
               : await fetchShowMetadata(item.tmdbIdentifier, token);
 
+          const reviewCount = await prisma.review.count({
+            where: {
+              tmdbIdentifier: item.tmdbIdentifier,
+              isMovie,
+            },
+          });
+
           return {
             tmdbId: item.tmdbIdentifier,
             averageRating: item._avg.rating !== null ? Number(item._avg.rating.toFixed(1)) : 0,
-            reviewCount: item._count.rating,
+            reviewCount,
             title: metadata.title,
             posterPath: metadata.posterPath,
             overview: metadata.overview,
             releaseDate: metadata.releaseDate,
           };
         } catch {
+          const reviewCount = await prisma.review.count({
+            where: {
+              tmdbIdentifier: item.tmdbIdentifier,
+              isMovie,
+            },
+          });
+
           return {
             tmdbId: item.tmdbIdentifier,
             averageRating: item._avg.rating !== null ? Number(item._avg.rating.toFixed(1)) : 0,
-            reviewCount: item._count.rating,
+            reviewCount,
             title: null,
             posterPath: null,
             overview: null,
