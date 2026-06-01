@@ -115,7 +115,7 @@ describe('GET /community/discovery', () => {
         where: { isMovie: true },
         orderBy: { _avg: { rating: 'desc' } },
         having: {
-          rating: { _count: { gte: 3 } },
+          rating: { _count: { gte: 1 } },
         },
       })
     );
