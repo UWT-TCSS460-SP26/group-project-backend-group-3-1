@@ -4,11 +4,14 @@ import { prisma } from '../src/lib/prisma';
 
 jest.mock('../src/lib/prisma', () => ({
   prisma: {
-    rating: {
-      groupBy: jest.fn(),
-    },
     review: {
       count: jest.fn(),
+      groupBy: jest.fn(),
+    },
+    $transaction: jest.fn(),
+    rating: {
+      groupBy: jest.fn(),
+      aggregate: jest.fn(),
     },
   },
 }));
@@ -112,7 +115,7 @@ describe('GET /community/discovery', () => {
         where: { isMovie: true },
         orderBy: { _avg: { rating: 'desc' } },
         having: {
-          rating: { _count: { gte: 3 } },
+          rating: { _count: { gte: 1 } },
         },
       })
     );
@@ -146,22 +149,44 @@ describe('GET /community/discovery', () => {
       expect.any(Object)
     );
     expect(prisma.rating.groupBy).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { isMovie: false } })
+      expect.objectContaining({
+        where: { isMovie: false },
+        having: {
+          rating: { _count: { gte: 1 } },
+        },
+      })
     );
   });
 
-  it('omits minimum-count having for most-reviewed sort', async () => {
-    (prisma.rating.groupBy as jest.Mock).mockResolvedValue([]);
+  it('calls review.groupBy for most-reviewed sort', async () => {
+    (prisma.review.groupBy as jest.Mock).mockResolvedValue([
+      { tmdbIdentifier: 550, _count: { reviewId: 10 } },
+    ]);
+    (prisma.rating.aggregate as jest.Mock).mockResolvedValue({
+      _avg: { rating: 8.0 },
+    });
+    globalThis.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        title: 'Fight Club',
+        poster_path: null,
+        release_date: null,
+        overview: null,
+      }),
+    } as never) as typeof globalThis.fetch;
 
-    await request(app).get('/community/discovery').query({ type: 'movie', sort: 'most-reviewed' });
+    const response = await request(app)
+      .get('/community/discovery')
+      .query({ type: 'movie', sort: 'most-reviewed' });
 
-    expect(prisma.rating.groupBy).toHaveBeenCalledWith(
+    expect(prisma.review.groupBy).toHaveBeenCalledWith(
       expect.objectContaining({
-        orderBy: { _count: { rating: 'desc' } },
+        orderBy: { _count: { reviewId: 'desc' } },
       })
     );
-    const callArg = (prisma.rating.groupBy as jest.Mock).mock.calls[0][0];
-    expect(callArg).not.toHaveProperty('having');
+    expect(response.status).toBe(200);
+    expect(response.body.results[0].reviewCount).toBe(10);
+    expect(response.body.results[0].averageRating).toBe(8.0);
   });
 
   it('fills null metadata when TMDB fetch fails', async () => {

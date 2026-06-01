@@ -6,7 +6,8 @@ const BASE_URL = 'https://api.themoviedb.org/3';
 const POSTER_BASE = 'https://image.tmdb.org/t/p/w500';
 
 /** Minimum ratings per title for the top-rated discovery list (outlier filter). */
-const MIN_RATINGS_TOP_RATED = 3;
+const MIN_RATINGS_TOP_RATED_MOVIE = 1;
+const MIN_RATINGS_TOP_RATED_SHOW = 1;
 
 type DiscoveryMetadata = {
   title: string | null;
@@ -83,38 +84,70 @@ export const getCommunityDiscovery = async (req: Request, res: Response) => {
   try {
     const isMovie = type === 'movie';
 
-    const aggregatedRatings = await prisma.rating.groupBy({
-      by: ['tmdbIdentifier'],
-      where: { isMovie },
-      _avg: { rating: true },
-      _count: { rating: true },
-      ...(sort === 'top-rated'
-        ? {
-            having: {
-              rating: {
-                _count: { gte: MIN_RATINGS_TOP_RATED },
-              },
+    let aggregatedItems;
+
+    if (sort === 'top-rated') {
+      aggregatedItems = await prisma.rating.groupBy({
+        by: ['tmdbIdentifier'],
+        where: { isMovie },
+        _avg: { rating: true },
+        _count: { rating: true },
+        having: {
+          rating: {
+            _count: { gte: isMovie ? MIN_RATINGS_TOP_RATED_MOVIE : MIN_RATINGS_TOP_RATED_SHOW },
+          },
+        },
+        orderBy: { _avg: { rating: 'desc' } },
+        take: 10,
+      });
+    } else {
+      // most-reviewed
+      const reviewGroups = await prisma.review.groupBy({
+        by: ['tmdbIdentifier'],
+        where: { isMovie },
+        _count: { reviewId: true },
+        orderBy: { _count: { reviewId: 'desc' } },
+        take: 10,
+      });
+
+      aggregatedItems = await Promise.all(
+        reviewGroups.map(async (group) => {
+          const ratingAggregate = await prisma.rating.aggregate({
+            where: {
+              tmdbIdentifier: group.tmdbIdentifier,
+              isMovie,
             },
-          }
-        : {}),
-      orderBy: sort === 'top-rated' ? { _avg: { rating: 'desc' } } : { _count: { rating: 'desc' } },
-      take: 10,
-    });
+            _avg: { rating: true },
+          });
+
+          return {
+            tmdbIdentifier: group.tmdbIdentifier,
+            _avg: { rating: ratingAggregate._avg.rating },
+            _count: { reviewId: group._count.reviewId },
+          };
+        })
+      );
+    }
 
     const results = await Promise.all(
-      aggregatedRatings.map(async (item) => {
+      aggregatedItems.map(async (item) => {
         try {
           const metadata =
             type === 'movie'
               ? await fetchMovieMetadata(item.tmdbIdentifier, token)
               : await fetchShowMetadata(item.tmdbIdentifier, token);
 
-          const reviewCount = await prisma.review.count({
-            where: {
-              tmdbIdentifier: item.tmdbIdentifier,
-              isMovie,
-            },
-          });
+          let reviewCount: number;
+          if (sort === 'most-reviewed' && '_count' in item && 'reviewId' in item._count) {
+            reviewCount = (item._count as { reviewId: number }).reviewId;
+          } else {
+            reviewCount = await prisma.review.count({
+              where: {
+                tmdbIdentifier: item.tmdbIdentifier,
+                isMovie,
+              },
+            });
+          }
 
           return {
             tmdbId: item.tmdbIdentifier,
@@ -126,12 +159,17 @@ export const getCommunityDiscovery = async (req: Request, res: Response) => {
             releaseDate: metadata.releaseDate,
           };
         } catch {
-          const reviewCount = await prisma.review.count({
-            where: {
-              tmdbIdentifier: item.tmdbIdentifier,
-              isMovie,
-            },
-          });
+          let reviewCount: number;
+          if (sort === 'most-reviewed' && '_count' in item && 'reviewId' in item._count) {
+            reviewCount = (item._count as { reviewId: number }).reviewId;
+          } else {
+            reviewCount = await prisma.review.count({
+              where: {
+                tmdbIdentifier: item.tmdbIdentifier,
+                isMovie,
+              },
+            });
+          }
 
           return {
             tmdbId: item.tmdbIdentifier,
