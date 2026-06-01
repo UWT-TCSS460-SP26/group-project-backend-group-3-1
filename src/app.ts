@@ -11,7 +11,7 @@ const app = express();
 // Application-level middleware
 app.use(
   cors({
-    origin: process.env.CORS_ORIGINS?.split(',').map(o => o.trim()) || [],
+    origin: process.env.CORS_ORIGINS?.split(',').map((o) => o.trim()) || [],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization'],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
