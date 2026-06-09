@@ -193,7 +193,7 @@ had to leave early, we always made sure everybody was kept up to date with the r
 With five people, it did get a bit confusing at times when it came to bug fixing this and that but two or three people would
 be in a call to walk through the issues, thus promoting an environment where members could talk and create a better product.
 
-2. ???
+2. If I were starting this quarter over, something I would do differently is spend more time reviewing my groups code. It seemed that towards the end especially we were more focused on finishing the project deliverables. We all have great trust in one another so reviewing each others code was not necessary but something I would have done if I had the chance to start over.
 
 3. Since every team was working from the same api source, we could get a grasp on what to use and expect. But what was the most interesting
 were the methods the other team created that we didn't think of. It showcased their future proofing in ways we didn't account for and allowed
