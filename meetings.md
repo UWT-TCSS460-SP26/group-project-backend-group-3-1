@@ -183,29 +183,25 @@ Sprint 7 Meeting (5/26)
 - Split stories into two.
 - Recap and end of meeting.
 
-
-
 **Retrospective Reflections**
 
 1. What went well throughout this quarter was the consistency of the meetings and communication we did. This went for both
-in-person and online meetings where we would typically have all five members. In the case someone couldn't make it or
-had to leave early, we always made sure everybody was kept up to date with the responsibilities they were assigned for that week.
-With five people, it did get a bit confusing at times when it came to bug fixing this and that but two or three people would
-be in a call to walk through the issues, thus promoting an environment where members could talk and create a better product.
+   in-person and online meetings where we would typically have all five members. In the case someone couldn't make it or
+   had to leave early, we always made sure everybody was kept up to date with the responsibilities they were assigned for that week.
+   With five people, it did get a bit confusing at times when it came to bug fixing this and that but two or three people would
+   be in a call to walk through the issues, thus promoting an environment where members could talk and create a better product.
 
 2. If I were starting this quarter over, something I would do differently is spend more time reviewing my groups code. It seemed that towards the end especially
-we were more focused on finishing the project deliverables. We all have great trust in one another so reviewing each others code was not necessary but something
-I would have done if I had the chance to start over. Another thing we would do is ask more questions in class, we all found the readings to be very helpful,
-especially since they were further discussed in class. However, there were still moments we found either the Sprints documentation or readings to be confusing.
+   we were more focused on finishing the project deliverables. We all have great trust in one another so reviewing each others code was not necessary but something
+   I would have done if I had the chance to start over. Another thing we would do is ask more questions in class, we all found the readings to be very helpful,
+   especially since they were further discussed in class. However, there were still moments we found either the Sprints documentation or readings to be confusing.
 
-5. Since every team was working from the same api source, we could get a grasp on what to use and expect. But what was the most interesting
-were the methods the other team created that we didn't think of. It showcased their future proofing in ways we didn't account for and allowed
-us to fix our own api and improve upon it. With other people working on ours, we would come to know our shortcomings from their bug reports or suggestions on what could be included. What we
-realized was that other groups had their own design philosphy or ideas that we didn't and never accounted for but this allowed for improvement.
+3. Since every team was working from the same api source, we could get a grasp on what to use and expect. But what was the most interesting
+   were the methods the other team created that we didn't think of. It showcased their future proofing in ways we didn't account for and allowed
+   us to fix our own api and improve upon it. With other people working on ours, we would come to know our shortcomings from their bug reports or suggestions on what could be included. What we
+   realized was that other groups had their own design philosphy or ideas that we didn't and never accounted for but this allowed for improvement.
 
-6. AI can get out of hand and often times do too much. As some members have come across this, Cursor has other modes that allows for better and
-more planned prompts. Overreliance on it can be detrimental and may cause deep-rooted issues but at the same time it can fill in knowledge gaps
-the coder is lacking in. One thing we learned is when overly prompting coding agents they don't remember everything, as a result there would be
-moments where the same variable would be named differently across the project. This made the documentation confusing to follow at times.
-
-
+4. AI can get out of hand and often times do too much. As some members have come across this, Cursor has other modes that allows for better and
+   more planned prompts. Overreliance on it can be detrimental and may cause deep-rooted issues but at the same time it can fill in knowledge gaps
+   the coder is lacking in. One thing we learned is when overly prompting coding agents they don't remember everything, as a result there would be
+   moments where the same variable would be named differently across the project. This made the documentation confusing to follow at times.
